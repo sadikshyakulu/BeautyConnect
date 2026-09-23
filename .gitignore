@@ -1,0 +1,15 @@
+# Visual Studio
+.vs/
+*.user
+bin/
+obj/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Env / secrets
+.env
+*.env.local
+appsettings.Development.json

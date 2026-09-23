@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --font-headline: 'Playfair Display', serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+
+  /* Stitch Design Tokens: Editorial Beauty Marketplace */
+  --color-surface: #fff8f8;
+  --color-surface-dim: #e2d8d9;
+  --color-surface-bright: #fff8f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fcf1f2;
+  --color-surface-container: #f6ebec;
+  --color-surface-container-high: #f0e6e7;
+  --color-surface-container-highest: #ebe0e1;
+  --color-surface-variant: #ebe0e1;
+
+  --color-on-surface: #1f1a1b;
+  --color-on-surface-variant: #544341;
+  --color-inverse-surface: #352f30;
+  --color-inverse-on-surface: #f9eeef;
+  
+  --color-outline: #877270;
+  --color-outline-variant: #dac1be;
+  
+  /* Accents */
+  --color-primary: #954741;
+  --color-primary-container: #d87d75;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #581916;
+  --color-primary-accent: #d87d75;
+  --color-primary-hover: #c46860;
+
+  --color-secondary: #865225;
+  --color-secondary-container: #fdb882;
+  --color-on-secondary: #ffffff;
+  --color-secondary-accent: #c88a58;
+
+  --color-tertiary: #99462a;
+  --color-tertiary-container: #de7b5b;
+  --color-tertiary-accent: #d97757;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+
+  /* Glassmorphism Tokens */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(218, 193, 190, 0.45);
+  --glass-shadow: 0 8px 32px 0 rgba(149, 71, 65, 0.08);
+  --glass-blur: blur(12px);
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(216, 125, 117, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(200, 138, 88, 0.06) 0px, transparent 50%);
+}
+
+h1, h2, h3, h4, .font-headline {
+  font-family: var(--font-headline);
+  font-weight: 600;
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
+}
+
+.input-with-icon {
+  padding-left: 2.75rem !important;
+}
+
+/* Glass panel utility */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-xl);
+}
