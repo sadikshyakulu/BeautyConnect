@@ -225,12 +225,40 @@
   border-top: 1px solid var(--outline-variant);
 }
 
+/* Aliases used in Navbar.jsx */
+.btn-pro-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.875rem;
+  background: var(--primary-container);
+  color: var(--on-primary);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.btn-pro-pill:hover {
+  opacity: 0.9;
+}
+
+.navbar-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface);
+  padding: 0.5rem;
+}
+
 @media (max-width: 992px) {
   .navbar-links,
   .navbar-actions {
     display: none;
   }
-  .navbar-mobile-toggle {
+  .navbar-mobile-toggle,
+  .navbar-hamburger {
     display: flex;
     align-items: center;
     justify-content: center;

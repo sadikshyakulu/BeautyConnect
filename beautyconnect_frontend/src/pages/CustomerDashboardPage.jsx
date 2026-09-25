@@ -293,28 +293,29 @@ const CustomerDashboardPage = () => {
 
             <div className="flex flex-col gap-4">
               {/* Past Item 1: Pending Review (Marcus Chen) */}
-              <div className="p-6 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="p-5 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col gap-4">
+                {/* Top: image + info */}
                 <div className="flex items-start gap-4">
                   <img
-                    className="w-20 h-20 rounded-xl object-cover shadow-sm shrink-0"
+                    className="w-16 h-16 rounded-xl object-cover shadow-sm shrink-0"
                     alt="Chic editorial close-up"
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7YlSgXsWhIpR2EjRrS1e7qS7vNFXrQCC_EXpvAhtQdUabctG0odY_sSPvECdA2J4tl-dx1SL9cJlOJVMKr-wc1etsS9nhNhg1Vy-LfRFF9l1fleKZ7h_w7El5EbxtaxBkjruJihQmkO08pkb0IgYx6ZulWD3_Mwc_tx5fhUpEzcie3Ezqp5gs47cQtNGF0JYi7fN7qrDxQptNZVcCk8Bou1lwmr2MUPEV4LBZYtMcjgweZKTWfyD72g"
                   />
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-secondary text-[11px] font-semibold">Completed Sep 24, 2025</span>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-secondary text-[11px] font-semibold whitespace-nowrap">Completed Sep 24, 2025</span>
                       <span className="text-xs text-on-surface-variant">Tribeca Atelier</span>
                     </div>
-                    <h4 className="font-serif text-lg font-semibold text-on-surface mt-1">Couture Hair Styling & Architectural Chignon</h4>
+                    <h4 className="font-serif text-base font-semibold text-on-surface mt-0.5 leading-snug">Couture Hair Styling &amp; Architectural Chignon</h4>
                     <p className="text-xs text-on-surface-variant">Artist: <span className="text-on-surface font-semibold">Marcus Chen</span> · $260.00 Paid</p>
                   </div>
                 </div>
 
-                {/* Review Callout Action */}
-                <div className="w-full lg:w-auto p-4 rounded-xl bg-surface-container-low/60 backdrop-blur-sm ring-1 ring-outline-variant/30 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                  <div className="flex flex-col">
+                {/* Review Callout — compact inline row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl bg-surface-container-low/60 backdrop-blur-sm ring-1 ring-outline-variant/30">
+                  <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-on-surface">Share your experience</span>
-                    <div className="flex items-center gap-1 text-tertiary mt-1">
+                    <div className="flex items-center gap-0.5 text-tertiary">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
@@ -322,27 +323,41 @@ const CustomerDashboardPage = () => {
                             setSelectedRating(star);
                             handleOpenReview('Marcus Chen');
                           }}
-                          className="hover:scale-125 transition-transform cursor-pointer"
+                          style={{ background: 'none', border: 'none', padding: '2px', lineHeight: 1, cursor: 'pointer', color: 'var(--tertiary)' }}
                         >
-                          <span className="material-symbols-outlined text-[20px]">star</span>
+                          <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>star</span>
                         </button>
                       ))}
                     </div>
                   </div>
                   <button
                     onClick={() => handleOpenReview('Marcus Chen')}
-                    className="w-full sm:w-auto px-5 py-2 rounded-full bg-primary text-on-primary text-xs font-semibold hover:bg-on-primary-container transition-colors shadow-sm shrink-0 cursor-pointer"
+                    style={{
+                      background: 'var(--primary)',
+                      color: 'var(--on-primary)',
+                      border: 'none',
+                      borderRadius: '9999px',
+                      padding: '0.45rem 1.25rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      transition: 'opacity 0.2s',
+                    }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
+                    onMouseOut={e => e.currentTarget.style.opacity = '1'}
                   >
-                    Leave a Review & Look
+                    Leave a Review &amp; Look
                   </button>
                 </div>
               </div>
 
               {/* Past Item 2: Reviewed (Sora Kim) */}
-              <div className="p-6 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div className="p-5 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col gap-4">
                 <div className="flex items-start gap-4">
                   <img
-                    className="w-20 h-20 rounded-xl object-cover shadow-sm shrink-0"
+                    className="w-16 h-16 rounded-xl object-cover shadow-sm shrink-0"
                     alt="Japanese ceramic gel nail art"
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPPNcxe0VtY54uP-E8uzV_kOYfCjucdQ136RgamqIg0bzbQ8Ij7wMemouCyiL_r3tHk1mm5eUH6Ba0fUr4sq-sAlTBg4UxR2ir5Dy0aTRB8yTWxKCaOyHj5Rfg4S1dCxtNdC-fuTWS36roaoPxxfwJQhb3KzSAOHNCAQ85pQw7Afww4pkv-z4F4mT2rbLN_c5CLkT2h8XW_qBcMVZJGuXUyDpYA0mJZC9uKdIbddJE4m5_sA23k8dzvg"
                   />
