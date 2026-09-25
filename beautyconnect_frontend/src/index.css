@@ -99,22 +99,22 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── Standardized Page Container Grid (consistent 80rem / 1280px max-width) ── */
+/* ── Standardized Page Container Grid (consistent 96rem / 1536px max-width) ── */
 .container,
 .page-container {
   width: 100%;
-  max-width: 80rem; /* 1280px */
+  max-width: 96rem; /* 1536px */
   margin-left: auto;
   margin-right: auto;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 @media (min-width: 768px) {
   .container,
   .page-container {
-    padding-left: 2rem;
-    padding-right: 2rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 
@@ -504,6 +504,7 @@ input[type="number"] {
 .row-span-2 { grid-row: span 2 / span 2 !important; }
 
 @media (min-width: 768px) {
+  .md\:grid { display: grid !important; }
   .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
@@ -531,7 +532,7 @@ input[type="number"] {
   .lg\:col-span-12 { grid-column: span 12 / span 12 !important; }
   .lg\:flex-row { flex-direction: row !important; }
   .lg\:items-end { align-items: flex-end !important; }
-  .lg\:px-12 { padding-left: 3rem !important; padding-right: 3rem !important; }
+  .lg\:px-12 { padding-left: 2rem !important; padding-right: 2rem !important; }
   .lg\:sticky { position: -webkit-sticky !important; position: sticky !important; }
   .lg\:top-24 { top: 6rem !important; }
   .lg\:top-20 { top: 5rem !important; }
@@ -567,7 +568,7 @@ input[type="number"] {
 .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 2rem !important; }
 
 /* Container & Max widths */
-.max-w-7xl { max-width: 80rem !important; }
+.max-w-7xl { max-width: 96rem !important; }
 .max-w-6xl { max-width: 72rem !important; }
 .max-w-5xl { max-width: 64rem !important; }
 .max-w-4xl { max-width: 56rem !important; }
@@ -989,6 +990,21 @@ input[type="number"] {
 .isolate       { isolation: isolate !important; }
 .text-balance  { text-wrap: balance; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+
+/* Responsive page gutters; keep these after base padding utilities. */
+@media (min-width: 576px) {
+  .sm\:px-8 { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+}
+
+@media (min-width: 992px) {
+  .lg\:px-12 { padding-left: 2rem !important; padding-right: 2rem !important; }
+}
+
+@media (min-width: 1200px) {
+  .lg\:px-12 { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
+}
+
+.top-1\/2 { top: 50% !important; }
 
 /* ── sm: Responsive Breakpoint (576 px) ─────────────────────── */
 @media (min-width: 576px) {

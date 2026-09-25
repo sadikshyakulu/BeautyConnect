@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import HeroPortrait from '../components/HeroPortrait'
 import './HomePage.css'
 
 export default function HomePage() {
@@ -98,24 +99,30 @@ export default function HomePage() {
         <div className="hero-glow hero-glow--2"></div>
 
         <div className="container hero-content">
-          {/* Editorial Micro Kicker */}
-          <div className="hero-kicker">
-            <span className="hero-kicker-dot"></span>
-            <span>Independent Freelance Collective</span>
-            <span className="hero-kicker-sep">/</span>
-            <span className="hero-kicker-season">Season Lookbook 2025</span>
+          <div className="hero-intro">
+            {/* Editorial Micro Kicker */}
+            <div className="hero-kicker">
+              <span className="hero-kicker-dot"></span>
+              <span>Independent Freelance Collective</span>
+              <span className="hero-kicker-sep">/</span>
+              <span className="hero-kicker-season">Season Lookbook 2025</span>
+            </div>
+
+            {/* High-Contrast Headline */}
+            <h1 className="hero-title">
+              Exceptional Beauty Artistry, <br className="br-hide-mobile" />
+              <span className="italic hero-title-accent">Curated for You.</span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="hero-subtitle">
+              Connect directly with verified independent freelance makeup artists, couture hair sculptors, and aesthetic specialists for on-demand atelier appointments or luxury travel directly to your door.
+            </p>
           </div>
 
-          {/* High-Contrast Headline */}
-          <h1 className="hero-title">
-            Exceptional Beauty Artistry, <br className="br-hide-mobile" />
-            <span className="italic hero-title-accent">Curated for You.</span>
-          </h1>
-
-          {/* Subtitle */}
-          <p className="hero-subtitle">
-            Connect directly with verified independent freelance makeup artists, couture hair sculptors, and aesthetic specialists for on-demand atelier appointments or luxury travel directly to your door.
-          </p>
+          <div className="hero-portrait" aria-hidden="true">
+            <HeroPortrait />
+          </div>
 
           {/* FLOATING MULTI-PARAMETER SEARCH BAR */}
           <div className="hero-search-wrapper glass">

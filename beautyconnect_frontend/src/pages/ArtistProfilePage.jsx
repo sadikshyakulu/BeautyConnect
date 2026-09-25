@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import './ArtistProfilePage.css'
 
 export default function ArtistProfilePage() {
   const navigate = useNavigate()
@@ -90,8 +91,8 @@ export default function ArtistProfilePage() {
       {/* Immersive Editorial Top Cover */}
       <section className="relative w-full overflow-hidden bg-surface-container-high pb-6">
         <div className="w-full h-80 md:h-[400px] relative">
-          <div className="grid grid-cols-12 h-full w-full gap-1">
-            <div className="col-span-12 md:col-span-7 h-full relative overflow-hidden group">
+          <div className="artist-cover-grid grid grid-cols-12 h-full w-full gap-1">
+            <div className="artist-cover-main col-span-12 md:col-span-7 h-full relative overflow-hidden group">
               <img
                 className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcDge5HmGT5tzkahGNG1noOLK02S6hx4SXozT-BtIj62KDw1m8clKyjSRfvyFdSJ5EtOD1wzbReoWuKC1eJYNJXviy8fhr8Ex_pQVTIcnRQ2_JaN2wQgq9VDdLc3FbDllijbTeQG_gZ5-17Wfhp-8iwaVCohk4SWgv7mgOkIjSeOC_ofQAcb_Rcae4VYiKLWM_IyGnfqV1CWgk1JDR3SOV8zrQCnmOlrP1txzWFMNHF19bWJ9jCcwb1A"
@@ -104,7 +105,7 @@ export default function ArtistProfilePage() {
                 </span>
               </div>
             </div>
-            <div className="hidden md:grid md:col-span-5 grid-rows-2 h-full gap-1">
+            <div className="artist-cover-side hidden md:grid md:col-span-5 grid-rows-2 h-full gap-1">
               <div className="relative overflow-hidden group">
                 <img
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
@@ -142,7 +143,7 @@ export default function ArtistProfilePage() {
                     alt="Aria Sterling"
                   />
                 </div>
-                <span className="absolute bottom-1 right-1 flex items-center justify-center w-7 h-7 rounded-full bg-secondary text-white shadow-md">
+                <span className="artist-verified-badge absolute flex items-center justify-center w-7 h-7 rounded-full bg-secondary text-white shadow-md">
                   <span className="material-symbols-outlined text-[17px]">verified</span>
                 </span>
               </div>
@@ -204,30 +205,30 @@ export default function ArtistProfilePage() {
 
           {/* 4 Feature Badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined text-xl">verified_user</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs text-on-surface font-semibold leading-tight">Licensed Esthetician</div>
                 <div className="text-[11px] text-on-surface-variant">8+ Years Master Practice</div>
               </div>
             </div>
-            <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary shrink-0">
                 <span className="material-symbols-outlined text-xl">schedule</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs text-on-surface font-semibold leading-tight">&lt; 15 min Reply</div>
                 <div className="text-[11px] text-on-surface-variant">100% On-Time Response</div>
               </div>
             </div>
-            <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
                 <span className="material-symbols-outlined text-xl">clean_hands</span>
               </div>
-              <div>
-                <div className="text-xs text-on-surface font-semibold leading-tight">Hospital-Grade San.</div>
+              <div className="min-w-0">
+                <div className="text-xs text-on-surface font-semibold leading-tight">Certified Sanitation</div>
                 <div className="text-[11px] text-on-surface-variant">EPA Hospital Certified Kit</div>
               </div>
             </div>
@@ -235,7 +236,7 @@ export default function ArtistProfilePage() {
               <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant shrink-0">
                 <span className="material-symbols-outlined text-xl">hotel_class</span>
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs text-on-surface font-semibold leading-tight">Vogue &amp; Brides</div>
                 <div className="text-[11px] text-on-surface-variant">Editorial Published Artist</div>
               </div>
@@ -302,14 +303,14 @@ export default function ArtistProfilePage() {
               </div>
 
               {/* Dynamic Bento Gallery Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="artist-gallery-grid">
                 {filteredGallery.map((item, idx) => (
-                  <div key={idx} className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-surface-container shadow-sm cursor-pointer">
-                    <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-inverse-surface/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                      <span className="text-xs text-secondary-fixed uppercase tracking-wider font-semibold">{item.badge}</span>
-                      <p className="text-sm text-white font-medium">{item.title}</p>
-                      <p className="text-xs text-white/80">{item.sub}</p>
+                  <div key={idx} className="artist-gallery-card group">
+                    <img src={item.img} alt={item.title} className="artist-gallery-image" />
+                    <div className="artist-gallery-caption">
+                      <span className="artist-gallery-badge">{item.badge}</span>
+                      <p className="artist-gallery-title">{item.title}</p>
+                      <p className="artist-gallery-subtitle">{item.sub}</p>
                     </div>
                   </div>
                 ))}
@@ -517,9 +518,9 @@ export default function ArtistProfilePage() {
           </div>
 
           {/* RIGHT COLUMN: 35% width Sticky Booking Card */}
-          <div className="lg:col-span-4 w-full" id="booking-card">
+          <div className="lg:col-span-4 w-full lg:sticky lg:top-24" id="booking-card">
             <div
-              className="lg:sticky lg:top-24 rounded-2xl shadow-xl border border-white/80 p-5 flex flex-col space-y-4 backdrop-blur-md"
+              className="rounded-2xl shadow-xl border border-white/80 p-5 flex flex-col space-y-4 backdrop-blur-md"
               style={{ background: 'rgba(255, 248, 248, 0.85)' }}
             >
               <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
