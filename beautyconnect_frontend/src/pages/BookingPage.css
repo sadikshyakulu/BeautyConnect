@@ -1,0 +1,149 @@
+/* ============================================================
+   BookingPage.css — Luxury Editorial Checkout Styles
+   ============================================================ */
+
+.booking-page-container {
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--on-surface);
+  padding-top: 2rem;
+  padding-bottom: 5rem;
+}
+
+.booking-stepper {
+  max-width: 640px;
+  margin: 0 auto 2.5rem;
+  padding: 0 1rem;
+}
+
+.booking-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(218, 193, 190, 0.45);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px -2px rgba(149, 71, 65, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.booking-card:hover {
+  box-shadow: 0 8px 30px -4px rgba(149, 71, 65, 0.08);
+}
+
+.booking-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(218, 193, 190, 0.35);
+}
+
+.booking-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.booking-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #2b2324;
+}
+
+.booking-input {
+  width: 100%;
+  background: #ffffff !important;
+  border: 1px solid #d8c3c1 !important;
+  border-radius: 0.75rem !important;
+  padding: 0.65rem 0.875rem !important;
+  font-size: 0.8125rem !important;
+  color: #1f1a1b !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.booking-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(149, 71, 65, 0.18) !important;
+  background-color: #ffffff !important;
+}
+
+.booking-input::placeholder {
+  color: #9c8a88 !important;
+}
+
+.booking-card-inner-box {
+  background: #faf2f2;
+  border: 1px solid rgba(218, 193, 190, 0.5);
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+
+.booking-quick-pay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.booking-quick-pay-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.booking-quick-pay-btn:active {
+  transform: translateY(0);
+}
+
+.booking-primary-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #954741 0%, #823832 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.95rem 1.5rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 16px rgba(149, 71, 65, 0.28);
+  transition: all 0.2s ease;
+}
+
+.booking-primary-btn:hover {
+  background: linear-gradient(135deg, #823832 0%, #6f2e29 100%);
+  box-shadow: 0 6px 22px rgba(149, 71, 65, 0.38);
+  transform: translateY(-1px);
+}
+
+.booking-primary-btn:active {
+  transform: translateY(0);
+}
+
+.booking-escrow-box {
+  background: #fdf5ef;
+  border: 1px solid #f3d4be;
+  border-radius: 0.875rem;
+  padding: 1rem;
+}
+
+.booking-summary-total-box {
+  background: #f5eae9;
+  border: 1px solid #ebd2cf;
+  border-radius: 0.875rem;
+  padding: 1.125rem 1.25rem;
+}

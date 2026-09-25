@@ -383,9 +383,9 @@ export default function SearchPage() {
 
                 {/* Price Range */}
                 <div className="mb-6">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Starting Price</span>
-                    <span className="text-sm font-semibold text-primary">$50 – ${priceMax}+</span>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-xs uppercase tracking-wider text-on-surface font-bold">Starting Price</span>
+                    <span className="text-xs font-bold text-primary bg-primary-fixed/60 px-2 py-0.5 rounded-md">$50 – ${priceMax}+</span>
                   </div>
                   <input
                     className="w-full h-1.5 bg-surface-container rounded-lg appearance-none cursor-pointer accent-primary"
@@ -395,37 +395,51 @@ export default function SearchPage() {
                     value={priceMax}
                     onChange={e => setPriceMax(Number(e.target.value))}
                   />
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="flex-1 bg-surface-container-low px-3 py-1.5 rounded-lg flex items-center gap-1 border border-outline-variant/30">
-                      <span className="text-on-surface-variant text-xs">$</span>
-                      <input className="w-full bg-transparent text-xs text-on-surface focus:outline-none" type="number" defaultValue="50" />
+                  <div className="flex items-center gap-2 mt-2.5">
+                    <div className="flex-1 bg-surface-bright px-3 py-2 rounded-xl flex items-center gap-1.5 border border-outline-variant shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all">
+                      <span className="text-on-surface-variant text-xs font-semibold">$</span>
+                      <input
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.75rem', color: 'var(--on-surface)', fontWeight: '600' }}
+                        type="number"
+                        defaultValue="50"
+                      />
                     </div>
-                    <span className="text-on-surface-variant text-xs">to</span>
-                    <div className="flex-1 bg-surface-container-low px-3 py-1.5 rounded-lg flex items-center gap-1 border border-outline-variant/30">
-                      <span className="text-on-surface-variant text-xs">$</span>
-                      <input className="w-full bg-transparent text-xs text-on-surface focus:outline-none" type="number" value={priceMax} onChange={e => setPriceMax(Number(e.target.value))} />
+                    <span className="text-on-surface-variant text-xs font-medium px-1">to</span>
+                    <div className="flex-1 bg-surface-bright px-3 py-2 rounded-xl flex items-center gap-1.5 border border-outline-variant shadow-sm focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all">
+                      <span className="text-on-surface-variant text-xs font-semibold">$</span>
+                      <input
+                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.75rem', color: 'var(--on-surface)', fontWeight: '600' }}
+                        type="number"
+                        value={priceMax}
+                        onChange={e => setPriceMax(Number(e.target.value))}
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Desired Date & Time */}
                 <div className="mb-6">
-                  <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold block mb-1">Desired Date</span>
-                  <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-xl mb-2 border border-outline-variant/30">
+                  <span className="text-xs uppercase tracking-wider text-on-surface font-bold block mb-1.5">Desired Date</span>
+                  <div className="flex items-center gap-2 bg-surface-bright px-3 py-2.5 rounded-xl mb-3 border border-outline-variant shadow-sm focus-within:ring-2 focus-within:ring-primary/40 transition-all">
                     <span className="material-symbols-outlined text-secondary text-base">calendar_today</span>
-                    <input className="bg-transparent text-xs text-on-surface w-full focus:outline-none cursor-pointer" readOnly type="text" defaultValue="This Week (Oct 24 - Oct 30)" />
+                    <input
+                      style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.75rem', color: 'var(--on-surface)', fontWeight: '500', cursor: 'pointer' }}
+                      readOnly
+                      type="text"
+                      defaultValue="This Week (Oct 24 - Oct 30)"
+                    />
                   </div>
 
-                  <span className="text-[11px] text-on-surface-variant mb-1.5 block">Time Preference</span>
+                  <span className="text-xs uppercase tracking-wider text-on-surface font-bold mb-1.5 block">Time Preference</span>
                   <div className="grid grid-cols-3 gap-1.5">
                     {['Morning', 'Afternoon', 'Evening'].map(time => (
                       <button
                         key={time}
                         onClick={() => setActiveTimePref(time)}
-                        className={`py-1.5 px-2 rounded-lg text-xs transition-colors text-center cursor-pointer ${
+                        className={`py-2 px-2 rounded-xl text-xs transition-all text-center cursor-pointer font-medium ${
                           activeTimePref === time
                             ? 'bg-primary text-white font-semibold shadow-sm'
-                            : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+                            : 'bg-surface-bright border border-outline-variant/60 text-on-surface hover:bg-surface-container'
                         }`}
                       >
                         {time}

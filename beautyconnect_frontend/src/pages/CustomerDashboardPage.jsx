@@ -377,19 +377,19 @@ const CustomerDashboardPage = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-row lg:flex-col items-center lg:items-end gap-2 w-full lg:w-auto justify-end">
-                  <Link
-                    to="/search"
-                    className="px-5 py-2 rounded-full bg-surface-container text-on-surface text-xs font-semibold hover:bg-surface-container-high transition-colors"
-                  >
-                    Re-book with Sora
-                  </Link>
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant/20 mt-1">
                   <button
                     onClick={() => alert('BeautyConnect Receipt #INV-8821 downloaded ($145.00).')}
-                    className="text-xs text-primary hover:underline px-2 py-1 cursor-pointer"
+                    className="text-xs text-primary hover:underline px-3 py-1.5 cursor-pointer font-medium"
                   >
                     View Invoice PDF
                   </button>
+                  <Link
+                    to="/search"
+                    className="px-5 py-2 rounded-full bg-primary text-white text-xs font-semibold hover:opacity-90 transition-all shadow-sm"
+                  >
+                    Re-book with Sora
+                  </Link>
                 </div>
               </div>
             </div>

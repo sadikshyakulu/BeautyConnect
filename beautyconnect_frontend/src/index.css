@@ -105,7 +105,7 @@ body {
   color: var(--on-surface);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
   margin: 0;
   padding: 0;
 }
@@ -130,6 +130,47 @@ button {
   font-family: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.focus\:outline-none:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.outline-none {
+  outline: none !important;
+}
+
+.border-none {
+  border: none !important;
+}
+
+.sticky {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+}
+
+.top-24 {
+  top: 6rem !important;
+}
+
+.top-20 {
+  top: 5rem !important;
 }
 
 /* ============================================================
@@ -440,7 +481,12 @@ button {
   .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   .md\:flex-row { flex-direction: row !important; }
+  .md\:col-span-4 { grid-column: span 4 / span 4 !important; }
+  .md\:col-span-5 { grid-column: span 5 / span 5 !important; }
   .md\:col-span-6 { grid-column: span 6 / span 6 !important; }
+  .md\:col-span-7 { grid-column: span 7 / span 7 !important; }
+  .md\:col-span-8 { grid-column: span 8 / span 8 !important; }
+  .md\:col-span-12 { grid-column: span 12 / span 12 !important; }
 }
 
 @media (min-width: 992px) {
@@ -455,9 +501,13 @@ button {
   .lg\:col-span-7 { grid-column: span 7 / span 7 !important; }
   .lg\:col-span-8 { grid-column: span 8 / span 8 !important; }
   .lg\:col-span-9 { grid-column: span 9 / span 9 !important; }
+  .lg\:col-span-12 { grid-column: span 12 / span 12 !important; }
   .lg\:flex-row { flex-direction: row !important; }
   .lg\:items-end { align-items: flex-end !important; }
   .lg\:px-12 { padding-left: 3rem !important; padding-right: 3rem !important; }
+  .lg\:sticky { position: -webkit-sticky !important; position: sticky !important; }
+  .lg\:top-24 { top: 6rem !important; }
+  .lg\:top-20 { top: 5rem !important; }
 }
 
 @media (min-width: 1200px) {
@@ -465,6 +515,8 @@ button {
   .xl\:col-span-4 { grid-column: span 4 / span 4 !important; }
   .xl\:col-span-8 { grid-column: span 8 / span 8 !important; }
   .xl\:col-span-9 { grid-column: span 9 / span 9 !important; }
+  .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .xl\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 }
 
 /* Gaps */
@@ -918,10 +970,25 @@ button {
   .sm\:items-center { align-items: center   !important; }
   .sm\:items-start  { align-items: flex-start !important; }
   .sm\:grid-cols-2  { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .sm\:grid-cols-3  { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .sm\:grid-cols-4  { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .sm\:col-span-2   { grid-column: span 2 / span 2 !important; }
+  .sm\:col-span-3   { grid-column: span 3 / span 3 !important; }
   .sm\:px-8  { padding-left: 2rem !important; padding-right: 2rem !important; }
   .sm\:py-4  { padding-top: 1rem  !important; padding-bottom: 1rem !important; }
   .sm\:flex-row .sm\:items-center { }
 }
+
+/* ── Ring Utilities ─────────────────────────────────────────── */
+.ring-1 { box-shadow: 0 0 0 1px var(--outline-variant) !important; }
+.ring-2 { box-shadow: 0 0 0 2px var(--primary) !important; }
+.ring-4 { box-shadow: 0 0 0 4px var(--primary) !important; }
+.ring-white { box-shadow: 0 0 0 4px #ffffff !important; }
+.ring-outline-variant\/30 { box-shadow: 0 0 0 1px rgba(218,193,190,0.30) !important; }
+.ring-primary\/20 { box-shadow: 0 0 0 4px rgba(149,71,65,0.20) !important; }
+.ring-primary\/30 { box-shadow: 0 0 0 2px rgba(149,71,65,0.30) !important; }
+.ring-surface-bright { box-shadow: 0 0 0 1px var(--surface-bright) !important; }
+.ring-surface-container { box-shadow: 0 0 0 1px var(--surface-container) !important; }
 
 /* ── md: Responsive extras ───────────────────────────────────── */
 @media (min-width: 768px) {
