@@ -12,8 +12,8 @@ export default function AdminPanelPage() {
   return (
     <div className="w-full min-h-screen bg-background text-on-surface">
       {/* Sub-Header Ribbon */}
-      <section className="w-full bg-surface-bright/80 backdrop-blur-md border-b border-white/60 px-4 lg:px-12 py-3 shadow-sm">
-        <div className="max-w-[1360px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <section className="w-full bg-surface-bright/80 backdrop-blur-md border-b border-white/60 py-3 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span>
             <span className="text-xs text-on-surface-variant font-medium">Platform Trust &amp; Integrity Console</span>
@@ -32,7 +32,7 @@ export default function AdminPanelPage() {
       </section>
 
       {/* Main Layout Grid */}
-      <div className="max-w-[1360px] w-full mx-auto px-4 lg:px-12 py-8 flex flex-col lg:flex-row gap-6">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-8 lg:px-12 py-8 flex flex-col lg:flex-row gap-6">
         {/* Left Operations Rail */}
         <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
           <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-sm flex flex-col gap-1 border border-white/60">

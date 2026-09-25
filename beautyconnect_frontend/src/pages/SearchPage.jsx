@@ -148,7 +148,7 @@ export default function SearchPage() {
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary-fixed/20 blur-3xl pointer-events-none"></div>
         <div className="absolute top-48 right-0 w-80 h-80 rounded-full bg-secondary-fixed/30 blur-3xl pointer-events-none"></div>
 
-        <div className="max-w-7xl mx-auto px-4 lg:px-12 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6">
           {/* Top Query Hero & Breadcrumb Row */}
           <section className="mb-8">
             <div className="flex flex-wrap items-center gap-1.5 text-on-surface-variant text-xs mb-2">

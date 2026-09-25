@@ -84,7 +84,9 @@ export default function ProfessionalDashboardPage() {
                 <span className="material-symbols-outlined text-base">{tab.icon}</span>
                 <span>{tab.label}</span>
                 {tab.badge && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-primary-container text-white text-[10px] font-bold">
+                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none shrink-0 ${
+                    activeTab === tab.id ? 'bg-white text-primary' : 'bg-primary text-white'
+                  }`}>
                     {tab.badge}
                   </span>
                 )}

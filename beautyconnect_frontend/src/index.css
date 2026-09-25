@@ -99,6 +99,33 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ── Standardized Page Container Grid (consistent 80rem / 1280px max-width) ── */
+.container,
+.page-container {
+  width: 100%;
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .container,
+  .page-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container,
+  .page-container {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--background);

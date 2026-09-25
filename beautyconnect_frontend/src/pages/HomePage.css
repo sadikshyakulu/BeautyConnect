@@ -491,7 +491,7 @@
   display: grid;
   grid-template-columns: 3fr 2fr;
   gap: 0.375rem;
-  height: 240px;
+  height: 220px;
 }
 
 .artist-main-img-wrap,
@@ -545,6 +545,7 @@
   align-items: center;
   gap: 0.65rem;
   min-width: 0;
+  flex: 1;
 }
 
 .artist-avatar {
@@ -557,6 +558,7 @@
 
 .artist-names {
   min-width: 0;
+  flex: 1;
 }
 
 .artist-name {
@@ -608,17 +610,22 @@
 }
 
 .artist-badge {
-  padding: 0.15rem 0.5rem;
+  padding: 0.2rem 0.55rem;
   border-radius: var(--radius-full);
   font-size: 0.6875rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.artist-badge .material-symbols-outlined {
+  font-size: 13px;
 }
 
 .artist-badge--verified {
-  background: rgba(255, 220, 195, 0.6);
+  background: rgba(255, 220, 195, 0.65);
   color: var(--on-secondary-fixed);
 }
 
@@ -634,6 +641,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .artist-logistics span {
@@ -649,6 +657,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .artist-price-label {
@@ -675,6 +684,7 @@
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-lookbook:hover {
@@ -1216,5 +1226,33 @@
   }
   .br-hide-mobile {
     display: none;
+  }
+  .hero-title {
+    font-size: 2.25rem;
+  }
+  .hero-sub {
+    font-size: 0.95rem;
+  }
+  .filter-pills {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .artist-collage {
+    height: 190px;
+  }
+  .artist-body {
+    padding: 0.875rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .artist-collage {
+    height: 160px;
   }
 }
