@@ -18,9 +18,7 @@ export default function Navbar() {
       <div className="container navbar-inner">
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          <div className="navbar-logo-mark">
-            <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: 22 }}>spa</span>
-          </div>
+          <img src="/beautyconnectlogo.png" alt="" className="navbar-logo-mark" />
           <span className="navbar-logo-text">BeautyConnect</span>
         </Link>
 

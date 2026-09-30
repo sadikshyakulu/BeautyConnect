@@ -33,6 +33,7 @@ export default function HeroPortrait() {
     let mixer = null
     let modelWidth = 5.2
     let modelHeight = 5.2
+    const maxYaw = Math.PI / 12
     let pointerYaw = 0
     let pointerPitch = 0
     let manualYaw = 0
@@ -109,7 +110,7 @@ export default function HeroPortrait() {
 
     const onPointerMove = event => {
       if (isDragging) {
-        manualYaw = (manualYaw + (event.clientX - lastPointerX) * 0.008) % (Math.PI * 2)
+        manualYaw = THREE.MathUtils.clamp(manualYaw + (event.clientX - lastPointerX) * 0.008, -maxYaw, maxYaw)
         manualPitch = THREE.MathUtils.clamp(manualPitch + (event.clientY - lastPointerY) * 0.004, -0.3, 0.3)
         lastPointerX = event.clientX
         lastPointerY = event.clientY
@@ -187,8 +188,8 @@ export default function HeroPortrait() {
 
       mixer?.update(delta)
 
-      const idleYaw = reducedMotion ? 0 : Math.sin(elapsed * 0.24) * 0.12
-      const targetYaw = manualYaw + pointerYaw + idleYaw
+      const idleYaw = Math.sin(elapsed * 0.32) * maxYaw
+      const targetYaw = THREE.MathUtils.clamp(manualYaw + pointerYaw + idleYaw, -maxYaw, maxYaw)
       const targetPitch = manualPitch + pointerPitch
       modelFrame.rotation.y += (targetYaw - modelFrame.rotation.y) * 0.035
       modelFrame.rotation.x += (targetPitch - modelFrame.rotation.x) * 0.035

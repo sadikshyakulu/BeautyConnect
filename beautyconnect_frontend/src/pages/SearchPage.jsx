@@ -221,7 +221,7 @@ export default function SearchPage() {
           {/* Interactive Map Panel (Collapsible/Toggled) */}
           {mapOpen && (
             <section className="mb-8 transition-all duration-300">
-              <div className="bg-surface-container-low rounded-2xl p-4 shadow-md border border-white/60">
+              <div className="glass-card rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary">pin_drop</span>
@@ -237,14 +237,14 @@ export default function SearchPage() {
                     className="w-full h-full bg-cover bg-center"
                     style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuA_ZPyYNHP-4rxcoTdyqFpClkLOYDBTMsW13Z3x3f-PNspAnI9xYsQHG10vu7tYf4hqNhovQdJiHj-E01-gJwq65BnRlNvsTeSModhJiKkZtiSvSgyeEgwO42gfgs3KBC2-Thgucd7gT8FkV3CqDYHLs9n8AeSp8MX3p0aDdVI6xxhyICkBVaqwvd-erTqcHWFrb2NSnm0chNEy-mS_h-jDSaKOfuwaO9MSeCAUJUJ7QBIQXMy2C7v0Iw')` }}
                   ></div>
-                  <div className="absolute top-6 left-12 bg-white/95 backdrop-blur-md rounded-lg p-3 shadow-md flex items-center gap-2 pointer-events-none">
+                  <div className="glass-card glass-card--strong absolute top-6 left-12 rounded-lg p-3 flex items-center gap-2 pointer-events-none">
                     <span className="material-symbols-outlined text-primary text-base">switch_video</span>
                     <div>
                       <p className="text-xs font-semibold text-on-surface">SoHo Atelier Cluster</p>
                       <p className="text-[10px] text-on-surface-variant">14 Active Artists</p>
                     </div>
                   </div>
-                  <div className="absolute bottom-8 right-16 bg-white/95 backdrop-blur-md rounded-lg p-3 shadow-md flex items-center gap-2 pointer-events-none">
+                  <div className="glass-card glass-card--strong absolute bottom-8 right-16 rounded-lg p-3 flex items-center gap-2 pointer-events-none">
                     <span className="material-symbols-outlined text-secondary text-base">directions_car</span>
                     <div>
                       <p className="text-xs font-semibold text-on-surface">Brooklyn On-Location</p>
@@ -260,10 +260,7 @@ export default function SearchPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* ==================== LEFT FILTER SIDEBAR ==================== */}
             <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
-              <div
-                className="rounded-2xl p-6 shadow-sm backdrop-blur-md border border-white/60"
-                style={{ background: 'rgba(255, 248, 248, 0.72)', boxShadow: 'rgba(149, 71, 65, 0.05) 0px 8px 32px 0px' }}
-              >
+              <div className="glass-card rounded-2xl p-6">
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-outline-variant/30">
                   <h2 className="text-lg text-on-surface font-semibold flex items-center gap-2">
                     <span className="material-symbols-outlined text-primary text-xl">tune</span>
@@ -496,10 +493,7 @@ export default function SearchPage() {
               </div>
 
               {/* Editorial Tip Banner */}
-              <div
-                className="rounded-2xl p-4 shadow-sm backdrop-blur-md border border-white/60"
-                style={{ background: 'rgba(252, 241, 242, 0.72)', boxShadow: 'rgba(149, 71, 65, 0.04) 0px 4px 20px 0px' }}
-              >
+              <div className="glass-card rounded-2xl p-4">
                 <div className="flex gap-3 items-start">
                   <span className="material-symbols-outlined text-secondary text-2xl">auto_stories</span>
                   <div className="space-y-1">
@@ -519,8 +513,7 @@ export default function SearchPage() {
                 {artists.map(artist => (
                   <article
                     key={artist.id}
-                    className="rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group backdrop-blur-md border border-white/70"
-                    style={{ background: 'rgba(255, 248, 248, 0.82)', boxShadow: 'rgba(134, 82, 37, 0.06) 0px 4px 20px -2px' }}
+                    className="glass-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group"
                   >
                     {/* Lookbook Mini-Mosaic Header */}
                     <div className="p-3 bg-surface-container-low">

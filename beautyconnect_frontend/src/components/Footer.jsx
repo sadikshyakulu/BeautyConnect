@@ -10,9 +10,7 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="footer-brand-col">
             <Link to="/" className="footer-logo">
-              <div className="footer-logo-mark">
-                <span className="material-symbols-outlined" style={{ color: 'var(--primary)', fontSize: 20 }}>spa</span>
-              </div>
+              <img src="/beautyconnectlogo.png" alt="" className="footer-logo-mark" />
               <span className="footer-logo-text">BeautyConnect</span>
             </Link>
             <p className="footer-tagline">

@@ -35,11 +35,8 @@
 .footer-logo-mark {
   width: 34px;
   height: 34px;
-  border-radius: var(--radius-full);
-  background: var(--surface-container-high);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .footer-logo-text {

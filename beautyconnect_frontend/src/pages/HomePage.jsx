@@ -345,7 +345,7 @@ export default function HomePage() {
           {/* 4-Card Artist Grid */}
           <div className="artists-grid">
             {filteredArtists.map(artist => (
-              <div key={artist.id} className="artist-card glass">
+              <div key={artist.id} className="artist-card glass-card">
                 {/* Lookbook collage */}
                 <div className="artist-collage">
                   <div className="artist-main-img-wrap">

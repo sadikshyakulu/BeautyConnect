@@ -35,7 +35,7 @@ export default function AdminPanelPage() {
       <div className="max-w-7xl w-full mx-auto px-4 sm:px-8 lg:px-12 py-8 flex flex-col lg:flex-row gap-6">
         {/* Left Operations Rail */}
         <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-4">
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl p-4 shadow-sm flex flex-col gap-1 border border-white/60">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-1">
             <div className="px-2 py-1 mb-1 flex items-center justify-between">
               <span className="text-[11px] uppercase tracking-wider text-outline font-semibold">Governance Rails</span>
               <span className="text-[11px] text-secondary font-medium">v2.4 Live</span>
@@ -94,7 +94,7 @@ export default function AdminPanelPage() {
             </Link>
           </div>
 
-          <div className="bg-surface-container-low rounded-2xl p-4 shadow-sm flex flex-col gap-2 border border-outline-variant/20">
+          <div className="glass-card rounded-2xl p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-secondary font-bold uppercase tracking-wider">System Status</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -109,7 +109,7 @@ export default function AdminPanelPage() {
         <div className="flex-1 flex flex-col gap-6 min-w-0">
           {/* Macro Executive KPIs */}
           <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-white/60 flex flex-col justify-between">
+            <div className="glass-card rounded-2xl p-4 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Total GMV (MTD)</span>
                 <span className="p-1 rounded-lg bg-surface-container text-primary">
@@ -123,7 +123,7 @@ export default function AdminPanelPage() {
               <span className="text-[11px] text-outline mt-0.5">Platform take-rate: 14.5%</span>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-white/60 flex flex-col justify-between">
+            <div className="glass-card rounded-2xl p-4 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Verified Artists</span>
                 <span className="p-1 rounded-lg bg-secondary-fixed text-on-secondary-fixed">
@@ -137,7 +137,7 @@ export default function AdminPanelPage() {
               <span className="text-[11px] text-outline mt-0.5">94% portfolio completion</span>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-white/60 flex flex-col justify-between">
+            <div className="glass-card rounded-2xl p-4 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Active Client Base</span>
                 <span className="p-1 rounded-lg bg-surface-container text-tertiary">
@@ -151,7 +151,7 @@ export default function AdminPanelPage() {
               <span className="text-[11px] text-outline mt-0.5">Repeat interval: 22 days</span>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-white/60 flex flex-col justify-between">
+            <div className="glass-card rounded-2xl p-4 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Avg Trust Rating</span>
                 <span className="p-1 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed">
@@ -178,7 +178,7 @@ export default function AdminPanelPage() {
               </div>
 
               {/* Applicant 1: Camila Rossi */}
-              <div className="bg-white/85 backdrop-blur-md border border-white/70 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+              <div className="glass-card rounded-2xl p-6 flex flex-col gap-4">
                 <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <img
@@ -256,7 +256,7 @@ export default function AdminPanelPage() {
               </div>
 
               {/* Applicant 2: Maya Lin */}
-              <div className="bg-white/85 backdrop-blur-md border border-white/70 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+              <div className="glass-card rounded-2xl p-6 flex flex-col gap-4">
                 <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <img
@@ -313,7 +313,7 @@ export default function AdminPanelPage() {
 
           {/* Dispute Resolution Section */}
           {activeTab === 'disputes' && (
-            <section className="bg-white/85 backdrop-blur-md border border-white/70 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+            <section className="glass-card rounded-2xl p-6 flex flex-col gap-4">
               <h2 className="font-headline text-xl text-on-surface font-semibold">Active Escrow Mediation &amp; Disputes (2)</h2>
               <p className="text-xs text-on-surface-variant">Stripe Escrow holds client funds until both parties agree or a platform steward renders a ruling.</p>
               <div className="p-4 rounded-xl bg-surface-container-low flex flex-col gap-2 border border-outline-variant/30">
@@ -332,7 +332,7 @@ export default function AdminPanelPage() {
 
           {/* Analytics Section */}
           {activeTab === 'analytics' && (
-            <section className="bg-white/85 backdrop-blur-md border border-white/70 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+            <section className="glass-card rounded-2xl p-6 flex flex-col gap-4">
               <h2 className="font-headline text-xl text-on-surface font-semibold">Platform Financial &amp; Operational Analytics</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-surface-container-low">

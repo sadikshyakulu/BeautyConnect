@@ -131,8 +131,7 @@ export default function ArtistProfilePage() {
         {/* Artist Identification Overlap Bar */}
         <div className="max-w-7xl mx-auto px-4 lg:px-12 -mt-16 md:-mt-20 relative z-20">
           <div
-            className="rounded-2xl shadow-xl p-4 lg:p-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4 border border-white/80 backdrop-blur-md"
-            style={{ background: 'rgba(255, 248, 248, 0.85)' }}
+            className="glass-card glass-card--strong rounded-2xl shadow-xl p-4 lg:p-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4"
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
               <div className="relative shrink-0">
@@ -205,7 +204,7 @@ export default function ArtistProfilePage() {
 
           {/* 4 Feature Badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="glass-card glass-card--strong rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary shrink-0">
                 <span className="material-symbols-outlined text-xl">verified_user</span>
               </div>
@@ -214,7 +213,7 @@ export default function ArtistProfilePage() {
                 <div className="text-[11px] text-on-surface-variant">8+ Years Master Practice</div>
               </div>
             </div>
-              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="glass-card glass-card--strong rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary shrink-0">
                 <span className="material-symbols-outlined text-xl">schedule</span>
               </div>
@@ -223,7 +222,7 @@ export default function ArtistProfilePage() {
                 <div className="text-[11px] text-on-surface-variant">100% On-Time Response</div>
               </div>
             </div>
-              <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+              <div className="glass-card glass-card--strong rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary shrink-0">
                 <span className="material-symbols-outlined text-xl">clean_hands</span>
               </div>
@@ -232,7 +231,7 @@ export default function ArtistProfilePage() {
                 <div className="text-[11px] text-on-surface-variant">EPA Hospital Certified Kit</div>
               </div>
             </div>
-            <div className="bg-surface-bright/80 backdrop-blur-md rounded-xl p-3 shadow-sm border border-white/80 flex items-center gap-3">
+            <div className="glass-card glass-card--strong rounded-xl p-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant shrink-0">
                 <span className="material-symbols-outlined text-xl">hotel_class</span>
               </div>
@@ -251,7 +250,7 @@ export default function ArtistProfilePage() {
           {/* LEFT COLUMN: 65% width */}
           <div className="lg:col-span-8 flex flex-col gap-8 min-w-0">
             {/* Editorial Biography Card */}
-            <article className="bg-surface-bright/80 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white flex flex-col gap-4">
+            <article className="glass-card rounded-2xl p-6 flex flex-col gap-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs uppercase tracking-widest text-primary font-semibold">Artist Manifesto</span>
@@ -365,8 +364,8 @@ export default function ArtistProfilePage() {
                   <div
                     key={svc.name}
                     onClick={() => setSelectedService(svc)}
-                    className={`bg-surface-bright rounded-2xl p-4 shadow-sm transition-all hover:shadow-md cursor-pointer ${
-                      selectedService.name === svc.name ? 'ring-2 ring-primary' : ''
+                    className={`glass-card rounded-2xl p-4 cursor-pointer ${
+                      selectedService.name === svc.name ? 'glass-card--selected' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -448,7 +447,7 @@ export default function ArtistProfilePage() {
             </div>
 
             {/* Verified Reviews Section */}
-            <div className="bg-surface-bright/80 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white flex flex-col gap-4">
+            <div className="glass-card rounded-2xl p-6 flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs uppercase tracking-widest text-secondary font-semibold">Client Testimonials</span>
@@ -520,8 +519,7 @@ export default function ArtistProfilePage() {
           {/* RIGHT COLUMN: 35% width Sticky Booking Card */}
           <div className="lg:col-span-4 w-full lg:sticky lg:top-24" id="booking-card">
             <div
-              className="rounded-2xl shadow-xl border border-white/80 p-5 flex flex-col space-y-4 backdrop-blur-md"
-              style={{ background: 'rgba(255, 248, 248, 0.85)' }}
+              className="glass-card rounded-2xl shadow-xl p-5 flex flex-col space-y-4"
             >
               <div className="flex items-center justify-between pb-3 border-b border-surface-container-high">
                 <div>

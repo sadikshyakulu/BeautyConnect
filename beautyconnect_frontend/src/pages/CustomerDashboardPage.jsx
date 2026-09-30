@@ -30,7 +30,7 @@ const CustomerDashboardPage = () => {
         <div className="absolute left-1/3 -bottom-24 w-80 h-80 rounded-full bg-secondary-container/20 blur-2xl pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="p-6 lg:p-8 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="glass-card rounded-2xl p-6 lg:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="relative">
                 <img
@@ -57,15 +57,15 @@ const CustomerDashboardPage = () => {
 
             {/* Quick Metrics Bento */}
             <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface-container-lowest/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm min-w-[108px] text-center">
+              <div className="glass-card rounded-2xl p-4 min-w-[108px] text-center flex flex-col items-center justify-center">
                 <span className="font-serif text-2xl font-bold text-primary">1</span>
                 <span className="text-xs text-on-surface-variant mt-0.5">Upcoming</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface-container-lowest/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm min-w-[108px] text-center">
+              <div className="glass-card rounded-2xl p-4 min-w-[108px] text-center flex flex-col items-center justify-center">
                 <span className="font-serif text-2xl font-bold text-on-surface">6</span>
                 <span className="text-xs text-on-surface-variant mt-0.5">Completed</span>
               </div>
-              <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-surface-container-lowest/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm min-w-[108px] text-center">
+              <div className="glass-card rounded-2xl p-4 min-w-[108px] text-center flex flex-col items-center justify-center">
                 <span className="font-serif text-2xl font-bold text-secondary">4</span>
                 <span className="text-xs text-on-surface-variant mt-0.5">Saved Curations</span>
               </div>
@@ -148,7 +148,7 @@ const CustomerDashboardPage = () => {
             </div>
 
             {/* Feature Card */}
-            <div className="bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 rounded-2xl shadow-md p-6 lg:p-8 relative overflow-hidden">
+            <div className="glass-card rounded-2xl p-6 lg:p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full pointer-events-none"></div>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
                 {/* Left Column: Booking Core Data */}
@@ -170,7 +170,7 @@ const CustomerDashboardPage = () => {
 
                   {/* Date, Time & Location Bento Strip */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-surface-container-low/60 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="glass-card rounded-xl p-4 flex items-start gap-3">
                       <div className="p-2 rounded-lg bg-surface-container-lowest text-primary shadow-sm">
                         <span className="material-symbols-outlined text-[24px]">calendar_clock</span>
                       </div>
@@ -181,7 +181,7 @@ const CustomerDashboardPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-surface-container-low/60 backdrop-blur-sm border border-outline-variant/20">
+                    <div className="glass-card rounded-xl p-4 flex items-start gap-3">
                       <div className="p-2 rounded-lg bg-surface-container-lowest text-secondary shadow-sm">
                         <span className="material-symbols-outlined text-[24px]">home_pin</span>
                       </div>
@@ -220,7 +220,7 @@ const CustomerDashboardPage = () => {
                 </div>
 
                 {/* Right Column: Artist Bio Touchpoints */}
-                <div className="lg:col-span-5 flex flex-col p-6 rounded-2xl bg-surface-bright/90 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm gap-4">
+                <div className="glass-card rounded-2xl p-6 lg:col-span-5 flex flex-col gap-4">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] uppercase tracking-widest text-secondary font-semibold">Your Confirmed Artisan</span>
                     <span className="px-2.5 py-0.5 rounded-full bg-secondary/10 text-secondary text-xs font-semibold flex items-center gap-1">
@@ -293,7 +293,7 @@ const CustomerDashboardPage = () => {
 
             <div className="flex flex-col gap-4">
               {/* Past Item 1: Pending Review (Marcus Chen) */}
-              <div className="p-5 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col gap-4">
+              <div className="glass-card rounded-2xl p-5 flex flex-col gap-4">
                 {/* Top: image + info */}
                 <div className="flex items-start gap-4">
                   <img
@@ -312,7 +312,7 @@ const CustomerDashboardPage = () => {
                 </div>
 
                 {/* Review Callout — compact inline row */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-xl bg-surface-container-low/60 backdrop-blur-sm ring-1 ring-outline-variant/30">
+                <div className="glass-card rounded-xl p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-on-surface">Share your experience</span>
                     <div className="flex items-center gap-0.5 text-tertiary">
@@ -354,7 +354,7 @@ const CustomerDashboardPage = () => {
               </div>
 
               {/* Past Item 2: Reviewed (Sora Kim) */}
-              <div className="p-5 rounded-2xl bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 shadow-sm flex flex-col gap-4">
+              <div className="glass-card rounded-2xl p-5 flex flex-col gap-4">
                 <div className="flex items-start gap-4">
                   <img
                     className="w-16 h-16 rounded-xl object-cover shadow-sm shrink-0"
@@ -409,7 +409,7 @@ const CustomerDashboardPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {/* Card 1: Aria Sterling */}
-              <div className="flex flex-col bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+              <div className="glass-card rounded-2xl flex flex-col overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
                   <img
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -445,7 +445,7 @@ const CustomerDashboardPage = () => {
               </div>
 
               {/* Card 2: Marcus Chen */}
-              <div className="flex flex-col bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+              <div className="glass-card rounded-2xl flex flex-col overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
                   <img
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -481,7 +481,7 @@ const CustomerDashboardPage = () => {
               </div>
 
               {/* Card 3: Sora Kim */}
-              <div className="flex flex-col bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+              <div className="glass-card rounded-2xl flex flex-col overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
                   <img
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -517,7 +517,7 @@ const CustomerDashboardPage = () => {
               </div>
 
               {/* Card 4: Camila Rossi */}
-              <div className="flex flex-col bg-surface-bright/80 backdrop-blur-md ring-1 ring-outline-variant/30 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+              <div className="glass-card rounded-2xl flex flex-col overflow-hidden group">
                 <div className="relative h-48 overflow-hidden">
                   <img
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

@@ -5,6 +5,9 @@
 .booking-page-container {
   min-height: 100vh;
   background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse at 10% 8%, color-mix(in srgb, var(--primary-container) 11%, transparent), transparent 38%),
+    radial-gradient(ellipse at 92% 32%, color-mix(in srgb, var(--surface-container-high) 76%, transparent), transparent 42%);
   color: var(--on-surface);
   padding-top: 2rem;
   padding-bottom: 5rem;
@@ -17,18 +20,8 @@
 }
 
 .booking-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(218, 193, 190, 0.45);
   border-radius: 1.25rem;
   padding: 1.75rem;
-  box-shadow: 0 4px 20px -2px rgba(149, 71, 65, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.booking-card:hover {
-  box-shadow: 0 8px 30px -4px rgba(149, 71, 65, 0.08);
 }
 
 .booking-card-header {

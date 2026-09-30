@@ -100,7 +100,7 @@ export default function ProfessionalDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-12 -mt-4 w-full space-y-8 pb-20">
         {/* KPI Cards Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Gross Earnings</span>
               <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
@@ -123,7 +123,7 @@ export default function ProfessionalDashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Completed Sessions</span>
               <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary">
@@ -143,7 +143,7 @@ export default function ProfessionalDashboardPage() {
             </div>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Platform Fee (10%)</span>
               <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
@@ -163,7 +163,7 @@ export default function ProfessionalDashboardPage() {
             </div>
           </div>
 
-          <div className="bg-surface-container-high border border-white/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-xs uppercase tracking-wider text-on-surface font-semibold">Net Payout Scheduled</span>
               <div className="w-8 h-8 rounded-full bg-primary-container text-white flex items-center justify-center">
@@ -186,7 +186,7 @@ export default function ProfessionalDashboardPage() {
 
         {/* Revenue Chart & Studio Controls */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+          <div className="glass-card lg:col-span-2 rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs uppercase tracking-wider text-secondary font-semibold">Artisanal Revenue Growth</span>
@@ -241,7 +241,7 @@ export default function ProfessionalDashboardPage() {
           </div>
 
           {/* Studio Controls */}
-          <div className="bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs uppercase tracking-wider text-secondary font-semibold">Live Operational Status</span>
@@ -304,7 +304,7 @@ export default function ProfessionalDashboardPage() {
         </section>
 
         {/* Priority Incoming Requests Section */}
-        <section className="bg-white/80 backdrop-blur-md border border-white/60 p-6 rounded-2xl shadow-sm">
+        <section className="glass-card rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
             <div>
               <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export default function ProfessionalDashboardPage() {
             ].map(req => {
               const isAccepted = acceptedRequests.includes(req.name)
               return (
-                <div key={req.name} className="bg-surface-container-low p-6 rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden border border-outline-variant/30">
+                <div key={req.name} className="glass-card rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden">
                   {req.urgent && (
                     <div className="absolute top-0 right-0 px-3 py-1 bg-primary text-white text-[11px] rounded-bl-xl font-semibold">
                       {req.urgent}

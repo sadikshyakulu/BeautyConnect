@@ -18,7 +18,7 @@ export default function BookingPage() {
   if (confirmed) {
     return (
       <div className="booking-page-container flex-1">
-        <div className="max-w-2xl mx-auto px-6 text-center py-16 booking-card">
+        <div className="max-w-2xl mx-auto px-6 text-center py-16 booking-card glass-card">
           <div className="w-16 h-16 rounded-full bg-primary-fixed text-primary flex items-center justify-center mx-auto mb-4 ring-8 ring-primary-fixed/30">
             <span className="material-symbols-outlined text-3xl">verified</span>
           </div>
@@ -82,7 +82,7 @@ export default function BookingPage() {
           {/* Left Column: Booking Configuration (7/12 cols) */}
           <section className="lg:col-span-7 flex flex-col gap-6">
             {/* Service Highlight Summary Card */}
-            <div className="booking-card">
+            <div className="booking-card glass-card">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant/30">
                 <div className="flex items-center gap-4">
                   <div className="relative shrink-0">
@@ -132,7 +132,7 @@ export default function BookingPage() {
             </div>
 
             {/* Location Selection */}
-            <div className="booking-card">
+            <div className="booking-card glass-card">
               <div className="booking-card-header">
                 <h2 className="font-headline text-lg text-on-surface font-semibold">Service Location</h2>
                 <span className="text-xs uppercase tracking-wider text-secondary font-bold bg-secondary-fixed/50 px-2.5 py-0.5 rounded-md">On-Demand Concierge</span>
@@ -262,7 +262,7 @@ export default function BookingPage() {
             </div>
 
             {/* Consultation Intake */}
-            <div className="booking-card">
+            <div className="booking-card glass-card">
               <div className="booking-card-header">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-secondary">palette</span>
@@ -302,7 +302,7 @@ export default function BookingPage() {
             </div>
 
             {/* Payment Method */}
-            <div className="booking-card">
+            <div className="booking-card glass-card">
               <div className="booking-card-header">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">lock</span>
@@ -409,7 +409,7 @@ export default function BookingPage() {
 
           {/* Right Column: Transparent Summary & Sticky Drawer (5/12 cols) */}
           <aside className="lg:col-span-5 flex flex-col gap-6 lg:sticky lg:top-24">
-            <div className="booking-card flex flex-col gap-4">
+            <div className="booking-card glass-card flex flex-col gap-4">
               <div className="booking-card-header">
                 <div className="flex flex-col">
                   <span className="text-xs uppercase tracking-wider text-secondary font-bold">Investment Summary</span>
@@ -491,7 +491,7 @@ export default function BookingPage() {
             </div>
 
             {/* Direct Concierge Callout */}
-            <div className="booking-card p-4 flex items-center justify-between">
+            <div className="booking-card glass-card p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary shadow-xs">
                   <span className="material-symbols-outlined text-[20px]">support_agent</span>
