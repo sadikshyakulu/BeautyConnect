@@ -67,6 +67,7 @@ public class BeautyConnectDbContext : DbContext
             // Search indexes for sub-2s query requirement
             entity.HasIndex(e => e.VerificationStatus);
             entity.HasIndex(e => e.City);
+            entity.HasIndex(e => new { e.City, e.VerificationStatus, e.RatingAverage });
             entity.HasIndex(e => e.RatingAverage);
             entity.HasIndex(e => new { e.VerificationStatus, e.RatingAverage });
         });
@@ -77,6 +78,7 @@ public class BeautyConnectDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Price).HasPrecision(10, 2);
             entity.HasIndex(e => e.Category);
+            entity.HasIndex(e => new { e.Category, e.Price });
             entity.HasIndex(e => e.Price);
 
             entity.HasOne(e => e.ProfessionalProfile)
@@ -104,6 +106,9 @@ public class BeautyConnectDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.TotalPrice).HasPrecision(10, 2);
             entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
+            entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100);
+            entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
+            entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
 
             entity.HasOne(e => e.CustomerProfile)
@@ -122,6 +127,7 @@ public class BeautyConnectDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => new { e.ProfessionalProfileId, e.ScheduledDateTime, e.Status });
+            entity.HasIndex(e => e.EsewaTransactionUuid).IsUnique();
         });
 
         // Review

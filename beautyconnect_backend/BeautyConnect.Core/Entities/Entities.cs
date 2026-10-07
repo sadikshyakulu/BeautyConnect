@@ -109,7 +109,9 @@ public class Booking
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
     public decimal TotalPrice { get; set; }
     public decimal CommissionAmount { get; set; }
-    public string? StripePaymentIntentId { get; set; }
+    public string? EsewaTransactionUuid { get; set; }
+    public string? EsewaTransactionCode { get; set; }
+    public decimal? EsewaTotalAmount { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

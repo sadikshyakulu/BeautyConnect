@@ -1,0 +1,19 @@
+@baseUrl = https://localhost:7155
+@customerToken = paste-customer-jwt-here
+@bookingId = 1
+@transactionUuid = paste-transaction-uuid-here
+@callbackData = paste-base64-eSewa-callback-here
+
+### Initiate eSewa UAT payment for a customer's pending booking
+POST {{baseUrl}}/api/payment/initiate/{{bookingId}}
+Authorization: Bearer {{customerToken}}
+
+### eSewa redirects to this callback after payment
+GET {{baseUrl}}/api/payment/success?data={{callbackData}}
+
+### eSewa redirects here if payment fails or is canceled
+GET {{baseUrl}}/api/payment/failure?transaction_uuid={{transactionUuid}}
+
+### Recheck a pending payment after a delayed or missing redirect
+GET {{baseUrl}}/api/payment/status/{{transactionUuid}}
+Authorization: Bearer {{customerToken}}
