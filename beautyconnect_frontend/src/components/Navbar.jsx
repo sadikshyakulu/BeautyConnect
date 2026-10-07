@@ -1,17 +1,32 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import './Navbar.css'
 
 export default function Navbar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, loading, roleHome, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [signOutError, setSignOutError] = useState('')
 
   const navLinks = [
     { label: 'Explore Services', to: '/search' },
-    { label: 'Featured Artists', to: '/artist/aria-sterling' },
-    { label: 'Bridal & Editorial', to: '/search?cat=bridal' },
+    { label: 'Featured Artists', to: '/search' },
+    { label: 'Bridal & Editorial', to: '/search?serviceType=bridal' },
     { label: 'How It Works', to: '/#how-it-works' },
   ]
+
+  async function handleSignOut() {
+    setSignOutError('')
+    try {
+      await signOut()
+      navigate('/', { replace: true })
+    } catch (error) {
+      setSignOutError(error.response?.data?.message ?? 'Could not contact the server to end the session.')
+      navigate('/', { replace: true })
+    }
+  }
 
   return (
     <header className="navbar-root glass">
@@ -26,7 +41,7 @@ export default function Navbar() {
         <nav className="navbar-links">
           {navLinks.map(link => (
             <Link
-              key={link.to}
+              key={link.label}
               to={link.to}
               className={`navbar-link ${location.pathname === link.to ? 'navbar-link--active' : ''}`}
             >
@@ -37,32 +52,22 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="navbar-actions">
-          <Link to="/auth" className="btn-ghost-sm">Become a Pro</Link>
-
-          <Link to="/dashboard/customer" className="navbar-icon-btn" aria-label="Saved Artists">
-            <span className="material-symbols-outlined">favorite</span>
-            <span className="navbar-badge"></span>
-          </Link>
-
-          <Link to="/dashboard/customer" className="navbar-avatar-group">
-            <img
-              src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&h=80&fit=crop&crop=face"
-              alt="Elena Vance"
-              className="navbar-avatar"
-            />
-            <div className="navbar-avatar-info">
-              <div className="navbar-avatar-name">
-                Elena Vance
-                <span className="material-symbols-outlined" style={{ fontSize: 16, color: 'var(--on-surface-variant)' }}>expand_more</span>
-              </div>
-              <span className="navbar-avatar-role">Customer View</span>
-            </div>
-          </Link>
-
-          <Link to="/dashboard/professional" className="btn-pro-pill">
-            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>sync_alt</span>
-            Pro Studio
-          </Link>
+          {!loading && !user && <Link to="/auth" className="btn-ghost-sm">Sign In / Join</Link>}
+          {user && (
+            <>
+              <Link to={roleHome} className="navbar-avatar-group">
+                <div className="navbar-avatar-info">
+                  <div className="navbar-avatar-name">{user.email}</div>
+                  <span className="navbar-avatar-role">{user.role} View</span>
+                </div>
+              </Link>
+              <Link to={roleHome} className="btn-pro-pill">
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>dashboard</span>
+                Dashboard
+              </Link>
+              <button type="button" className="btn-ghost-sm" onClick={handleSignOut}>Sign Out</button>
+            </>
+          )}
 
           {/* Mobile hamburger */}
           <button className="navbar-hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
@@ -76,7 +81,7 @@ export default function Navbar() {
         <div className="navbar-mobile-menu glass">
           {navLinks.map(link => (
             <Link
-              key={link.to}
+              key={link.label}
               to={link.to}
               className="navbar-mobile-link"
               onClick={() => setMobileOpen(false)}
@@ -84,9 +89,28 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link to="/auth" className="navbar-mobile-link" onClick={() => setMobileOpen(false)}>Sign In / Register</Link>
+          {user ? (
+            <>
+              <Link to={roleHome} className="navbar-mobile-link" onClick={() => setMobileOpen(false)}>
+                {user.role} Dashboard
+              </Link>
+              <button
+                type="button"
+                className="navbar-mobile-link"
+                onClick={() => {
+                  setMobileOpen(false)
+                  handleSignOut()
+                }}
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link to="/auth" className="navbar-mobile-link" onClick={() => setMobileOpen(false)}>Sign In / Register</Link>
+          )}
         </div>
       )}
+      {signOutError && <div className="container"><div className="alert alert-warning mb-0" role="alert">{signOutError}</div></div>}
     </header>
   )
 }

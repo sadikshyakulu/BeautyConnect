@@ -88,12 +88,7 @@ public class AuthController : ControllerBase
             await _authService.RevokeTokenAsync(token);
         }
 
-        Response.Cookies.Delete("refreshToken", new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None
-        });
+        Response.Cookies.Delete("refreshToken", GetRefreshTokenCookieOptions());
 
         return Ok(new { message = "Logged out successfully." });
     }
@@ -116,14 +111,19 @@ public class AuthController : ControllerBase
 
     private void SetRefreshTokenCookie(string token)
     {
-        var cookieOptions = new CookieOptions
+        Response.Cookies.Append("refreshToken", token, GetRefreshTokenCookieOptions());
+    }
+
+    private CookieOptions GetRefreshTokenCookieOptions()
+    {
+        var isHttps = Request.IsHttps;
+        return new CookieOptions
         {
             HttpOnly = true,
-            Secure = false, // Set to true in HTTPS production
-            SameSite = SameSiteMode.Lax,
+            Secure = isHttps,
+            SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(7)
         };
-        Response.Cookies.Append("refreshToken", token, cookieOptions);
     }
 
     private string GetClientIp()

@@ -1,9 +1,12 @@
-import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import './AuthPage.css'
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user, loading, signIn, signUp, roleHome } = useAuth()
   const [role, setRole] = useState('client') // 'client' | 'pro'
   const [mode, setMode] = useState('register') // 'register' | 'login'
   const [showPassword, setShowPassword] = useState(false)
@@ -11,15 +14,51 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [specialty, setSpecialty] = useState('')
-  const [portfolio, setPortfolio] = useState('')
+  const [businessName, setBusinessName] = useState('')
+  const [city, setCity] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (user) navigate(location.state?.from ?? roleHome, { replace: true })
+  }, [user, roleHome, navigate, location.state])
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (role === 'pro') {
-      navigate('/dashboard/professional')
-    } else {
-      navigate('/dashboard/customer')
+    setErrorMessage('')
+    setSubmitting(true)
+    try {
+      const authenticatedUser = mode === 'login'
+        ? await signIn(email, password)
+        : await signUp({
+            email,
+            password,
+            role: role === 'pro' ? 1 : 0,
+            fullName: name,
+            businessName: role === 'pro' ? businessName : null,
+            speciality: role === 'pro' ? specialty : null,
+            city: role === 'pro' ? city : null,
+          })
+
+      const destination = authenticatedUser.role === 'Admin'
+        ? '/admin'
+        : authenticatedUser.role === 'Professional'
+          ? '/dashboard/professional'
+          : '/dashboard/customer'
+      navigate(location.state?.from ?? destination, { replace: true })
+    } catch (error) {
+      setErrorMessage(
+        error.response?.data?.message ??
+        error.response?.data?.title ??
+        'Authentication failed. Please check your details and try again.',
+      )
+    } finally {
+      setSubmitting(false)
     }
+  }
+
+  if (loading) {
+    return <div className="container py-5 text-center" role="status">Checking your session…</div>
   }
 
   return (
@@ -56,37 +95,22 @@ export default function AuthPage() {
             Where tactile intimacy meets seamless appointments. Curated master portfolios, protected escrow payouts, and bespoke styling experiences crafted without compromise.
           </p>
 
-          {/* Artist Preview Inset */}
-          <div className="auth-artist-preview">
-            <img
-              className="w-12 h-12 rounded-xl object-cover shadow-sm"
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop"
-              alt="Elena Rostova"
-            />
-            <div className="d-flex flex-column">
-              <span className="text-white text-sm font-semibold">Elena Rostova</span>
-              <span className="text-secondary-fixed text-xs d-flex align-items-center gap-1 font-medium">
-                <span className="material-symbols-outlined text-[14px]">verified</span>
-                Master Bridal Stylist • NYC
-              </span>
-            </div>
-          </div>
         </div>
 
-        {/* Bottom Trust Metrics */}
+        {/* Platform information */}
         <div className="auth-content-layer pt-3">
           <div className="auth-metrics-bar">
             <div className="d-flex flex-column">
-              <span className="text-primary-container fs-5 fw-bold">380+</span>
-              <span className="text-white text-opacity-75 text-xs">Vetted Master Artists</span>
+              <span className="text-primary-container fs-5 fw-bold">Explore</span>
+              <span className="text-white text-opacity-75 text-xs">Independent professionals</span>
             </div>
             <div className="d-flex flex-column">
-              <span className="text-primary-container fs-5 fw-bold">$0</span>
-              <span className="text-white text-opacity-75 text-xs">Subscription Fee</span>
+              <span className="text-primary-container fs-5 fw-bold">Book</span>
+              <span className="text-white text-opacity-75 text-xs">Request appointments</span>
             </div>
             <div className="d-flex flex-column">
-              <span className="text-primary-container fs-5 fw-bold">100%</span>
-              <span className="text-white text-opacity-75 text-xs">Stripe Escrow Safe</span>
+              <span className="text-primary-container fs-5 fw-bold">Manage</span>
+              <span className="text-white text-opacity-75 text-xs">Track bookings online</span>
             </div>
           </div>
         </div>
@@ -183,6 +207,35 @@ export default function AuthPage() {
               {role === 'pro' && mode === 'register' && (
                 <>
                   <div className="auth-input-group">
+                    <label className="text-xs text-on-surface font-medium" htmlFor="businessName">Business / Studio Name</label>
+                    <div className="auth-input-wrapper">
+                      <span className="material-symbols-outlined auth-input-icon">storefront</span>
+                      <input
+                        id="businessName"
+                        type="text"
+                        value={businessName}
+                        onChange={e => setBusinessName(e.target.value)}
+                        placeholder="Your studio name"
+                        className="auth-input-control"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="auth-input-group">
+                    <label className="text-xs text-on-surface font-medium" htmlFor="city">City</label>
+                    <div className="auth-input-wrapper">
+                      <span className="material-symbols-outlined auth-input-icon">location_on</span>
+                      <input
+                        id="city"
+                        type="text"
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        placeholder="City"
+                        className="auth-input-control"
+                      />
+                    </div>
+                  </div>
+                  <div className="auth-input-group">
                     <label className="text-xs text-on-surface font-medium d-flex align-items-center justify-content-between" htmlFor="specialty">
                       <span>Primary Artistic Specialty</span>
                       <span className="text-[10px] text-primary">Required for Atelier Tier</span>
@@ -207,23 +260,6 @@ export default function AuthPage() {
                     </div>
                   </div>
 
-                  <div className="auth-input-group">
-                    <label className="text-xs text-on-surface font-medium d-flex align-items-center justify-content-between" htmlFor="portfolio">
-                      <span>Portfolio / Instagram Link</span>
-                      <span className="text-[10px] text-on-surface-variant">Optional</span>
-                    </label>
-                    <div className="auth-input-wrapper">
-                      <span className="material-symbols-outlined auth-input-icon">link</span>
-                      <input
-                        id="portfolio"
-                        type="text"
-                        value={portfolio}
-                        onChange={e => setPortfolio(e.target.value)}
-                        placeholder="instagram.com/yourhandle or portfolio URL"
-                        className="auth-input-control"
-                      />
-                    </div>
-                  </div>
                 </>
               )}
 
@@ -257,7 +293,7 @@ export default function AuthPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Minimum 8 characters"
+                    placeholder="Minimum 6 characters"
                     className="auth-input-control"
                     required
                   />
@@ -282,32 +318,18 @@ export default function AuthPage() {
                 </div>
               )}
 
-              <button type="submit" className="auth-submit-btn">
-                <span>{mode === 'register' ? 'Create Free Account' : 'Sign In to BeautyConnect'}</span>
+              {errorMessage && <div className="alert alert-danger mb-0" role="alert">{errorMessage}</div>}
+
+              <button type="submit" className="auth-submit-btn" disabled={submitting}>
+                <span>{submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In to BeautyConnect'}</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
               </button>
             </form>
 
-            {/* Social Authentication */}
-            <div className="mt-4 pt-3 border-top border-outline-variant">
-              <span className="d-block text-center text-[10px] text-uppercase tracking-wider text-on-surface-variant mb-3 font-semibold">
-                Or Continue With
-              </span>
-              <div className="d-flex gap-3">
-                <button type="button" className="auth-social-btn">
-                  <span className="font-bold"></span>
-                  <span>Apple</span>
-                </button>
-                <button type="button" className="auth-social-btn">
-                  <span className="fw-bold text-danger">G</span>
-                  <span>Google</span>
-                </button>
-              </div>
-            </div>
           </div>
 
           <p className="text-center text-[11px] text-on-surface-variant mt-4">
-            Protected by 256–bit AES encryption. Trusted by independent stylists nationwide.
+            Use your account to manage bookings and professional services.
           </p>
         </div>
       </section>

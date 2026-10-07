@@ -10,10 +10,6 @@ namespace BeautyConnect.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "StripePaymentIntentId",
-                table: "Bookings");
-
             migrationBuilder.AddColumn<decimal>(
                 name: "EsewaTotalAmount",
                 table: "Bookings",
@@ -63,13 +59,6 @@ namespace BeautyConnect.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "EsewaTransactionUuid",
                 table: "Bookings");
-
-            migrationBuilder.AddColumn<string>(
-                name: "StripePaymentIntentId",
-                table: "Bookings",
-                type: "longtext",
-                nullable: true)
-                .Annotation("MySql:CharSet", "utf8mb4");
         }
     }
 }

@@ -48,7 +48,7 @@
   position: relative;
   z-index: 10;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
   align-items: center;
   gap: 1.5rem 2.5rem;
   max-width: 1280px;
@@ -114,7 +114,7 @@
 
 .hero-title {
   font-family: var(--font-headline);
-  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-size: clamp(2.5rem, 4.2vw, 3rem);
   font-weight: 600;
   color: #fff8f5;
   line-height: 1.15;
@@ -126,6 +126,13 @@
   color: #f2a08d;
   font-style: italic;
   font-weight: 400;
+}
+
+@media (min-width: 1025px) {
+  .hero-title-accent {
+    display: block;
+    white-space: nowrap;
+  }
 }
 
 .hero-subtitle {
@@ -148,7 +155,7 @@
 
 .hero-search-form {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(0, 1.15fr) minmax(8rem, 0.8fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(8rem, auto);
   gap: 0.5rem;
   align-items: center;
 }
@@ -1318,6 +1325,10 @@
   }
   .hero-title {
     font-size: 2.25rem;
+  }
+  .hero-title-accent {
+    display: inline;
+    white-space: normal;
   }
   .hero-sub {
     font-size: 0.95rem;

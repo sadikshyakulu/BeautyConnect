@@ -10,6 +10,9 @@ import AuthPage from './pages/AuthPage'
 import ProfessionalDashboardPage from './pages/ProfessionalDashboardPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import CustomerDashboardPage from './pages/CustomerDashboardPage'
+import { AuthProvider } from './auth/AuthContext'
+import { useAuth } from './auth/useAuth'
+import RouteGuard from './auth/RouteGuard'
 
 function ScrollToRoute() {
   const { pathname, search, hash } = useLocation()
@@ -26,26 +29,55 @@ function ScrollToRoute() {
   return null
 }
 
-export default function App() {
+function AppLayout() {
+  const { sessionError } = useAuth()
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToRoute />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--background)' }}>
         <Navbar />
         <main style={{ flex: 1 }}>
+          {sessionError && (
+            <div className="container pt-3">
+              <div className="alert alert-warning" role="alert">{sessionError}</div>
+            </div>
+          )}
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/search" element={<SearchPage />} />
+            <Route path="/search" element={<SearchRoute />} />
             <Route path="/artist/:id" element={<ArtistProfilePage />} />
-            <Route path="/booking" element={<BookingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard/professional" element={<ProfessionalDashboardPage />} />
-            <Route path="/admin" element={<AdminPanelPage />} />
-            <Route path="/dashboard/customer" element={<CustomerDashboardPage />} />
+            <Route element={<RouteGuard allowedRoles={['Customer']} />}>
+              <Route path="/booking" element={<BookingPage />} />
+              <Route path="/dashboard/customer" element={<CustomerDashboardPage />} />
+            </Route>
+            <Route element={<RouteGuard allowedRoles={['Professional']} />}>
+              <Route path="/dashboard/professional" element={<ProfessionalDashboardPage />} />
+            </Route>
+            <Route element={<RouteGuard allowedRoles={['Admin']} />}>
+              <Route path="/admin" element={<AdminPanelPage />} />
+            </Route>
+            <Route path="*" element={<HomePage />} />
           </Routes>
         </main>
         <Footer />
       </div>
+    </>
+  )
+}
+
+function SearchRoute() {
+  const { search } = useLocation()
+  return <SearchPage key={search} />
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppLayout />
+      </AuthProvider>
     </BrowserRouter>
   )
 }

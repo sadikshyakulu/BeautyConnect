@@ -30,11 +30,11 @@ export default function Footer() {
           <div className="footer-nav-col">
             <h4 className="footer-heading">Curation</h4>
             <nav className="footer-links">
-              <Link to="/search?cat=bridal">Bridal Makeup</Link>
-              <Link to="/search?cat=hair">Editorial Hair</Link>
-              <Link to="/search?cat=skincare">Clean Skincare</Link>
-              <Link to="/search?cat=nails">Precision Nails</Link>
-              <Link to="/search?cat=lashes">Aesthetic Lash &amp; Brow</Link>
+              <Link to="/search?serviceType=bridal">Bridal Makeup</Link>
+              <Link to="/search?serviceType=hair">Editorial Hair</Link>
+              <Link to="/search?serviceType=skincare">Clean Skincare</Link>
+              <Link to="/search?serviceType=nails">Precision Nails</Link>
+              <Link to="/search?serviceType=lash">Aesthetic Lash &amp; Brow</Link>
             </nav>
           </div>
 
@@ -65,7 +65,7 @@ export default function Footer() {
             <h4 className="footer-heading">Client Care</h4>
             <nav className="footer-links">
               <Link to="/#how-it-works">Help Center</Link>
-              <Link to="/dashboard/customer">Saved Portfolios</Link>
+              <Link to="/dashboard/customer">Your Bookings</Link>
               <Link to="/#how-it-works">Concierge Inquiries</Link>
             </nav>
           </div>
@@ -73,7 +73,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="footer-bottom">
-          <p className="footer-copy">© 2025 BeautyConnect Inc. Pure craft, authentic care. All rights reserved.</p>
+          <p className="footer-copy">© {new Date().getFullYear()} BeautyConnect. All rights reserved.</p>
           <div className="footer-legal">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
