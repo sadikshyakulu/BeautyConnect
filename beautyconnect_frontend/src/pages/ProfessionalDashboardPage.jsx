@@ -13,7 +13,10 @@ import {
 import {
   addService,
   getMyProfile,
+  submitForVerification,
+  updateService,
 } from '../api/professionalProfile'
+import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
 
 const bookingStatus = (status) => typeof status === 'number'
@@ -21,6 +24,9 @@ const bookingStatus = (status) => typeof status === 'number'
   : status
 const profileStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
+  : status
+const refundStatus = (status) => typeof status === 'number'
+  ? ['Not requested', 'Requested', 'Refunded'][status] ?? 'Unknown'
   : status
 
 export default function ProfessionalDashboardPage() {
@@ -38,6 +44,9 @@ export default function ProfessionalDashboardPage() {
   const [serviceCategory, setServiceCategory] = useState('')
   const [servicePrice, setServicePrice] = useState('')
   const [serviceDuration, setServiceDuration] = useState('60')
+  const [serviceDurationEdits, setServiceDurationEdits] = useState({})
+  const [verifyingRefundId, setVerifyingRefundId] = useState(null)
+  const [refundMessages, setRefundMessages] = useState({})
 
   const loadDashboard = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -92,6 +101,24 @@ export default function ProfessionalDashboardPage() {
     }
   }
 
+  async function handleVerifyRefund(bookingId) {
+    setRefundMessages((current) => ({ ...current, [bookingId]: '' }))
+    setNotice('')
+    setVerifyingRefundId(bookingId)
+    try {
+      const result = await verifyBookingRefund(bookingId)
+      await loadDashboard()
+      setNotice(`eSewa confirmed the full refund of ${result.refundAmount}.`)
+    } catch (error) {
+      const message = error.response?.status === 409
+        ? 'eSewa has not confirmed this refund yet. If you already processed it through your merchant account, wait for the status to update and check again.'
+        : error.response?.data?.message ?? 'Could not verify the eSewa refund.'
+      setRefundMessages((current) => ({ ...current, [bookingId]: message }))
+    } finally {
+      setVerifyingRefundId(null)
+    }
+  }
+
   async function handleAvailability(event) {
     event.preventDefault()
     setErrorMessage('')
@@ -131,13 +158,47 @@ export default function ProfessionalDashboardPage() {
     }
   }
 
+  async function handleFixServiceDuration(service) {
+    const durationMinutes = Number(serviceDurationEdits[service.id])
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes >= 1440) {
+      setErrorMessage('Enter a service duration between 1 and 1439 minutes.')
+      return
+    }
+
+    setErrorMessage('')
+    try {
+      await updateService(service.id, {
+        name: service.name,
+        description: service.description,
+        category: service.category,
+        price: service.price,
+        durationMinutes,
+      })
+      await loadDashboard()
+      setNotice('Service duration updated.')
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message ?? 'Could not update this service duration.')
+    }
+  }
+
+  async function handleSubmitForVerification() {
+    setErrorMessage('')
+    try {
+      await submitForVerification()
+      await loadDashboard()
+      setNotice('Your profile has been submitted for verification.')
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message ?? 'Could not submit your profile for verification.')
+    }
+  }
+
   if (loading) return <div className="container py-5" role="status">Loading professional dashboard…</div>
 
   const incoming = bookings.filter((booking) => ['Pending', 'Confirmed'].includes(bookingStatus(booking.status)))
   const pendingCount = bookings.filter((booking) => bookingStatus(booking.status) === 'Pending').length
 
   return (
-    <div className="container py-5">
+    <div className="container-fluid px-3 px-lg-5 py-5">
       <header className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
         <div>
           <p className="text-uppercase text-secondary fw-semibold small mb-2">Professional studio</p>
@@ -152,6 +213,14 @@ export default function ProfessionalDashboardPage() {
 
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
       {notice && <div className="alert alert-success" role="status">{notice}</div>}
+      {profile && profileStatus(profile.verificationStatus) === 'Pending' && (
+        <div className="alert alert-warning d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" role="status">
+          <span>Your profile is pending Admin verification and won’t appear publicly until it is approved.</span>
+          <button className="btn btn-outline-primary align-self-start align-self-sm-auto" type="button" onClick={handleSubmitForVerification}>
+            Submit for verification
+          </button>
+        </div>
+      )}
 
       <div className="row g-3 mb-4">
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active bookings</span><strong className="d-block fs-3">{incoming.length}</strong></div></div>
@@ -161,7 +230,7 @@ export default function ProfessionalDashboardPage() {
       </div>
 
       <div className="row g-4">
-        <section className="col-12 col-xl-7">
+        <section className="col-12">
           <div className="glass-card rounded-2xl p-4">
             <h2 className="h4 mb-3">Incoming bookings</h2>
             {incoming.length === 0 ? (
@@ -200,8 +269,69 @@ export default function ProfessionalDashboardPage() {
           </div>
         </section>
 
-        <div className="col-12 col-xl-5 d-flex flex-column gap-4">
-          <section className="glass-card rounded-2xl p-4">
+        {bookings.some((booking) => refundStatus(booking.refundStatus) === 'Requested' || refundStatus(booking.refundStatus) === 'Refunded') && (
+          <div className="col-12 d-flex flex-column gap-4">
+          {bookings.some((booking) => refundStatus(booking.refundStatus) === 'Requested') && (
+            <section className="glass-card rounded-2xl p-4">
+              <h2 className="h5">Refund requests</h2>
+              <p className="small text-on-surface-variant">
+                Process the refund through your eSewa merchant account first. Once eSewa updates the transaction, check its status here.{' '}
+                <a href="https://developer.esewa.com.np/pages/Epay" target="_blank" rel="noreferrer">About eSewa refund statuses</a>
+              </p>
+              <div className="row g-3">
+                {bookings
+                  .filter((booking) => refundStatus(booking.refundStatus) === 'Requested')
+                  .map((booking) => (
+                    <div className="col-12 col-md-6 col-xxl-4" key={booking.id}>
+                      <article className="glass-card rounded-2xl p-3 h-100">
+                        <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
+                        <span className="small text-on-surface-variant d-block mt-1">
+                          Booking #{booking.id} · Full refund: {booking.refundAmount} · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
+                        </span>
+                        {refundMessages[booking.id] && (
+                          <div className="alert alert-warning small mt-3 mb-0" role="status">
+                            {refundMessages[booking.id]}
+                          </div>
+                        )}
+                        <button
+                          className="btn btn-sm btn-primary mt-3"
+                          type="button"
+                          onClick={() => handleVerifyRefund(booking.id)}
+                          disabled={verifyingRefundId === booking.id}
+                        >
+                          {verifyingRefundId === booking.id ? 'Checking eSewa…' : 'Check refund status'}
+                        </button>
+                      </article>
+                    </div>
+                  ))}
+              </div>
+            </section>
+          )}
+
+          {bookings.some((booking) => refundStatus(booking.refundStatus) === 'Refunded') && (
+            <section className="glass-card rounded-2xl p-4">
+              <h2 className="h5">Completed refunds</h2>
+              <div className="row g-3">
+                {bookings
+                  .filter((booking) => refundStatus(booking.refundStatus) === 'Refunded')
+                  .map((booking) => (
+                    <div className="col-12 col-md-6 col-xxl-4" key={booking.id}>
+                      <article className="glass-card rounded-2xl p-3 h-100">
+                        <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
+                        <span className="small text-on-surface-variant">
+                          Booking #{booking.id} · Refunded {booking.refundAmount} · eSewa reference {booking.refundGatewayReference}
+                        </span>
+                      </article>
+                    </div>
+                  ))}
+              </div>
+            </section>
+          )}
+          </div>
+        )}
+
+          <section className="col-12 col-xl-6">
+            <div className="glass-card rounded-2xl p-4 h-100">
             <h2 className="h5">Weekly availability</h2>
             <form onSubmit={handleAvailability}>
               <label className="form-label" htmlFor="availability-day">Day of week</label>
@@ -214,22 +344,68 @@ export default function ProfessionalDashboardPage() {
               </div>
               <button className="btn btn-outline-primary" type="submit">Add availability</button>
             </form>
-            <ul className="list-group list-group-flush mt-3">
-              {availability.map((slot) => (
-                <li className="list-group-item px-0" key={slot.id}>
-                  {slot.specificDate ?? (slot.dayOfWeek === null ? 'Date not set' : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][slot.dayOfWeek])}
-                  {' · '}{slot.startTime}–{slot.endTime}{!slot.isAvailable && ' · unavailable'}
-                </li>
-              ))}
-            </ul>
+            {availability.length === 0 ? (
+              <p className="small text-on-surface-variant mt-3 mb-0">No availability has been added yet.</p>
+            ) : (
+              <div className="d-flex flex-column gap-2 mt-3">
+                {availability.map((slot) => (
+                  <article className="glass-card rounded-2xl p-3" key={slot.id}>
+                    <strong className="d-block">
+                      {slot.specificDate ?? (slot.dayOfWeek === null ? 'Date not set' : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][slot.dayOfWeek])}
+                    </strong>
+                    <span className="small text-on-surface-variant">
+                      {slot.startTime}–{slot.endTime}{!slot.isAvailable && ' · unavailable'}
+                    </span>
+                  </article>
+                ))}
+              </div>
+            )}
+            </div>
           </section>
 
-          <section className="glass-card rounded-2xl p-4">
+          <section className="col-12 col-xl-6">
+            <div className="glass-card rounded-2xl p-4 h-100">
             <h2 className="h5">Services</h2>
             {profile?.services?.length ? (
-              <ul className="list-group list-group-flush mb-3">
-                {profile.services.map((service) => <li className="list-group-item px-0" key={service.id}>{service.name} · {service.price} · {service.durationMinutes} min</li>)}
-              </ul>
+              <div className="d-flex flex-column gap-2 mb-3">
+                {profile.services.map((service) => (
+                  <article className="glass-card rounded-2xl p-3" key={service.id}>
+                    <strong className="d-block">{service.name}</strong>
+                    <span className="small text-on-surface-variant">
+                      {service.category} · {service.price} · {service.durationMinutes} min
+                    </span>
+                    {service.durationMinutes >= 1440 && (
+                      <form
+                        className="mt-2"
+                        onSubmit={(event) => {
+                          event.preventDefault()
+                          handleFixServiceDuration(service)
+                        }}
+                      >
+                        <p className="small text-danger mb-2">
+                          This duration cannot be booked because bookings must fit within one local day. Update it to 1439 minutes or less.
+                        </p>
+                        <div className="d-flex gap-2">
+                          <input
+                            aria-label={`New duration for ${service.name}`}
+                            className="form-control"
+                            type="number"
+                            min="1"
+                            max="1439"
+                            required
+                            value={serviceDurationEdits[service.id] ?? ''}
+                            onChange={(event) => setServiceDurationEdits((current) => ({
+                              ...current,
+                              [service.id]: event.target.value,
+                            }))}
+                          />
+                          <button className="btn btn-outline-primary text-nowrap" type="submit">Update</button>
+                        </div>
+                      </form>
+                    )}
+                  </article>
+                ))}
+              </div>
             ) : <p className="small text-on-surface-variant">No services are listed yet.</p>}
             <form onSubmit={handleAddService}>
               <label className="form-label" htmlFor="service-name">Service name</label>
@@ -238,12 +414,12 @@ export default function ProfessionalDashboardPage() {
               <input id="service-category" className="form-control mb-2" required value={serviceCategory} onChange={(event) => setServiceCategory(event.target.value)} />
               <div className="row g-2 mb-3">
                 <div className="col-6"><label className="form-label" htmlFor="service-price">Price</label><input id="service-price" className="form-control" type="number" min="0.01" step="0.01" required value={servicePrice} onChange={(event) => setServicePrice(event.target.value)} /></div>
-                <div className="col-6"><label className="form-label" htmlFor="service-duration">Minutes</label><input id="service-duration" className="form-control" type="number" min="1" max="1440" required value={serviceDuration} onChange={(event) => setServiceDuration(event.target.value)} /></div>
+                <div className="col-6"><label className="form-label" htmlFor="service-duration">Minutes</label><input id="service-duration" className="form-control" type="number" min="1" max="1439" required value={serviceDuration} onChange={(event) => setServiceDuration(event.target.value)} /></div>
               </div>
               <button className="btn btn-outline-primary" type="submit">Add service</button>
             </form>
+            </div>
           </section>
-        </div>
       </div>
     </div>
   )

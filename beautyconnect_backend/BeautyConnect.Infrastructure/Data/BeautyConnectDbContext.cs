@@ -16,6 +16,7 @@ public class BeautyConnectDbContext : DbContext
     public DbSet<Service> Services => Set<Service>();
     public DbSet<Availability> Availabilities => Set<Availability>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Dispute> Disputes => Set<Dispute>();
 
@@ -109,6 +110,9 @@ public class BeautyConnectDbContext : DbContext
             entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100);
             entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
             entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
+            entity.Property(e => e.RefundStatus).HasConversion<string>().HasMaxLength(30);
+            entity.Property(e => e.RefundAmount).HasPrecision(10, 2);
+            entity.Property(e => e.RefundGatewayReference).HasMaxLength(200);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
 
             entity.HasOne(e => e.CustomerProfile)
@@ -128,6 +132,35 @@ public class BeautyConnectDbContext : DbContext
 
             entity.HasIndex(e => new { e.ProfessionalProfileId, e.ScheduledDateTime, e.Status });
             entity.HasIndex(e => e.EsewaTransactionUuid).IsUnique();
+        });
+
+        modelBuilder.Entity<PaymentIntent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TotalPrice).HasPrecision(10, 2);
+            entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
+            entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
+            entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
+            entity.HasIndex(e => e.EsewaTransactionUuid).IsUnique();
+            entity.HasIndex(e => new { e.ProfessionalProfileId, e.ScheduledDateTime, e.Status, e.ExpiresAt });
+            entity.HasOne(e => e.CustomerProfile)
+                .WithMany()
+                .HasForeignKey(e => e.CustomerProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ProfessionalProfile)
+                .WithMany()
+                .HasForeignKey(e => e.ProfessionalProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Service)
+                .WithMany()
+                .HasForeignKey(e => e.ServiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Booking)
+                .WithOne()
+                .HasForeignKey<PaymentIntent>("BookingId")
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Review

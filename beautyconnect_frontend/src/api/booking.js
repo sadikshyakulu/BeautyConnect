@@ -1,10 +1,5 @@
 import client from './client'
 
-export async function createBooking(booking) {
-  const { data } = await client.post('/Booking', booking)
-  return data
-}
-
 export async function getCustomerBookings() {
   const { data } = await client.get('/Booking/customer')
   return data

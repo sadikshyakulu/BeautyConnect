@@ -25,6 +25,11 @@ public class AuthService : IAuthService
 
     public async Task<(AuthResponseDto? Response, string? RefreshToken, string? Error)> RegisterAsync(RegisterRequestDto dto, string ipAddress)
     {
+        if (dto.Role is not UserRole.Customer and not UserRole.Professional)
+        {
+            return (null, null, "Public registration is only available for Customer and Professional accounts.");
+        }
+
         var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
         if (await _context.Users.AnyAsync(u => u.Email == normalizedEmail))
         {

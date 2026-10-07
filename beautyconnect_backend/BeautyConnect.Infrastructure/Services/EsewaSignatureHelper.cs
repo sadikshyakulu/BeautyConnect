@@ -12,7 +12,6 @@ public static class EsewaSignatureHelper
     {
         ArgumentNullException.ThrowIfNull(signedFieldNames);
         ArgumentNullException.ThrowIfNull(fieldValues);
-        ArgumentException.ThrowIfNullOrWhiteSpace(secretKey);
 
         if (signedFieldNames.Count == 0)
         {
@@ -21,7 +20,36 @@ public static class EsewaSignatureHelper
                 nameof(signedFieldNames));
         }
 
-        var message = string.Join(
+        return GenerateSignatureFromMessage(
+            BuildMessage(signedFieldNames, fieldValues),
+            secretKey);
+    }
+
+    public static string GenerateSignatureFromMessage(string message, string secretKey)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        ArgumentException.ThrowIfNullOrWhiteSpace(secretKey);
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey));
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(message));
+        return Convert.ToBase64String(hash);
+    }
+
+    public static string BuildMessage(
+        IReadOnlyList<string> signedFieldNames,
+        IReadOnlyDictionary<string, string> fieldValues)
+    {
+        ArgumentNullException.ThrowIfNull(signedFieldNames);
+        ArgumentNullException.ThrowIfNull(fieldValues);
+
+        if (signedFieldNames.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one signed field is required.",
+                nameof(signedFieldNames));
+        }
+
+        return string.Join(
             ",",
             signedFieldNames.Select(fieldName =>
             {
@@ -41,9 +69,5 @@ public static class EsewaSignatureHelper
 
                 return $"{fieldName}={value}";
             }));
-
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secretKey));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(message));
-        return Convert.ToBase64String(hash);
     }
 }

@@ -4,7 +4,6 @@ namespace BeautyConnect.Core.Interfaces;
 
 public interface IBookingService
 {
-    Task<(BookingDto? Booking, string? Error)> CreateBookingAsync(int userId, BookingCreateDto dto);
     Task<List<BookingDto>?> GetCustomerBookingsAsync(int userId);
     Task<List<BookingDto>?> GetProfessionalBookingsAsync(int userId);
     Task<(BookingDto? Booking, string? Error)> AcceptBookingAsync(int userId, int bookingId);

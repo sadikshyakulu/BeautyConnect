@@ -9,6 +9,10 @@ export default function Navbar() {
   const { user, loading, roleHome, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [signOutError, setSignOutError] = useState('')
+  const displayName = user?.profile?.fullName?.trim()
+    || user?.profile?.businessName?.trim()
+    || user?.email?.split('@')[0]
+    || 'Account'
 
   const navLinks = [
     { label: 'Explore Services', to: '/search' },
@@ -57,7 +61,7 @@ export default function Navbar() {
             <>
               <Link to={roleHome} className="navbar-avatar-group">
                 <div className="navbar-avatar-info">
-                  <div className="navbar-avatar-name">{user.email}</div>
+                  <div className="navbar-avatar-name">{displayName}</div>
                   <span className="navbar-avatar-role">{user.role} View</span>
                 </div>
               </Link>

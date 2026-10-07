@@ -10,5 +10,6 @@ public sealed class EsewaOptions
     public string StatusCheckUrl { get; set; } = string.Empty;
     public string SuccessUrl { get; set; } = string.Empty;
     public string FailureUrl { get; set; } = string.Empty;
+    public string FrontendReturnUrl { get; set; } = string.Empty;
     public decimal CommissionRate { get; set; } = 0.05m;
 }

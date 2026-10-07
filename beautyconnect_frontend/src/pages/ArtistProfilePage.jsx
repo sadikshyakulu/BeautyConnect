@@ -5,11 +5,35 @@ import { getReviewsForProfessional } from '../api/review'
 import { getProfessionalById } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 
-function localDateString(date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+const verificationStatus = (status) => typeof status === 'number'
+  ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
+  : status
+
+function nepalDateString(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kathmandu',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const part = (type) => parts.find((item) => item.type === type)?.value
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
+
+function slotDateTime(slot) {
+  const [wholeSeconds, fraction = ''] = slot.startTime.split('.')
+  const milliseconds = fraction ? `.${fraction.slice(0, 3).padEnd(3, '0')}` : ''
+  return new Date(`${slot.date}T${wholeSeconds}${milliseconds}+05:45`)
+}
+
+function timeToMinutes(time) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function serviceFitsSlot(service, slot) {
+  return service.durationMinutes < 1440
+    && service.durationMinutes <= timeToMinutes(slot.endTime) - timeToMinutes(slot.startTime)
 }
 
 export default function ArtistProfilePage() {
@@ -18,7 +42,7 @@ export default function ArtistProfilePage() {
   const [professional, setProfessional] = useState(null)
   const [loadedProfileId, setLoadedProfileId] = useState(null)
   const [reviews, setReviews] = useState([])
-  const [selectedDate, setSelectedDate] = useState(() => localDateString(new Date()))
+  const [selectedDate, setSelectedDate] = useState(() => nepalDateString(new Date()))
   const [slots, setSlots] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -77,7 +101,10 @@ export default function ArtistProfilePage() {
     const currentAvailabilityKey = `${professional.id}:${selectedDate}`
     getOpenSlots(professional.id, selectedDate)
       .then((openSlots) => {
-        if (active) setSlots(openSlots)
+        if (active) {
+          const now = new Date()
+          setSlots(openSlots.filter((slot) => slotDateTime(slot) > now))
+        }
       })
       .catch((error) => {
         if (!active) return
@@ -101,7 +128,14 @@ export default function ArtistProfilePage() {
 
   function startBooking(service) {
     const slot = selectedSlot
-    const scheduledDateTime = new Date(`${slot.date}T${slot.startTime}`).toISOString()
+    const appointmentTime = slotDateTime(slot)
+    if (appointmentTime <= new Date()) {
+      setSelectedSlot(null)
+      setSlotError('That appointment time has passed. Please choose another available time.')
+      return
+    }
+
+    const scheduledDateTime = appointmentTime.toISOString()
     navigate(
       `/booking?serviceId=${service.id}&professionalProfileId=${professional.id}&scheduledDateTime=${encodeURIComponent(scheduledDateTime)}`,
     )
@@ -118,6 +152,11 @@ export default function ArtistProfilePage() {
   return (
     <div className="container py-5">
       <Link to="/search" className="small">← Back to professionals</Link>
+      {verificationStatus(professional.verificationStatus) === 'Pending' && (
+        <div className="alert alert-warning mt-3" role="status">
+          This profile is pending verification and is not visible to the public until an Admin approves it.
+        </div>
+      )}
       <section className="glass-card rounded-2xl p-4 p-md-5 mt-3">
         <div className="d-flex flex-column flex-md-row gap-4 align-items-start">
           {professional.avatarUrl && (
@@ -147,10 +186,18 @@ export default function ArtistProfilePage() {
                     <h3 className="h5">{service.name}</h3>
                     <p className="small text-on-surface-variant">{service.category} · {service.durationMinutes} minutes</p>
                     {service.description && <p className="mb-0">{service.description}</p>}
+                    {service.durationMinutes >= 1440 && (
+                      <p className="small text-danger mb-0">
+                        This service cannot be booked because its duration is 24 hours or longer. Please contact the professional.
+                      </p>
+                    )}
                   </div>
                   <div className="text-sm-end">
                     <strong className="d-block mb-2">{service.price}</strong>
-                    <button className="btn btn-primary" type="button" disabled={!selectedSlot} onClick={() => startBooking(service)}>
+                    {selectedSlot && service.durationMinutes < 1440 && !serviceFitsSlot(service, selectedSlot) && (
+                      <p className="small text-danger mb-2">The selected availability is shorter than this service.</p>
+                    )}
+                    <button className="btn btn-primary" type="button" disabled={!selectedSlot || !serviceFitsSlot(service, selectedSlot)} onClick={() => startBooking(service)}>
                       Select to book
                     </button>
                   </div>
@@ -168,7 +215,7 @@ export default function ArtistProfilePage() {
               id="appointment-date"
               className="form-control mb-3"
               type="date"
-              min={localDateString(new Date())}
+              min={nepalDateString(new Date())}
               value={selectedDate}
               onChange={(event) => {
                 setSelectedDate(event.target.value)

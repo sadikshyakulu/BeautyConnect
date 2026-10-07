@@ -30,6 +30,16 @@ public class ProfessionalProfileService : IProfessionalProfileService
         return profile == null ? null : ToDto(profile);
     }
 
+    public async Task<ProfessionalProfileDto?> GetProfileByIdAsync(int profileId)
+    {
+        var profile = await _context.ProfessionalProfiles
+            .AsNoTracking()
+            .Include(p => p.Services)
+            .FirstOrDefaultAsync(p => p.Id == profileId);
+
+        return profile == null ? null : ToDto(profile);
+    }
+
     public async Task<ProfessionalProfileDto> SaveProfileAsync(int userId, ProfessionalProfileUpdateDto dto)
     {
         var profile = await _context.ProfessionalProfiles

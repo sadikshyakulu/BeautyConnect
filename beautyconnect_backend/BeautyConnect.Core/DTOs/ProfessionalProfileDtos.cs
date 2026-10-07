@@ -67,7 +67,7 @@ public class ServiceUpsertDto
     [Range(typeof(decimal), "0.01", "99999999.99")]
     public decimal Price { get; set; }
 
-    [Range(1, 1440)]
+    [Range(1, 1439)]
     public int DurationMinutes { get; set; } = 60;
 }
 

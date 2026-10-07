@@ -4,6 +4,7 @@ using BeautyConnect.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeautyConnect.Infrastructure.Migrations
 {
     [DbContext(typeof(BeautyConnectDbContext))]
-    partial class BeautyConnectDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007180608_AddPaymentIntents")]
+    partial class AddPaymentIntents
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -95,25 +98,6 @@ namespace BeautyConnect.Infrastructure.Migrations
 
                     b.Property<int>("ProfessionalProfileId")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("RefundAmount")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<string>("RefundGatewayReference")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<DateTime?>("RefundRequestedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("RefundStatus")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
-
-                    b.Property<DateTime?>("RefundedAt")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("ScheduledDateTime")
                         .HasColumnType("datetime(6)");

@@ -26,6 +26,11 @@ public class BookingDto
     public BookingStatus Status { get; set; }
     public decimal TotalPrice { get; set; }
     public decimal CommissionAmount { get; set; }
+    public decimal? RefundAmount { get; set; }
+    public RefundStatus RefundStatus { get; set; }
+    public DateTime? RefundRequestedAt { get; set; }
+    public DateTime? RefundedAt { get; set; }
+    public string? RefundGatewayReference { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
     public string CustomerName { get; set; } = string.Empty;

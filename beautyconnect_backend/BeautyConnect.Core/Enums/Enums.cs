@@ -22,6 +22,20 @@ public enum BookingStatus
     Cancelled
 }
 
+public enum PaymentIntentStatus
+{
+    Pending,
+    Completed,
+    Cancelled
+}
+
+public enum RefundStatus
+{
+    NotRequested,
+    Requested,
+    Refunded
+}
+
 public enum DisputeStatus
 {
     Open,

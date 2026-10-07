@@ -112,6 +112,11 @@ public class Booking
     public string? EsewaTransactionUuid { get; set; }
     public string? EsewaTransactionCode { get; set; }
     public decimal? EsewaTotalAmount { get; set; }
+    public RefundStatus RefundStatus { get; set; } = RefundStatus.NotRequested;
+    public decimal? RefundAmount { get; set; }
+    public DateTime? RefundRequestedAt { get; set; }
+    public DateTime? RefundedAt { get; set; }
+    public string? RefundGatewayReference { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -120,6 +125,30 @@ public class Booking
     public Service Service { get; set; } = null!;
     public Review? Review { get; set; }
     public Dispute? Dispute { get; set; }
+}
+
+public class PaymentIntent
+{
+    public int Id { get; set; }
+    public int CustomerProfileId { get; set; }
+    public int ProfessionalProfileId { get; set; }
+    public int ServiceId { get; set; }
+    public DateTime ScheduledDateTime { get; set; }
+    public DateTime EndDateTime { get; set; }
+    public decimal TotalPrice { get; set; }
+    public decimal CommissionAmount { get; set; }
+    public decimal EsewaTotalAmount { get; set; }
+    public string EsewaTransactionUuid { get; set; } = string.Empty;
+    public string? EsewaTransactionCode { get; set; }
+    public string? Notes { get; set; }
+    public PaymentIntentStatus Status { get; set; } = PaymentIntentStatus.Pending;
+    public DateTime ExpiresAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public CustomerProfile CustomerProfile { get; set; } = null!;
+    public ProfessionalProfile ProfessionalProfile { get; set; } = null!;
+    public Service Service { get; set; } = null!;
+    public Booking? Booking { get; set; }
 }
 
 public class Review

@@ -19,32 +19,6 @@ public class BookingController : ControllerBase
     }
 
     [Authorize(Roles = "Customer")]
-    [HttpPost]
-    public async Task<IActionResult> CreateBooking([FromBody] BookingCreateDto dto)
-    {
-        var userId = GetUserId();
-        if (userId == null) return Unauthorized();
-
-        var (booking, error) = await _bookingService.CreateBookingAsync(userId.Value, dto);
-        if (booking == null)
-        {
-            if (error?.EndsWith("not found.", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return NotFound(new { message = error });
-            }
-
-            if (error?.Contains("conflict", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return Conflict(new { message = error });
-            }
-
-            return BadRequest(new { message = error });
-        }
-
-        return CreatedAtAction(nameof(GetCustomerBookings), null, booking);
-    }
-
-    [Authorize(Roles = "Customer")]
     [HttpGet("customer")]
     public async Task<IActionResult> GetCustomerBookings()
     {

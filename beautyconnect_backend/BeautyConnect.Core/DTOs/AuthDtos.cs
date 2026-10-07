@@ -3,7 +3,7 @@ using BeautyConnect.Core.Enums;
 
 namespace BeautyConnect.Core.DTOs;
 
-public class RegisterRequestDto
+public class RegisterRequestDto : IValidatableObject
 {
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
@@ -19,6 +19,16 @@ public class RegisterRequestDto
     public string? PhoneNumber { get; set; }
     public string? Speciality { get; set; }
     public string? City { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (Role is not UserRole.Customer and not UserRole.Professional)
+        {
+            yield return new ValidationResult(
+                "Public registration is only available for Customer and Professional accounts.",
+                new[] { nameof(Role) });
+        }
+    }
 }
 
 public class LoginRequestDto

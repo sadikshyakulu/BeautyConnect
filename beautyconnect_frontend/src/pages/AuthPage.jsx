@@ -8,7 +8,7 @@ export default function AuthPage() {
   const location = useLocation()
   const { user, loading, signIn, signUp, roleHome } = useAuth()
   const [role, setRole] = useState('client') // 'client' | 'pro'
-  const [mode, setMode] = useState('register') // 'register' | 'login'
+  const [mode, setMode] = useState('login') // 'register' | 'login'
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -18,6 +18,11 @@ export default function AuthPage() {
   const [city, setCity] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+
+  const changeMode = (nextMode) => {
+    setMode(nextMode)
+    setErrorMessage('')
+  }
 
   useEffect(() => {
     if (user) navigate(location.state?.from ?? roleHome, { replace: true })
@@ -119,57 +124,44 @@ export default function AuthPage() {
       {/* Right Authentication Panel */}
       <section className="auth-form-panel">
         <div className="auth-form-wrapper">
-          {/* Role Segmented Controller */}
-          <div className="mb-4">
-            <label className="d-block text-on-surface-variant text-uppercase tracking-wider mb-2 text-label-sm font-semibold">
-              Select Your Platform Persona
-            </label>
-            <div className="auth-segmented-pill">
-              <button
-                type="button"
-                onClick={() => setRole('client')}
-                className={`auth-persona-btn ${role === 'client' ? 'active' : ''}`}
-              >
-                <span className="material-symbols-outlined text-[18px]">person</span>
-                <span>Client / Guest</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('pro')}
-                className={`auth-persona-btn ${role === 'pro' ? 'active' : ''}`}
-              >
-                <span className="material-symbols-outlined text-[18px]">brush</span>
-                <span>Beauty Professional</span>
-              </button>
-            </div>
-          </div>
-
           {/* Card Container */}
           <div className="auth-card">
-            {/* Mode Switcher */}
             <div className="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom border-outline-variant">
-              <div className="d-flex align-items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setMode('register')}
-                  className={`auth-mode-tab ${mode === 'register' ? 'active' : ''}`}
-                >
-                  Create Account
-                  {mode === 'register' && <div className="auth-mode-indicator"></div>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  className={`auth-mode-tab ${mode === 'login' ? 'active' : ''}`}
-                >
-                  Welcome Back
-                  {mode === 'login' && <div className="auth-mode-indicator"></div>}
-                </button>
-              </div>
+              <h1 className="auth-heading">
+                {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+              </h1>
               <span className="text-xs px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-medium">
                 Secured SSL
               </span>
             </div>
+
+            {mode === 'register' && (
+              <div className="mb-4">
+                <label className="d-block text-on-surface-variant text-uppercase tracking-wider mb-2 text-label-sm font-semibold">
+                  Register as
+                </label>
+                <div className="auth-segmented-pill">
+                  <button
+                    type="button"
+                    onClick={() => setRole('client')}
+                    className={`auth-persona-btn ${role === 'client' ? 'active' : ''}`}
+                    aria-pressed={role === 'client'}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">person</span>
+                    <span>Client / Guest</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('pro')}
+                    className={`auth-persona-btn ${role === 'pro' ? 'active' : ''}`}
+                    aria-pressed={role === 'pro'}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">brush</span>
+                    <span>Beauty Professional</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Pro Badge Callout */}
             {role === 'pro' && (
@@ -327,6 +319,24 @@ export default function AuthPage() {
             </form>
 
           </div>
+
+          <p className="text-center mt-4 mb-0 auth-mode-prompt">
+            {mode === 'login' ? (
+              <>
+                No account?{' '}
+                <button type="button" onClick={() => changeMode('register')}>
+                  Register
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button type="button" onClick={() => changeMode('login')}>
+                  Sign in
+                </button>
+              </>
+            )}
+          </p>
 
           <p className="text-center text-[11px] text-on-surface-variant mt-4">
             Use your account to manage bookings and professional services.

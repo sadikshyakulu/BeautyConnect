@@ -137,7 +137,7 @@ export default function SearchPage() {
         <p role="status">Loading professionals…</p>
       ) : !errorMessage && results.length === 0 ? (
         <div className="glass-card rounded-2xl p-5 text-center">
-          <h3 className="h5">No professionals found</h3>
+          <h3 className="h5">No verified professionals match yet</h3>
           <p className="text-on-surface-variant mb-0">Try changing or clearing your filters.</p>
         </div>
       ) : (

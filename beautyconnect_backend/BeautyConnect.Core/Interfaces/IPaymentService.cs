@@ -6,7 +6,12 @@ public interface IPaymentService
 {
     Task<PaymentOperationResult<EsewaPaymentFormDto>> InitiatePaymentAsync(
         int userId,
-        int bookingId,
+        PaymentInitiateDto request,
+        CancellationToken cancellationToken);
+
+    Task<PaymentOperationResult<EsewaPaymentFormDto>> RefreshPaymentAsync(
+        int userId,
+        string transactionUuid,
         CancellationToken cancellationToken);
 
     Task<PaymentOperationResult<PaymentStatusDto>> VerifyPaymentCallbackAsync(
@@ -20,5 +25,10 @@ public interface IPaymentService
     Task<PaymentOperationResult<PaymentStatusDto>> CheckTransactionStatusAsync(
         int userId,
         string transactionUuid,
+        CancellationToken cancellationToken);
+
+    Task<PaymentOperationResult<RefundVerificationDto>> VerifyRefundStatusAsync(
+        int professionalUserId,
+        int bookingId,
         CancellationToken cancellationToken);
 }

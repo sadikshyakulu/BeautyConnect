@@ -1,4 +1,6 @@
 using System.Text;
+using BeautyConnect.Core.Entities;
+using BeautyConnect.Core.Enums;
 using BeautyConnect.Api.Filters;
 using BeautyConnect.Api.Middleware;
 using BeautyConnect.Core.Interfaces;
@@ -106,6 +108,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+await SeedAdminAsync(app);
+
 // Global Exception Handler Middleware
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
@@ -127,3 +131,57 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static async Task SeedAdminAsync(WebApplication app)
+{
+    var email = app.Configuration["AdminSeed:Email"];
+    var password = app.Configuration["AdminSeed:Password"];
+
+    // Local test credentials are intentionally available only in Development.
+    if (app.Environment.IsDevelopment())
+    {
+        if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(password))
+        {
+            email = "admin.test@beautyconnect.local";
+            password = "BeautyConnect_TestAdmin_2026!";
+        }
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<BeautyConnectDbContext>();
+    if (await dbContext.Users.AnyAsync(user => user.Role == UserRole.Admin))
+    {
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    {
+        if (!app.Environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "No Admin account exists. Configure AdminSeed:Email and AdminSeed:Password before starting.");
+        }
+
+        throw new InvalidOperationException(
+            "Configure both AdminSeed:Email and AdminSeed:Password, or remove both to use the Development test credentials.");
+    }
+
+    var normalizedEmail = email.Trim().ToLowerInvariant();
+    if (await dbContext.Users.AnyAsync(user => user.Email == normalizedEmail))
+    {
+        throw new InvalidOperationException(
+            $"Cannot seed the Admin account because {normalizedEmail} is already registered with another role.");
+    }
+
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    dbContext.Users.Add(new User
+    {
+        Email = normalizedEmail,
+        PasswordHash = passwordHasher.HashPassword(password),
+        Role = UserRole.Admin,
+        CreatedAt = DateTime.UtcNow
+    });
+    await dbContext.SaveChangesAsync();
+
+    app.Logger.LogInformation("Seeded the configured Admin account {Email}.", normalizedEmail);
+}

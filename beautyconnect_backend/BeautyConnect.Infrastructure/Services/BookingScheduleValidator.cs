@@ -15,6 +15,9 @@ public static class BookingScheduleValidator
             NepalTimeZone.GetUtcOffset(unspecifiedDateTime));
     }
 
+    public static DateTimeOffset GetNepalNow() =>
+        TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, NepalTimeZone);
+
     public static bool TryPrepare(
         DateTimeOffset requestedStart,
         int durationMinutes,
@@ -41,6 +44,12 @@ public static class BookingScheduleValidator
         if (durationMinutes <= 0)
         {
             error = "Service duration must be greater than zero.";
+            return false;
+        }
+
+        if (durationMinutes >= 24 * 60)
+        {
+            error = "Service duration must be less than 24 hours to fit within one local-day availability slot.";
             return false;
         }
 

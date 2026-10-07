@@ -28,6 +28,27 @@ public class ProfessionalProfileController : ControllerBase
         return profile == null ? NotFound() : Ok(profile);
     }
 
+    [AllowAnonymous]
+    [HttpGet("{profileId:int}")]
+    public async Task<IActionResult> GetProfileById(int profileId)
+    {
+        var profile = await _profileService.GetProfileByIdAsync(profileId);
+        if (profile == null)
+        {
+            return NotFound();
+        }
+
+        var isOwner = GetUserId() == profile.UserId;
+        if (profile.VerificationStatus != BeautyConnect.Core.Enums.VerificationStatus.Approved
+            && !User.IsInRole("Admin")
+            && !isOwner)
+        {
+            return NotFound();
+        }
+
+        return Ok(profile);
+    }
+
     [HttpPut("me")]
     public async Task<IActionResult> SaveMyProfile([FromBody] ProfessionalProfileUpdateDto dto)
     {

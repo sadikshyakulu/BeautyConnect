@@ -142,6 +142,8 @@
   border-radius: var(--radius-full);
   transition: background 0.2s ease;
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 220px;
 }
 
 .navbar-avatar-group:hover {
@@ -159,16 +161,20 @@
 .navbar-avatar-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .navbar-avatar-name {
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
+  display: block;
+  max-width: 100%;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--on-surface);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .navbar-avatar-role {
@@ -229,16 +235,7 @@
 }
 
 /* Breakpoint for tablet/mobile collapsing */
-@media (max-width: 1140px) {
-  .btn-ghost-sm {
-    display: none;
-  }
-  .navbar-links {
-    gap: 1.25rem;
-  }
-}
-
-@media (max-width: 1140px) {
+@media (max-width: 1199px) {
   .navbar-links,
   .navbar-actions .btn-ghost-sm,
   .navbar-actions .navbar-avatar-group,

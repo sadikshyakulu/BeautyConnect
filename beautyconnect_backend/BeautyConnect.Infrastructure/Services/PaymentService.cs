@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Data;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -9,6 +10,7 @@ using BeautyConnect.Core.Interfaces;
 using BeautyConnect.Infrastructure.Configuration;
 using BeautyConnect.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BeautyConnect.Infrastructure.Services;
@@ -23,105 +25,255 @@ public sealed class PaymentService : IPaymentService
     private readonly BeautyConnectDbContext _context;
     private readonly HttpClient _httpClient;
     private readonly EsewaOptions _options;
+    private readonly ILogger<PaymentService> _logger;
+    private string ProductCode => _options.ProductCode.Trim();
+    private static readonly TimeSpan PaymentIntentLifetime = TimeSpan.FromMinutes(20);
 
     public PaymentService(
         BeautyConnectDbContext context,
         HttpClient httpClient,
-        IOptions<EsewaOptions> options)
+        IOptions<EsewaOptions> options,
+        ILogger<PaymentService> logger)
     {
         _context = context;
         _httpClient = httpClient;
         _options = options.Value;
+        _logger = logger;
     }
 
     public async Task<PaymentOperationResult<EsewaPaymentFormDto>> InitiatePaymentAsync(
         int userId,
-        int bookingId,
+        PaymentInitiateDto request,
         CancellationToken cancellationToken)
     {
         EnsureConfigured();
-        var booking = await _context.Bookings
-            .Include(item => item.Service)
-            .Include(item => item.CustomerProfile)
-            .FirstOrDefaultAsync(
-                item => item.Id == bookingId && item.CustomerProfile.UserId == userId,
-                cancellationToken);
-        if (booking == null)
+        var customerProfileId = await _context.CustomerProfiles
+            .Where(profile => profile.UserId == userId)
+            .Select(profile => (int?)profile.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (!customerProfileId.HasValue)
         {
             return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
-                "Booking not found.",
+                "Customer profile not found.",
                 PaymentErrorCode.NotFound);
         }
 
-        if (booking.Status != BookingStatus.Pending)
+        var service = await _context.Services
+            .AsNoTracking()
+            .Include(item => item.ProfessionalProfile)
+            .FirstOrDefaultAsync(item => item.Id == request.ServiceId, cancellationToken);
+        if (service == null || service.ProfessionalProfile.VerificationStatus != VerificationStatus.Approved)
         {
             return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
-                $"Payment cannot be initiated for a booking in status {booking.Status}.",
+                "The selected verified service was not found.",
+                PaymentErrorCode.NotFound);
+        }
+
+        if (service.DurationMinutes >= 24 * 60)
+        {
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                "Service duration must be less than 24 hours.",
                 PaymentErrorCode.Conflict);
         }
 
-        decimal amount;
-        decimal commission;
-        decimal totalAmount;
-        if (booking.EsewaTransactionUuid != null)
+        if (!BookingScheduleValidator.TryPrepare(
+                request.ScheduledDateTime,
+                service.DurationMinutes,
+                DateTimeOffset.UtcNow,
+                out var schedule,
+                out var scheduleError,
+                _logger))
         {
-            if (!booking.EsewaTotalAmount.HasValue)
-            {
-                return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
-                    "The existing eSewa payment attempt is incomplete.",
-                    PaymentErrorCode.Conflict);
-            }
-
-            amount = booking.TotalPrice;
-            totalAmount = booking.EsewaTotalAmount.Value;
-            commission = totalAmount - amount;
-        }
-        else
-        {
-            amount = booking.Service.Price;
-            if (amount <= 0)
-            {
-                return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
-                    "The service price must be greater than zero.",
-                    PaymentErrorCode.Conflict);
-            }
-
-            commission = decimal.Round(
-                amount * _options.CommissionRate,
-                2,
-                MidpointRounding.AwayFromZero);
-            totalAmount = amount + commission;
-            booking.TotalPrice = amount;
-            booking.EsewaTotalAmount = totalAmount;
-            booking.EsewaTransactionUuid = CreateTransactionUuid(booking.Id);
-            await _context.SaveChangesAsync(cancellationToken);
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                scheduleError ?? "The selected appointment time is invalid.",
+                PaymentErrorCode.InvalidRequest);
         }
 
-        var values = new Dictionary<string, string>(StringComparer.Ordinal)
+        var scheduledDate = DateOnly.FromDateTime(schedule.LocalStart);
+        var commission = decimal.Round(
+            service.Price * _options.CommissionRate,
+            2,
+            MidpointRounding.AwayFromZero);
+        var totalAmount = service.Price + commission;
+        var now = DateTime.UtcNow;
+        var intent = new PaymentIntent
         {
-            ["total_amount"] = FormatAmount(totalAmount),
-            ["transaction_uuid"] = booking.EsewaTransactionUuid,
-            ["product_code"] = _options.ProductCode
+            CustomerProfileId = customerProfileId.Value,
+            ProfessionalProfileId = service.ProfessionalProfileId,
+            ServiceId = service.Id,
+            ScheduledDateTime = schedule.LocalStart,
+            EndDateTime = schedule.LocalEnd,
+            TotalPrice = service.Price,
+            CommissionAmount = commission,
+            EsewaTotalAmount = totalAmount,
+            EsewaTransactionUuid = CreateTransactionUuid(service.Id),
+            Notes = request.Notes?.Trim(),
+            Status = PaymentIntentStatus.Pending,
+            ExpiresAt = now.Add(PaymentIntentLifetime),
+            CreatedAt = now
         };
-        var signature = EsewaSignatureHelper.GenerateSignature(
-            InitialSignedFields.Split(','),
-            values,
+
+        var strategy = _context.Database.CreateExecutionStrategy();
+        var (created, error) = await strategy.ExecuteAsync(async () =>
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            var availability = await _context.Availabilities
+                .Where(slot =>
+                    slot.ProfessionalProfileId == service.ProfessionalProfileId
+                    && (slot.SpecificDate == scheduledDate
+                        || (slot.SpecificDate == null && slot.DayOfWeek == scheduledDate.DayOfWeek)))
+                .ToListAsync(cancellationToken);
+            if (!BookingScheduleValidator.FitsAvailabilitySlot(availability, new BookingSchedule(schedule.LocalStart, schedule.LocalEnd)))
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return (Created: false, Error: "The selected time is not within the professional’s availability.");
+            }
+
+            var bookingConflict = await _context.Bookings.AnyAsync(booking =>
+                booking.ProfessionalProfileId == service.ProfessionalProfileId
+                && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
+                && booking.ScheduledDateTime < schedule.LocalEnd
+                && booking.EndDateTime > schedule.LocalStart,
+                cancellationToken);
+            var pendingPaymentConflict = await _context.PaymentIntents.AnyAsync(paymentIntent =>
+                paymentIntent.ProfessionalProfileId == service.ProfessionalProfileId
+                && paymentIntent.Status == PaymentIntentStatus.Pending
+                && paymentIntent.ExpiresAt > now
+                && paymentIntent.ScheduledDateTime < schedule.LocalEnd
+                && paymentIntent.EndDateTime > schedule.LocalStart,
+                cancellationToken);
+            if (bookingConflict || pendingPaymentConflict)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return (Created: false, Error: "The selected appointment time is no longer available.");
+            }
+
+            _context.PaymentIntents.Add(intent);
+            await _context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return (Created: true, Error: (string?)null);
+        });
+
+        if (!created)
+        {
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                error ?? "Could not reserve the selected appointment time.",
+                PaymentErrorCode.Conflict);
+        }
+
+        return PaymentOperationResult<EsewaPaymentFormDto>.Success(BuildPaymentForm(intent));
+    }
+
+    public async Task<PaymentOperationResult<EsewaPaymentFormDto>> RefreshPaymentAsync(
+        int userId,
+        string transactionUuid,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        var intent = await _context.PaymentIntents
+            .Include(item => item.CustomerProfile)
+            .FirstOrDefaultAsync(
+                item => item.EsewaTransactionUuid == transactionUuid
+                    && item.CustomerProfile.UserId == userId,
+                cancellationToken);
+        if (intent == null)
+        {
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                "Payment request not found.",
+                PaymentErrorCode.NotFound);
+        }
+
+        if (intent.Status != PaymentIntentStatus.Pending || intent.ExpiresAt <= DateTime.UtcNow)
+        {
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                "This payment request has expired or is no longer pending. Please choose the appointment again.",
+                PaymentErrorCode.Conflict);
+        }
+
+        return PaymentOperationResult<EsewaPaymentFormDto>.Success(BuildPaymentForm(intent));
+    }
+
+    private EsewaPaymentFormDto BuildPaymentForm(PaymentIntent intent)
+    {
+        var amountText = FormatAmount(intent.TotalPrice);
+        var taxAmountText = FormatAmount(0m);
+        var totalAmountText = FormatAmount(intent.EsewaTotalAmount);
+        var productServiceChargeText = FormatAmount(intent.CommissionAmount);
+        var productDeliveryChargeText = FormatAmount(0m);
+        var transactionUuid = intent.EsewaTransactionUuid;
+        var productCode = ProductCode;
+        var signedFieldNames = InitialSignedFields.Split(',');
+        var signedValues = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["total_amount"] = totalAmountText,
+            ["transaction_uuid"] = transactionUuid,
+            ["product_code"] = productCode
+        };
+        var signatureMessage = EsewaSignatureHelper.BuildMessage(signedFieldNames, signedValues);
+        _logger.LogInformation(
+            "eSewa signature raw message: [[[{SignatureMessage}]]]",
+            signatureMessage);
+        _logger.LogInformation(
+            "eSewa signature raw message character codes: {SignatureMessageCharacters}",
+            DescribeCharacters(signatureMessage));
+        _logger.LogInformation(
+            "eSewa signed_field_names: [[[{SignedFieldNames}]]]",
+            InitialSignedFields);
+        _logger.LogInformation(
+            "eSewa total_amount: [[[{TotalAmount}]]]",
+            totalAmountText);
+        _logger.LogInformation(
+            "eSewa transaction_uuid: [[[{TransactionUuid}]]], has_outer_whitespace={HasOuterWhitespace}",
+            transactionUuid,
+            transactionUuid != transactionUuid.Trim());
+        _logger.LogInformation(
+            "eSewa product_code: [[[{ProductCode}]]], configured_value_had_outer_whitespace={HadOuterWhitespace}",
+            productCode,
+            _options.ProductCode != ProductCode);
+        _logger.LogInformation(
+            "eSewa form amount: [[[{Amount}]]]",
+            amountText);
+        _logger.LogInformation(
+            "eSewa form tax_amount: [[[{TaxAmount}]]]",
+            taxAmountText);
+        _logger.LogInformation(
+            "eSewa form product_service_charge: [[[{ProductServiceCharge}]]]",
+            productServiceChargeText);
+        _logger.LogInformation(
+            "eSewa form product_delivery_charge: [[[{ProductDeliveryCharge}]]]",
+            productDeliveryChargeText);
+
+        var componentSum =
+            decimal.Parse(amountText, CultureInfo.InvariantCulture)
+            + decimal.Parse(taxAmountText, CultureInfo.InvariantCulture)
+            + decimal.Parse(productServiceChargeText, CultureInfo.InvariantCulture)
+            + decimal.Parse(productDeliveryChargeText, CultureInfo.InvariantCulture);
+        var formattedComponentSum = FormatAmount(componentSum);
+        _logger.LogInformation(
+            "eSewa amount arithmetic: total_amount={TotalAmount}, component_sum={ComponentSum}, matches={Matches}",
+            totalAmountText,
+            formattedComponentSum,
+            string.Equals(totalAmountText, formattedComponentSum, StringComparison.Ordinal));
+        var signature = EsewaSignatureHelper.GenerateSignatureFromMessage(
+            signatureMessage,
             _options.SecretKey);
 
-        return PaymentOperationResult<EsewaPaymentFormDto>.Success(
-            new EsewaPaymentFormDto(
-                Amount: FormatAmount(amount),
-                TaxAmount: FormatAmount(0m),
-                TotalAmount: FormatAmount(totalAmount),
+        return new EsewaPaymentFormDto(
+                PaymentIntentId: intent.Id,
+                Amount: amountText,
+                TaxAmount: taxAmountText,
+                TotalAmount: totalAmountText,
                 FormUrl: _options.FormUrl,
-                TransactionUuid: booking.EsewaTransactionUuid,
-                ProductCode: _options.ProductCode,
+                TransactionUuid: transactionUuid,
+                ProductCode: productCode,
                 SuccessUrl: _options.SuccessUrl,
                 FailureUrl: _options.FailureUrl,
                 SignedFieldNames: InitialSignedFields,
                 Signature: signature,
-                ProductServiceCharge: FormatAmount(commission),
-                ProductDeliveryCharge: FormatAmount(0m)));
+                ProductServiceCharge: productServiceChargeText,
+                ProductDeliveryCharge: productDeliveryChargeText);
     }
 
     public async Task<PaymentOperationResult<PaymentStatusDto>> VerifyPaymentCallbackAsync(
@@ -149,11 +301,35 @@ public sealed class PaymentService : IPaymentService
                 PaymentErrorCode.InvalidRequest);
         }
 
-        if (!string.Equals(callback.ProductCode, _options.ProductCode, StringComparison.Ordinal))
+        if (!string.Equals(callback.ProductCode, ProductCode, StringComparison.Ordinal))
         {
             return PaymentOperationResult<PaymentStatusDto>.Failure(
                 "The callback product_code does not match this application.",
                 PaymentErrorCode.InvalidRequest);
+        }
+
+        var paymentIntent = await _context.PaymentIntents
+            .FirstOrDefaultAsync(
+                item => item.EsewaTransactionUuid == callback.TransactionUuid,
+                cancellationToken);
+        if (paymentIntent != null)
+        {
+            if (paymentIntent.EsewaTotalAmount != callbackTotal)
+            {
+                return PaymentOperationResult<PaymentStatusDto>.Failure(
+                    "The callback total_amount does not match the initiated payment.",
+                    PaymentErrorCode.InvalidRequest);
+            }
+
+            var intentGatewayResult = await CheckGatewayStatusAsync(
+                paymentIntent.EsewaTransactionUuid,
+                paymentIntent.EsewaTotalAmount,
+                cancellationToken);
+            return await ApplyGatewayStatusAsync(
+                paymentIntent,
+                intentGatewayResult,
+                callback.TransactionCode,
+                cancellationToken);
         }
 
         var booking = await GetBookingByTransactionUuidAsync(
@@ -189,6 +365,23 @@ public sealed class PaymentService : IPaymentService
         CancellationToken cancellationToken)
     {
         EnsureConfigured();
+        var paymentIntent = await _context.PaymentIntents
+            .FirstOrDefaultAsync(
+                item => item.EsewaTransactionUuid == transactionUuid,
+                cancellationToken);
+        if (paymentIntent != null)
+        {
+            var intentGatewayResult = await CheckGatewayStatusAsync(
+                paymentIntent.EsewaTransactionUuid,
+                paymentIntent.EsewaTotalAmount,
+                cancellationToken);
+            return await ApplyGatewayStatusAsync(
+                paymentIntent,
+                intentGatewayResult,
+                transactionCode: null,
+                cancellationToken);
+        }
+
         var booking = await GetBookingByTransactionUuidAsync(transactionUuid, cancellationToken);
         if (booking == null)
         {
@@ -214,6 +407,25 @@ public sealed class PaymentService : IPaymentService
         CancellationToken cancellationToken)
     {
         EnsureConfigured();
+        var paymentIntent = await _context.PaymentIntents
+            .Include(item => item.CustomerProfile)
+            .FirstOrDefaultAsync(
+                item => item.EsewaTransactionUuid == transactionUuid
+                    && item.CustomerProfile.UserId == userId,
+                cancellationToken);
+        if (paymentIntent != null)
+        {
+            var gatewayResult = await CheckGatewayStatusAsync(
+                paymentIntent.EsewaTransactionUuid,
+                paymentIntent.EsewaTotalAmount,
+                cancellationToken);
+            return await ApplyGatewayStatusAsync(
+                paymentIntent,
+                gatewayResult,
+                transactionCode: null,
+                cancellationToken);
+        }
+
         var booking = await _context.Bookings
             .Include(item => item.CustomerProfile)
             .FirstOrDefaultAsync(
@@ -226,7 +438,6 @@ public sealed class PaymentService : IPaymentService
                 "Payment transaction not found.",
                 PaymentErrorCode.NotFound);
         }
-
         if (!booking.EsewaTotalAmount.HasValue)
         {
             return PaymentOperationResult<PaymentStatusDto>.Failure(
@@ -234,15 +445,253 @@ public sealed class PaymentService : IPaymentService
                 PaymentErrorCode.Conflict);
         }
 
-        var gatewayResult = await CheckGatewayStatusAsync(
+        var bookingGatewayResult = await CheckGatewayStatusAsync(
             booking.EsewaTransactionUuid!,
             booking.EsewaTotalAmount.Value,
             cancellationToken);
         return await ApplyGatewayStatusAsync(
             booking,
-            gatewayResult,
+            bookingGatewayResult,
             transactionCode: null,
             cancellationToken);
+    }
+
+    public async Task<PaymentOperationResult<RefundVerificationDto>> VerifyRefundStatusAsync(
+        int professionalUserId,
+        int bookingId,
+        CancellationToken cancellationToken)
+    {
+        EnsureConfigured();
+        var booking = await _context.Bookings
+            .Include(item => item.ProfessionalProfile)
+            .FirstOrDefaultAsync(
+                item => item.Id == bookingId
+                    && item.ProfessionalProfile.UserId == professionalUserId,
+                cancellationToken);
+        if (booking == null)
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "Booking not found.",
+                PaymentErrorCode.NotFound);
+        }
+
+        if (booking.RefundStatus == RefundStatus.Refunded)
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Success(
+                ToRefundVerification(booking));
+        }
+
+        if (booking.RefundStatus != RefundStatus.Requested
+            || string.IsNullOrWhiteSpace(booking.EsewaTransactionUuid)
+            || string.IsNullOrWhiteSpace(booking.EsewaTransactionCode)
+            || !booking.EsewaTotalAmount.HasValue)
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "This booking has no eligible eSewa refund request.",
+                PaymentErrorCode.Conflict);
+        }
+
+        var gatewayStatus = await CheckGatewayStatusAsync(
+            booking.EsewaTransactionUuid,
+            booking.EsewaTotalAmount.Value,
+            cancellationToken);
+        if (!string.Equals(
+                gatewayStatus.TransactionUuid,
+                booking.EsewaTransactionUuid,
+                StringComparison.Ordinal)
+            || !string.Equals(gatewayStatus.ProductCode, ProductCode, StringComparison.Ordinal)
+            || gatewayStatus.TotalAmount != booking.EsewaTotalAmount)
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "The eSewa status response does not match this booking's payment.",
+                PaymentErrorCode.InvalidRequest);
+        }
+
+        if (gatewayStatus.Status.Equals("PARTIAL_REFUND", StringComparison.OrdinalIgnoreCase))
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "eSewa reports a partial refund. Partial refund amounts are not yet supported here; contact support before closing this request.",
+                PaymentErrorCode.Conflict);
+        }
+
+        if (!gatewayStatus.Status.Equals("FULL_REFUND", StringComparison.OrdinalIgnoreCase))
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "eSewa has not confirmed a full refund yet. Process the refund through your eSewa merchant refund channel, then check again.",
+                PaymentErrorCode.Conflict);
+        }
+
+        if (string.IsNullOrWhiteSpace(gatewayStatus.TransactionCode))
+        {
+            return PaymentOperationResult<RefundVerificationDto>.Failure(
+                "eSewa confirmed the refund without a reference. Contact support to verify it before closing this request.",
+                PaymentErrorCode.Conflict);
+        }
+
+        booking.RefundStatus = RefundStatus.Refunded;
+        booking.RefundAmount = booking.EsewaTotalAmount.Value;
+        booking.RefundedAt = DateTime.UtcNow;
+        booking.RefundGatewayReference = gatewayStatus.TransactionCode;
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return PaymentOperationResult<RefundVerificationDto>.Success(
+            ToRefundVerification(booking));
+    }
+
+    private static RefundVerificationDto ToRefundVerification(Booking booking) =>
+        new(
+            booking.Id,
+            booking.RefundStatus.ToString(),
+            booking.RefundAmount ?? 0m,
+            booking.RefundedAt,
+            booking.RefundGatewayReference);
+
+    private async Task<PaymentOperationResult<PaymentStatusDto>> ApplyGatewayStatusAsync(
+        PaymentIntent paymentIntent,
+        GatewayStatus gatewayStatus,
+        string? transactionCode,
+        CancellationToken cancellationToken)
+    {
+        if (gatewayStatus.Status.Equals("COMPLETE", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.Equals(
+                    gatewayStatus.TransactionUuid,
+                    paymentIntent.EsewaTransactionUuid,
+                    StringComparison.Ordinal)
+                || !string.Equals(gatewayStatus.ProductCode, ProductCode, StringComparison.Ordinal)
+                || gatewayStatus.TotalAmount != paymentIntent.EsewaTotalAmount)
+            {
+                return PaymentOperationResult<PaymentStatusDto>.Failure(
+                    "The eSewa status response does not match the payment request.",
+                    PaymentErrorCode.InvalidRequest);
+            }
+
+            var confirmedTransactionCode = transactionCode ?? gatewayStatus.TransactionCode;
+            if (string.IsNullOrWhiteSpace(confirmedTransactionCode))
+            {
+                return PaymentOperationResult<PaymentStatusDto>.Failure(
+                    "eSewa confirmed payment without returning a transaction code.",
+                    PaymentErrorCode.Conflict);
+            }
+
+            if (paymentIntent.Status == PaymentIntentStatus.Completed)
+            {
+                var existingBooking = await _context.Bookings
+                    .FirstOrDefaultAsync(
+                        item => item.EsewaTransactionUuid == paymentIntent.EsewaTransactionUuid,
+                        cancellationToken);
+                if (existingBooking != null && paymentIntent.Booking == null)
+                {
+                    paymentIntent.Booking = existingBooking;
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                return existingBooking == null
+                    ? PaymentOperationResult<PaymentStatusDto>.Failure(
+                        "The completed payment has no associated booking.",
+                        PaymentErrorCode.Conflict)
+                    : PaymentOperationResult<PaymentStatusDto>.Success(ToPaymentStatus(
+                        existingBooking,
+                        gatewayStatus.Status));
+            }
+
+            if (paymentIntent.Status != PaymentIntentStatus.Pending)
+            {
+                return PaymentOperationResult<PaymentStatusDto>.Failure(
+                    "This payment request is no longer pending.",
+                    PaymentErrorCode.Conflict);
+            }
+
+            var strategy = _context.Database.CreateExecutionStrategy();
+            var (bookingId, error) = await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+                var existing = await _context.Bookings
+                    .FirstOrDefaultAsync(
+                        item => item.EsewaTransactionUuid == paymentIntent.EsewaTransactionUuid,
+                        cancellationToken);
+                if (existing != null)
+                {
+                    paymentIntent.Status = PaymentIntentStatus.Completed;
+                    paymentIntent.EsewaTransactionCode = confirmedTransactionCode;
+                    paymentIntent.Booking = existing;
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return (BookingId: (int?)existing.Id, Error: (string?)null);
+                }
+
+                var hasConflict = await _context.Bookings.AnyAsync(booking =>
+                    booking.ProfessionalProfileId == paymentIntent.ProfessionalProfileId
+                    && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
+                    && booking.ScheduledDateTime < paymentIntent.EndDateTime
+                    && booking.EndDateTime > paymentIntent.ScheduledDateTime,
+                    cancellationToken);
+                if (hasConflict)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    return (BookingId: (int?)null, Error: "Payment succeeded, but the appointment time has since been booked. Contact support to resolve the payment.");
+                }
+
+                var booking = new Booking
+                {
+                    CustomerProfileId = paymentIntent.CustomerProfileId,
+                    ProfessionalProfileId = paymentIntent.ProfessionalProfileId,
+                    ServiceId = paymentIntent.ServiceId,
+                    ScheduledDateTime = paymentIntent.ScheduledDateTime,
+                    EndDateTime = paymentIntent.EndDateTime,
+                    Status = BookingStatus.Confirmed,
+                    TotalPrice = paymentIntent.TotalPrice,
+                    CommissionAmount = paymentIntent.CommissionAmount,
+                    EsewaTransactionUuid = paymentIntent.EsewaTransactionUuid,
+                    EsewaTransactionCode = confirmedTransactionCode,
+                    EsewaTotalAmount = paymentIntent.EsewaTotalAmount,
+                    Notes = paymentIntent.Notes
+                };
+                _context.Bookings.Add(booking);
+                paymentIntent.Booking = booking;
+                paymentIntent.Status = PaymentIntentStatus.Completed;
+                paymentIntent.EsewaTransactionCode = confirmedTransactionCode;
+                await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return (BookingId: (int?)booking.Id, Error: (string?)null);
+            });
+
+            if (bookingId == null)
+            {
+                return PaymentOperationResult<PaymentStatusDto>.Failure(
+                    error ?? "Could not create a booking for this successful payment.",
+                    PaymentErrorCode.Conflict);
+            }
+
+            var createdBooking = await GetBookingByTransactionUuidAsync(
+                paymentIntent.EsewaTransactionUuid,
+                cancellationToken);
+            return createdBooking == null
+                ? PaymentOperationResult<PaymentStatusDto>.Failure(
+                    "The booking was created but could not be loaded.",
+                    PaymentErrorCode.Conflict)
+                : PaymentOperationResult<PaymentStatusDto>.Success(ToPaymentStatus(
+                    createdBooking,
+                    gatewayStatus.Status));
+        }
+
+        if (gatewayStatus.Status.Equals("CANCELED", StringComparison.OrdinalIgnoreCase)
+            && paymentIntent.Status == PaymentIntentStatus.Pending)
+        {
+            paymentIntent.Status = PaymentIntentStatus.Cancelled;
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        return PaymentOperationResult<PaymentStatusDto>.Success(
+            new PaymentStatusDto(
+                BookingId: null,
+                paymentIntent.EsewaTransactionUuid,
+                gatewayStatus.Status,
+                paymentIntent.Status.ToString(),
+                IsPaid: false,
+                paymentIntent.EsewaTransactionCode,
+                paymentIntent.EsewaTotalAmount));
     }
 
     private async Task<PaymentOperationResult<PaymentStatusDto>> ApplyGatewayStatusAsync(
@@ -259,7 +708,7 @@ public sealed class PaymentService : IPaymentService
                     StringComparison.Ordinal)
                 || !string.Equals(
                     gatewayStatus.ProductCode,
-                    _options.ProductCode,
+                    ProductCode,
                     StringComparison.Ordinal)
                 || gatewayStatus.TotalAmount != booking.EsewaTotalAmount)
             {
@@ -317,7 +766,7 @@ public sealed class PaymentService : IPaymentService
         decimal totalAmount,
         CancellationToken cancellationToken)
     {
-        var url = $"{_options.StatusCheckUrl}?product_code={Uri.EscapeDataString(_options.ProductCode)}"
+        var url = $"{_options.StatusCheckUrl}?product_code={Uri.EscapeDataString(ProductCode)}"
             + $"&total_amount={Uri.EscapeDataString(FormatAmount(totalAmount))}"
             + $"&transaction_uuid={Uri.EscapeDataString(transactionUuid)}";
         using var response = await _httpClient.GetAsync(url, cancellationToken);
@@ -360,6 +809,16 @@ public sealed class PaymentService : IPaymentService
                 booking => booking.EsewaTransactionUuid == transactionUuid,
                 cancellationToken);
     }
+
+    private static PaymentStatusDto ToPaymentStatus(Booking booking, string gatewayStatus) =>
+        new(
+            booking.Id,
+            booking.EsewaTransactionUuid!,
+            gatewayStatus,
+            booking.Status.ToString(),
+            booking.Status == BookingStatus.Confirmed,
+            booking.EsewaTransactionCode,
+            booking.EsewaTotalAmount!.Value);
 
     private CallbackParseResult TryParseAndVerifyCallback(string encodedResponse)
     {
@@ -510,6 +969,11 @@ public sealed class PaymentService : IPaymentService
 
     private static string FormatAmount(decimal amount) =>
         amount.ToString("0.00", CultureInfo.InvariantCulture);
+
+    private static string DescribeCharacters(string value) =>
+        string.Join(
+            " ",
+            value.Select(character => $"U+{(int)character:X4}"));
 
     private sealed record VerifiedCallback(
         string TransactionUuid,

@@ -1,7 +1,14 @@
 import client from './client'
 
-export async function initiatePayment(bookingId) {
-  const { data } = await client.post(`/Payment/initiate/${bookingId}`)
+export async function initiatePayment(paymentRequest) {
+  const { data } = await client.post('/Payment/initiate', paymentRequest)
+  return data
+}
+
+export async function refreshPayment(transactionUuid) {
+  const { data } = await client.post(
+    `/Payment/initiate/${encodeURIComponent(transactionUuid)}/refresh`,
+  )
   return data
 }
 
@@ -20,6 +27,13 @@ export async function getPaymentFailure(transactionUuid) {
 export async function getPaymentStatus(transactionUuid) {
   const { data } = await client.get(
     `/Payment/status/${encodeURIComponent(transactionUuid)}`,
+  )
+  return data
+}
+
+export async function verifyBookingRefund(bookingId) {
+  const { data } = await client.post(
+    `/Payment/bookings/${bookingId}/refund/verify`,
   )
   return data
 }

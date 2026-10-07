@@ -204,6 +204,29 @@
   backdrop-filter: blur(20px);
 }
 
+.auth-heading {
+  margin: 0;
+  color: var(--primary);
+  font-family: var(--font-headline);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.auth-mode-prompt {
+  color: var(--on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.auth-mode-prompt button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .auth-mode-tab {
   font-family: var(--font-headline);
   font-size: 1.25rem;

@@ -150,6 +150,15 @@ public class AvailabilityService : IAvailabilityService
             })
             .ToListAsync();
 
+        var nepalNow = BookingScheduleValidator.GetNepalNow();
+        if (date == DateOnly.FromDateTime(nepalNow.DateTime))
+        {
+            var currentTime = TimeOnly.FromDateTime(nepalNow.DateTime);
+            slots = slots
+                .Where(slot => slot.StartTime > currentTime)
+                .ToList();
+        }
+
         return (slots, null);
     }
 

@@ -107,7 +107,7 @@ export default function HomePage() {
           {loading ? (
             <p role="status">Loading professionals…</p>
           ) : !errorMessage && professionals.length === 0 ? (
-            <p className="text-on-surface-variant">No public professional profiles are available yet.</p>
+            <p className="text-on-surface-variant">No verified professionals match yet</p>
           ) : (
             <div className="artists-grid">
               {professionals.map((professional) => {
