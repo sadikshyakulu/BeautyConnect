@@ -968,7 +968,7 @@ public sealed class PaymentService : IPaymentService
         $"B{bookingId}-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}";
 
     private static string FormatAmount(decimal amount) =>
-        amount.ToString("0.00", CultureInfo.InvariantCulture);
+        amount.ToString("0.##", CultureInfo.InvariantCulture);
 
     private static string DescribeCharacters(string value) =>
         string.Join(
