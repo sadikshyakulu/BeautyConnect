@@ -16,11 +16,28 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Database Connection with Pomelo MySQL
+// Use SQLite by default for local development so the API can boot even when MySQL is not running yet.
+// Switching to MySQL is still supported by setting Database:Provider=MySql and a valid DefaultConnection.
+var databaseProvider = builder.Configuration["Database:Provider"] ?? "Sqlite";
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<BeautyConnectDbContext>(options =>
+var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=beautyconnect.db";
+var mysqlVersionText = builder.Configuration["Database:MySqlVersion"] ?? "8.0.36";
+var mysqlVersion = ServerVersion.Parse(mysqlVersionText);
+
+builder.Services.AddDbContext<BeautyConnectDbContext>((_, options) =>
 {
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString), mysqlOptions =>
+    if (databaseProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(sqliteConnectionString);
+        return;
+    }
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing or empty.");
+    }
+
+    options.UseMySql(connectionString, mysqlVersion, mysqlOptions =>
     {
         mysqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
@@ -107,6 +124,14 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// Apply schema changes automatically only in Development; production migrations should be reviewed and deployed separately.
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<BeautyConnectDbContext>();
+    db.Database.Migrate();
+}
 
 await SeedAdminAsync(app);
 

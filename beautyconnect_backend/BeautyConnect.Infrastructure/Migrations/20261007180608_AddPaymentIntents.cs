@@ -16,7 +16,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "PaymentIntents",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     CustomerProfileId = table.Column<int>(type: "int", nullable: false),
                     ProfessionalProfileId = table.Column<int>(type: "int", nullable: false),
