@@ -13,3 +13,4 @@ build/
 .env
 *.env.local
 appsettings.Development.json
+!beautyconnect_backend/BeautyConnect.Api/appsettings.Development.json
