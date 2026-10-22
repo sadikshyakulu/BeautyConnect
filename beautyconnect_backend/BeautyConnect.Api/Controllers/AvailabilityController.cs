@@ -76,7 +76,8 @@ public class AvailabilityController : ControllerBase
     [HttpGet("professionals/{professionalProfileId:int}/open-slots")]
     public async Task<IActionResult> GetOpenSlots(
         int professionalProfileId,
-        [FromQuery, Required] DateOnly? date)
+        [FromQuery, Required] DateOnly? date,
+        [FromQuery, Range(1, 1439)] int durationMinutes = 30)
     {
         if (date == null)
         {
@@ -85,7 +86,8 @@ public class AvailabilityController : ControllerBase
 
         var (slots, error) = await _availabilityService.GetOpenSlotsAsync(
             professionalProfileId,
-            date.Value);
+            date.Value,
+            durationMinutes);
         if (slots == null)
         {
             return NotFound(new { message = error });

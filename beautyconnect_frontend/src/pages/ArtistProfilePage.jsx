@@ -26,16 +26,6 @@ function slotDateTime(slot) {
   return new Date(`${slot.date}T${wholeSeconds}${milliseconds}+05:45`)
 }
 
-function timeToMinutes(time) {
-  const [hours, minutes] = time.split(':').map(Number)
-  return hours * 60 + minutes
-}
-
-function serviceFitsSlot(service, slot) {
-  return service.durationMinutes < 1440
-    && service.durationMinutes <= timeToMinutes(slot.endTime) - timeToMinutes(slot.startTime)
-}
-
 export default function ArtistProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -45,6 +35,7 @@ export default function ArtistProfilePage() {
   const [selectedDate, setSelectedDate] = useState(() => nepalDateString(new Date()))
   const [slots, setSlots] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
+  const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [slotLoading, setSlotLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -97,9 +88,15 @@ export default function ArtistProfilePage() {
 
   useEffect(() => {
     if (!professional) return undefined
+    if (!selectedServiceId) return undefined
+
+    const selectedService = (professional.matchingServices ?? [])
+      .find((service) => service.id === selectedServiceId)
+    if (!selectedService || selectedService.durationMinutes >= 1440) return undefined
+
     let active = true
-    const currentAvailabilityKey = `${professional.id}:${selectedDate}`
-    getOpenSlots(professional.id, selectedDate)
+    const currentAvailabilityKey = `${professional.id}:${selectedDate}:${selectedService.id}`
+    getOpenSlots(professional.id, selectedDate, selectedService.durationMinutes)
       .then((openSlots) => {
         if (active) {
           const now = new Date()
@@ -124,7 +121,7 @@ export default function ArtistProfilePage() {
     return () => {
       active = false
     }
-  }, [professional, selectedDate])
+  }, [professional, selectedDate, selectedServiceId])
 
   function startBooking(service) {
     const slot = selectedSlot
@@ -146,7 +143,8 @@ export default function ArtistProfilePage() {
   if (!professional) return null
 
   const services = professional.matchingServices ?? []
-  const activeAvailabilityKey = `${professional.id}:${selectedDate}`
+  const activeAvailabilityKey = `${professional.id}:${selectedDate}:${selectedServiceId ?? 'none'}`
+  const selectedService = services.find((service) => service.id === selectedServiceId)
   const visibleSlots = availabilityKey === activeAvailabilityKey ? slots : []
 
   return (
@@ -181,7 +179,7 @@ export default function ArtistProfilePage() {
           ) : (
             <div className="d-flex flex-column gap-3">
               {services.map((service) => (
-                <article key={service.id} className="glass-card rounded-2xl p-4 d-flex flex-column flex-sm-row justify-content-between gap-3">
+                <article key={service.id} className={`glass-card rounded-2xl p-4 d-flex flex-column flex-sm-row justify-content-between gap-3${selectedServiceId === service.id ? ' border border-primary' : ''}`}>
                   <div>
                     <h3 className="h5">{service.name}</h3>
                     <p className="small text-on-surface-variant">{service.category} · {service.durationMinutes} minutes</p>
@@ -194,11 +192,18 @@ export default function ArtistProfilePage() {
                   </div>
                   <div className="text-sm-end">
                     <strong className="d-block mb-2">{service.price}</strong>
-                    {selectedSlot && service.durationMinutes < 1440 && !serviceFitsSlot(service, selectedSlot) && (
-                      <p className="small text-danger mb-2">The selected availability is shorter than this service.</p>
-                    )}
-                    <button className="btn btn-primary" type="button" disabled={!selectedSlot || !serviceFitsSlot(service, selectedSlot)} onClick={() => startBooking(service)}>
-                      Select to book
+                    <button
+                      className={`btn ${selectedServiceId === service.id ? 'btn-primary' : 'btn-outline-primary'}`}
+                      type="button"
+                      disabled={service.durationMinutes >= 1440}
+                      aria-pressed={selectedServiceId === service.id}
+                      onClick={() => {
+                        setSelectedServiceId(service.id)
+                        setSelectedSlot(null)
+                        setSlotError('')
+                      }}
+                    >
+                      {selectedServiceId === service.id ? 'Selected' : 'Choose service'}
                     </button>
                   </div>
                 </article>
@@ -210,6 +215,13 @@ export default function ArtistProfilePage() {
         <aside className="col-lg-5">
           <div className="glass-card rounded-2xl p-4">
             <h2 className="h5">Available appointments</h2>
+            {!selectedService ? (
+              <p className="text-on-surface-variant">Choose a service first to see appointment times that fit its duration.</p>
+            ) : (
+              <p className="small text-on-surface-variant">
+                {selectedService.name} · {selectedService.durationMinutes} minutes
+              </p>
+            )}
             <label className="form-label" htmlFor="appointment-date">Choose a date</label>
             <input
               id="appointment-date"
@@ -223,23 +235,28 @@ export default function ArtistProfilePage() {
                 setSlotError('')
               }}
             />
-            {(slotLoading || availabilityKey !== activeAvailabilityKey) && <p role="status">Loading availability…</p>}
+            {selectedService && (slotLoading || availabilityKey !== activeAvailabilityKey) && <p role="status">Finding bookable times…</p>}
             {slotError && <div className="alert alert-danger" role="alert">{slotError}</div>}
-            {!slotLoading && availabilityKey === activeAvailabilityKey && !slotError && visibleSlots.length === 0 && (
-              <p className="text-on-surface-variant">No open slots for this date.</p>
+            {selectedService && !slotLoading && availabilityKey === activeAvailabilityKey && !slotError && visibleSlots.length === 0 && (
+              <p className="text-on-surface-variant">No bookable times for this service on this date. Try another date.</p>
             )}
             <div className="d-flex flex-wrap gap-2">
               {visibleSlots.map((slot) => (
                 <button
                   key={`${slot.availabilityId}-${slot.startTime}`}
-                  className={`btn ${selectedSlot === slot ? 'btn-primary' : 'btn-outline-primary'}`}
+                  className={`btn ${selectedSlot?.availabilityId === slot.availabilityId && selectedSlot?.startTime === slot.startTime ? 'btn-primary' : 'btn-outline-primary'}`}
                   type="button"
                   onClick={() => setSelectedSlot(slot)}
                 >
-                  {slot.startTime}
+                  {slot.startTime.slice(0, 5)}
                 </button>
               ))}
             </div>
+            {selectedService && selectedSlot && (
+              <button className="btn btn-primary w-100 mt-3" type="button" onClick={() => startBooking(selectedService)}>
+                Continue with {selectedService.name}
+              </button>
+            )}
           </div>
         </aside>
       </div>

@@ -1,0 +1,148 @@
+.professional-weekly-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.professional-schedule-day {
+  padding: 0.8rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.9rem;
+  background: linear-gradient(115deg, #fff, var(--surface-container-low));
+}
+
+.professional-schedule-day-heading,
+.professional-schedule-day-heading > div {
+  display: flex;
+  align-items: center;
+}
+
+.professional-schedule-day-heading {
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.professional-schedule-day-heading > div {
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.professional-schedule-day-heading strong {
+  min-width: 5.2rem;
+  font-size: 0.88rem;
+}
+
+.professional-day-status {
+  padding: 0.2rem 0.48rem;
+  border-radius: 999px;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+.professional-day-status--open {
+  background: #e8f3e8;
+  color: #2f6c3c;
+}
+
+.professional-day-empty {
+  margin: 0.6rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.76rem;
+}
+
+.professional-shift-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.professional-shift {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.48rem 0.55rem;
+  border-radius: 0.65rem;
+  background: rgba(246, 235, 236, 0.68);
+}
+
+.professional-shift--paused {
+  background: #f3f0ef;
+  color: var(--on-surface-variant);
+}
+
+.professional-shift-time {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.79rem;
+  font-weight: 650;
+}
+
+.professional-shift-time .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 1rem;
+}
+
+.professional-shift--paused .professional-shift-time .material-symbols-outlined {
+  color: var(--outline);
+}
+
+.professional-shift-time small {
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: #e5dfdd;
+  font-size: 0.62rem;
+}
+
+.professional-shift-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.professional-shift-actions .btn {
+  padding: 0.18rem 0.48rem;
+  font-size: 0.68rem;
+}
+
+.professional-hours-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+  padding: 0.75rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.professional-date-overrides {
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.professional-date-override {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.4rem 0;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 480px) {
+  .professional-schedule-day {
+    padding: 0.65rem;
+  }
+
+  .professional-day-status {
+    font-size: 0.58rem;
+  }
+
+  .professional-shift {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

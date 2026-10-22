@@ -9,15 +9,15 @@ import {
 import {
   createAvailability,
   getMyAvailability,
+  updateAvailability,
 } from '../api/availability'
 import {
-  addService,
   getMyProfile,
   submitForVerification,
-  updateService,
 } from '../api/professionalProfile'
 import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
+import './ProfessionalDashboardPage.css'
 
 const bookingStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Confirmed', 'Completed', 'Cancelled'][status] ?? 'Unknown'
@@ -28,6 +28,7 @@ const profileStatus = (status) => typeof status === 'number'
 const refundStatus = (status) => typeof status === 'number'
   ? ['Not requested', 'Requested', 'Refunded'][status] ?? 'Unknown'
   : status
+const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export default function ProfessionalDashboardPage() {
   const { user } = useAuth()
@@ -40,11 +41,8 @@ export default function ProfessionalDashboardPage() {
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('17:00')
   const [dayOfWeek, setDayOfWeek] = useState('1')
-  const [serviceName, setServiceName] = useState('')
-  const [serviceCategory, setServiceCategory] = useState('')
-  const [servicePrice, setServicePrice] = useState('')
-  const [serviceDuration, setServiceDuration] = useState('60')
-  const [serviceDurationEdits, setServiceDurationEdits] = useState({})
+  const [availabilityEditorDay, setAvailabilityEditorDay] = useState(null)
+  const [editingAvailabilityId, setEditingAvailabilityId] = useState(null)
   const [verifyingRefundId, setVerifyingRefundId] = useState(null)
   const [refundMessages, setRefundMessages] = useState({})
 
@@ -122,62 +120,90 @@ export default function ProfessionalDashboardPage() {
   async function handleAvailability(event) {
     event.preventDefault()
     setErrorMessage('')
-    try {
-      await createAvailability({
-        dayOfWeek: Number(dayOfWeek),
-        specificDate: null,
-        startTime: `${startTime}:00`,
-        endTime: `${endTime}:00`,
-        isAvailable: true,
-      })
-      await loadDashboard()
-      setNotice('Availability added.')
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not add availability.')
-    }
-  }
-
-  async function handleAddService(event) {
-    event.preventDefault()
-    setErrorMessage('')
-    try {
-      await addService({
-        name: serviceName,
-        description: '',
-        category: serviceCategory,
-        price: Number(servicePrice),
-        durationMinutes: Number(serviceDuration),
-      })
-      await loadDashboard()
-      setServiceName('')
-      setServiceCategory('')
-      setServicePrice('')
-      setNotice('Service added to your profile.')
-    } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not add this service.')
-    }
-  }
-
-  async function handleFixServiceDuration(service) {
-    const durationMinutes = Number(serviceDurationEdits[service.id])
-    if (!Number.isInteger(durationMinutes) || durationMinutes < 1 || durationMinutes >= 1440) {
-      setErrorMessage('Enter a service duration between 1 and 1439 minutes.')
+    setNotice('')
+    const nextStart = `${startTime}:00`
+    const nextEnd = `${endTime}:00`
+    if (startTime >= endTime) {
+      setErrorMessage('Choose an end time later than the start time.')
       return
     }
 
-    setErrorMessage('')
+    const overlapsExistingHours = availability.some((slot) =>
+      slot.specificDate == null
+      && Number(slot.dayOfWeek) === Number(dayOfWeek)
+      && slot.isAvailable
+      && slot.id !== editingAvailabilityId
+      && startTime < slot.endTime.slice(0, 5)
+      && endTime > slot.startTime.slice(0, 5),
+    )
+    if (overlapsExistingHours) {
+      setErrorMessage('These hours overlap another active shift. Edit that shift or choose a different time.')
+      return
+    }
+
     try {
-      await updateService(service.id, {
-        name: service.name,
-        description: service.description,
-        category: service.category,
-        price: service.price,
-        durationMinutes,
+      const schedule = {
+        dayOfWeek: Number(dayOfWeek),
+        specificDate: null,
+        startTime: nextStart,
+        endTime: nextEnd,
+        isAvailable: true,
+      }
+      if (editingAvailabilityId !== null) {
+        await updateAvailability(editingAvailabilityId, schedule)
+      } else {
+        await createAvailability(schedule)
+      }
+      await loadDashboard()
+      setAvailabilityEditorDay(null)
+      setEditingAvailabilityId(null)
+      setNotice(editingAvailabilityId !== null ? 'Working hours updated.' : 'Working hours added.')
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message ?? 'Could not save these working hours.')
+    }
+  }
+
+  function beginAddAvailability(dayIndex, daySlots) {
+    const activeWindows = daySlots
+      .filter((slot) => slot.isAvailable)
+      .sort((left, right) => left.endTime.localeCompare(right.endTime))
+    const lastEnd = activeWindows.at(-1)?.endTime?.slice(0, 5)
+    const start = lastEnd ?? '09:00'
+    const [hours, minutes] = start.split(':').map(Number)
+    const endMinutes = Math.min(hours * 60 + minutes + (lastEnd ? 120 : 480), 1439)
+    const end = `${String(Math.floor(endMinutes / 60)).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`
+    setDayOfWeek(String(dayIndex))
+    setStartTime(start)
+    setEndTime(end)
+    setEditingAvailabilityId(null)
+    setAvailabilityEditorDay(String(dayIndex))
+    setErrorMessage('')
+  }
+
+  function beginEditAvailability(slot) {
+    setDayOfWeek(String(slot.dayOfWeek))
+    setStartTime(slot.startTime.slice(0, 5))
+    setEndTime(slot.endTime.slice(0, 5))
+    setEditingAvailabilityId(slot.id)
+    setAvailabilityEditorDay(String(slot.dayOfWeek))
+    setErrorMessage('')
+  }
+
+  async function toggleAvailability(slot) {
+    setErrorMessage('')
+    setNotice('')
+    try {
+      await updateAvailability(slot.id, {
+        dayOfWeek: slot.dayOfWeek,
+        specificDate: slot.specificDate,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        isAvailable: !slot.isAvailable,
       })
       await loadDashboard()
-      setNotice('Service duration updated.')
+      setNotice(slot.isAvailable ? 'This shift is now paused.' : 'This shift is available again.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not update this service duration.')
+      setErrorMessage(error.response?.data?.message ?? 'Could not update this shift.')
     }
   }
 
@@ -196,6 +222,8 @@ export default function ProfessionalDashboardPage() {
 
   const incoming = bookings.filter((booking) => ['Pending', 'Confirmed'].includes(bookingStatus(booking.status)))
   const pendingCount = bookings.filter((booking) => bookingStatus(booking.status) === 'Pending').length
+  const weeklyAvailability = availability.filter((slot) => slot.specificDate == null)
+  const dateOverrides = availability.filter((slot) => slot.specificDate != null)
 
   return (
     <div className="container-fluid px-3 px-lg-5 py-5">
@@ -225,7 +253,7 @@ export default function ProfessionalDashboardPage() {
       <div className="row g-3 mb-4">
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active bookings</span><strong className="d-block fs-3">{incoming.length}</strong></div></div>
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Pending requests</span><strong className="d-block fs-3">{pendingCount}</strong></div></div>
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Availability slots</span><strong className="d-block fs-3">{availability.length}</strong></div></div>
+        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active work shifts</span><strong className="d-block fs-3">{weeklyAvailability.filter((slot) => slot.isAvailable).length}</strong></div></div>
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Services</span><strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong></div></div>
       </div>
 
@@ -332,31 +360,96 @@ export default function ProfessionalDashboardPage() {
 
           <section className="col-12 col-xl-6">
             <div className="glass-card rounded-2xl p-4 h-100">
-            <h2 className="h5">Weekly availability</h2>
-            <form onSubmit={handleAvailability}>
-              <label className="form-label" htmlFor="availability-day">Day of week</label>
-              <select id="availability-day" className="form-select mb-3" value={dayOfWeek} onChange={(event) => setDayOfWeek(event.target.value)}>
-                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, value) => <option key={day} value={value}>{day}</option>)}
-              </select>
-              <div className="row g-2 mb-3">
-                <div className="col-6"><label className="form-label" htmlFor="availability-start">Start</label><input id="availability-start" className="form-control" type="time" required value={startTime} onChange={(event) => setStartTime(event.target.value)} /></div>
-                <div className="col-6"><label className="form-label" htmlFor="availability-end">End</label><input id="availability-end" className="form-control" type="time" required value={endTime} onChange={(event) => setEndTime(event.target.value)} /></div>
+            <div className="d-flex justify-content-between align-items-start gap-3 mb-2">
+              <div>
+                <h2 className="h5 mb-1">Weekly working hours</h2>
+                <p className="small text-on-surface-variant mb-0">Set your regular shifts. Customers see bookable start times that fit each service.</p>
               </div>
-              <button className="btn btn-outline-primary" type="submit">Add availability</button>
-            </form>
-            {availability.length === 0 ? (
-              <p className="small text-on-surface-variant mt-3 mb-0">No availability has been added yet.</p>
-            ) : (
-              <div className="d-flex flex-column gap-2 mt-3">
-                {availability.map((slot) => (
-                  <article className="glass-card rounded-2xl p-3" key={slot.id}>
-                    <strong className="d-block">
-                      {slot.specificDate ?? (slot.dayOfWeek === null ? 'Date not set' : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][slot.dayOfWeek])}
-                    </strong>
-                    <span className="small text-on-surface-variant">
-                      {slot.startTime}–{slot.endTime}{!slot.isAvailable && ' · unavailable'}
-                    </span>
+              <span className="material-symbols-outlined text-secondary" aria-hidden="true">calendar_month</span>
+            </div>
+            <div className="professional-weekly-schedule mt-3">
+              {weekDays.map((day, dayIndex) => {
+                const daySlots = weeklyAvailability
+                  .filter((slot) => Number(slot.dayOfWeek) === dayIndex)
+                  .sort((left, right) => left.startTime.localeCompare(right.startTime))
+                const isEditingThisDay = availabilityEditorDay === String(dayIndex)
+                const hasActiveWindow = daySlots.some((slot) => slot.isAvailable)
+                return (
+                  <article className="professional-schedule-day" key={day}>
+                    <div className="professional-schedule-day-heading">
+                      <div>
+                        <strong>{day}</strong>
+                        <span className={`professional-day-status${hasActiveWindow ? ' professional-day-status--open' : ''}`}>
+                          {hasActiveWindow ? 'Open for bookings' : 'Day off'}
+                        </span>
+                      </div>
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        type="button"
+                        onClick={() => isEditingThisDay
+                          ? setAvailabilityEditorDay(null)
+                          : beginAddAvailability(dayIndex, daySlots)}
+                      >
+                        {isEditingThisDay ? 'Close' : daySlots.length ? 'Add shift' : 'Set hours'}
+                      </button>
+                    </div>
+                    {daySlots.length === 0 ? (
+                      <p className="professional-day-empty">No working hours set.</p>
+                    ) : (
+                      <div className="professional-shift-list">
+                        {daySlots.map((slot) => (
+                          <div className={`professional-shift${slot.isAvailable ? '' : ' professional-shift--paused'}`} key={slot.id}>
+                            <div className="professional-shift-time">
+                              <span className="material-symbols-outlined" aria-hidden="true">{slot.isAvailable ? 'schedule' : 'pause_circle'}</span>
+                              <span>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
+                              {!slot.isAvailable && <small>Paused</small>}
+                            </div>
+                            <div className="professional-shift-actions">
+                              <button className="btn btn-sm btn-light" type="button" onClick={() => beginEditAvailability(slot)}>Edit</button>
+                              <button className="btn btn-sm btn-light" type="button" onClick={() => toggleAvailability(slot)}>
+                                {slot.isAvailable ? 'Pause' : 'Open'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isEditingThisDay && (
+                      <form className="professional-hours-editor" onSubmit={handleAvailability}>
+                        <span className="small fw-semibold">{editingAvailabilityId !== null ? 'Update this shift' : `Add a shift on ${day}`}</span>
+                        <div className="row g-2">
+                          <div className="col-6">
+                            <label className="form-label small mb-1" htmlFor={`availability-start-${dayIndex}`}>Starts</label>
+                            <input id={`availability-start-${dayIndex}`} className="form-control form-control-sm" type="time" required value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label small mb-1" htmlFor={`availability-end-${dayIndex}`}>Ends</label>
+                            <input id={`availability-end-${dayIndex}`} className="form-control form-control-sm" type="time" required value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+                          </div>
+                        </div>
+                        <div className="d-flex gap-2 mt-2">
+                          <button className="btn btn-sm btn-primary" type="submit">{editingAvailabilityId !== null ? 'Save shift' : 'Add shift'}</button>
+                          <button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => {
+                            setAvailabilityEditorDay(null)
+                            setEditingAvailabilityId(null)
+                          }}>Cancel</button>
+                        </div>
+                      </form>
+                    )}
                   </article>
+                )
+              })}
+            </div>
+            {dateOverrides.length > 0 && (
+              <div className="professional-date-overrides mt-3">
+                <h3 className="small fw-bold mb-2">Date-specific hours</h3>
+                {dateOverrides.map((slot) => (
+                  <div className="professional-date-override" key={slot.id}>
+                    <span>{slot.specificDate} · {slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
+                    <span className={slot.isAvailable ? 'text-success' : 'text-secondary'}>
+                      {slot.isAvailable ? 'Extra hours' : 'Closed'}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -365,7 +458,13 @@ export default function ProfessionalDashboardPage() {
 
           <section className="col-12 col-xl-6">
             <div className="glass-card rounded-2xl p-4 h-100">
-            <h2 className="h5">Services</h2>
+            <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
+              <div>
+                <h2 className="h5 mb-1">Services</h2>
+                <p className="small text-on-surface-variant mb-0">Your current offerings</p>
+              </div>
+              <Link className="btn btn-sm btn-outline-primary text-nowrap" to="/dashboard/professional/studio">Manage studio</Link>
+            </div>
             {profile?.services?.length ? (
               <div className="d-flex flex-column gap-2 mb-3">
                 {profile.services.map((service) => (
@@ -374,50 +473,10 @@ export default function ProfessionalDashboardPage() {
                     <span className="small text-on-surface-variant">
                       {service.category} · {service.price} · {service.durationMinutes} min
                     </span>
-                    {service.durationMinutes >= 1440 && (
-                      <form
-                        className="mt-2"
-                        onSubmit={(event) => {
-                          event.preventDefault()
-                          handleFixServiceDuration(service)
-                        }}
-                      >
-                        <p className="small text-danger mb-2">
-                          This duration cannot be booked because bookings must fit within one local day. Update it to 1439 minutes or less.
-                        </p>
-                        <div className="d-flex gap-2">
-                          <input
-                            aria-label={`New duration for ${service.name}`}
-                            className="form-control"
-                            type="number"
-                            min="1"
-                            max="1439"
-                            required
-                            value={serviceDurationEdits[service.id] ?? ''}
-                            onChange={(event) => setServiceDurationEdits((current) => ({
-                              ...current,
-                              [service.id]: event.target.value,
-                            }))}
-                          />
-                          <button className="btn btn-outline-primary text-nowrap" type="submit">Update</button>
-                        </div>
-                      </form>
-                    )}
                   </article>
                 ))}
               </div>
-            ) : <p className="small text-on-surface-variant">No services are listed yet.</p>}
-            <form onSubmit={handleAddService}>
-              <label className="form-label" htmlFor="service-name">Service name</label>
-              <input id="service-name" className="form-control mb-2" required value={serviceName} onChange={(event) => setServiceName(event.target.value)} />
-              <label className="form-label" htmlFor="service-category">Category</label>
-              <input id="service-category" className="form-control mb-2" required value={serviceCategory} onChange={(event) => setServiceCategory(event.target.value)} />
-              <div className="row g-2 mb-3">
-                <div className="col-6"><label className="form-label" htmlFor="service-price">Price</label><input id="service-price" className="form-control" type="number" min="0.01" step="0.01" required value={servicePrice} onChange={(event) => setServicePrice(event.target.value)} /></div>
-                <div className="col-6"><label className="form-label" htmlFor="service-duration">Minutes</label><input id="service-duration" className="form-control" type="number" min="1" max="1439" required value={serviceDuration} onChange={(event) => setServiceDuration(event.target.value)} /></div>
-              </div>
-              <button className="btn btn-outline-primary" type="submit">Add service</button>
-            </form>
+            ) : <p className="small text-on-surface-variant">No services are listed yet. Create your first one in your studio profile.</p>}
             </div>
           </section>
       </div>

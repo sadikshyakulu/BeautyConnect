@@ -15,10 +15,10 @@ export async function updateAvailability(availabilityId, availability) {
   return data
 }
 
-export async function getOpenSlots(professionalProfileId, date) {
+export async function getOpenSlots(professionalProfileId, date, durationMinutes = 30) {
   const { data } = await client.get(
     `/Availability/professionals/${professionalProfileId}/open-slots`,
-    { params: { date } },
+    { params: { date, durationMinutes } },
   )
   return data
 }

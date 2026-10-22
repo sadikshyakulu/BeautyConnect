@@ -114,10 +114,27 @@ public static class BookingScheduleValidator
 
         var bookingStartTime = TimeOnly.FromDateTime(schedule.LocalStart);
         var bookingEndTime = TimeOnly.FromDateTime(schedule.LocalEnd);
-        return candidateSlots.Any(slot =>
-            slot.IsAvailable
-            && slot.StartTime <= bookingStartTime
-            && slot.EndTime >= bookingEndTime);
+        var coveredUntil = bookingStartTime;
+        foreach (var slot in candidateSlots
+                     .Where(slot => slot.IsAvailable && slot.EndTime > bookingStartTime)
+                     .OrderBy(slot => slot.StartTime))
+        {
+            if (slot.StartTime > coveredUntil)
+            {
+                break;
+            }
+
+            if (slot.EndTime > coveredUntil)
+            {
+                coveredUntil = slot.EndTime;
+                if (coveredUntil >= bookingEndTime)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static TimeZoneInfo ResolveNepalTimeZone()

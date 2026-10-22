@@ -1,5 +1,6 @@
 using BeautyConnect.Core.DTOs;
 using BeautyConnect.Core.Entities;
+using BeautyConnect.Core.Enums;
 using BeautyConnect.Core.Interfaces;
 using BeautyConnect.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -118,8 +119,14 @@ public class AvailabilityService : IAvailabilityService
 
     public async Task<(List<OpenAvailabilitySlotDto>? Slots, string? Error)> GetOpenSlotsAsync(
         int professionalProfileId,
-        DateOnly date)
+        DateOnly date,
+        int durationMinutes)
     {
+        if (durationMinutes is < 1 or >= 24 * 60)
+        {
+            return (null, "Service duration must be between 1 and 1439 minutes.");
+        }
+
         var profileExists = await _context.ProfessionalProfiles
             .AnyAsync(profile => profile.Id == professionalProfileId);
         if (!profileExists)
@@ -132,7 +139,7 @@ public class AvailabilityService : IAvailabilityService
                 availability.ProfessionalProfileId == professionalProfileId
                 && availability.SpecificDate == date);
 
-        var slots = await _context.Availabilities
+        var availability = await _context.Availabilities
             .AsNoTracking()
             .Where(availability =>
                 availability.ProfessionalProfileId == professionalProfileId
@@ -141,23 +148,89 @@ public class AvailabilityService : IAvailabilityService
                     ? availability.SpecificDate == date
                     : availability.SpecificDate == null && availability.DayOfWeek == date.DayOfWeek))
             .OrderBy(availability => availability.StartTime)
-            .Select(availability => new OpenAvailabilitySlotDto
+            .ToListAsync();
+        var mergedWindows = new List<(TimeOnly Start, TimeOnly End, int Id)>();
+        foreach (var window in availability)
+        {
+            if (mergedWindows.Count > 0 && window.StartTime <= mergedWindows[^1].End)
             {
-                AvailabilityId = availability.Id,
-                Date = date,
-                StartTime = availability.StartTime,
-                EndTime = availability.EndTime
-            })
+                var previous = mergedWindows[^1];
+                mergedWindows[^1] = (
+                    previous.Start,
+                    window.EndTime > previous.End ? window.EndTime : previous.End,
+                    previous.Id);
+            }
+            else
+            {
+                mergedWindows.Add((window.StartTime, window.EndTime, window.Id));
+            }
+        }
+
+        var localDayStart = date.ToDateTime(TimeOnly.MinValue);
+        var localDayEnd = localDayStart.AddDays(1);
+        var bookings = await _context.Bookings
+            .AsNoTracking()
+            .Where(booking =>
+                booking.ProfessionalProfileId == professionalProfileId
+                && (booking.Status == BookingStatus.Pending || booking.Status == BookingStatus.Confirmed)
+                && booking.ScheduledDateTime < localDayEnd
+                && booking.EndDateTime > localDayStart)
+            .Select(booking => new { booking.ScheduledDateTime, booking.EndDateTime })
+            .ToListAsync();
+        var now = DateTime.UtcNow;
+        var paymentIntents = await _context.PaymentIntents
+            .AsNoTracking()
+            .Where(paymentIntent =>
+                paymentIntent.ProfessionalProfileId == professionalProfileId
+                && paymentIntent.Status == PaymentIntentStatus.Pending
+                && paymentIntent.ExpiresAt > now
+                && paymentIntent.ScheduledDateTime < localDayEnd
+                && paymentIntent.EndDateTime > localDayStart)
+            .Select(paymentIntent => new { paymentIntent.ScheduledDateTime, paymentIntent.EndDateTime })
             .ToListAsync();
 
         var nepalNow = BookingScheduleValidator.GetNepalNow();
-        if (date == DateOnly.FromDateTime(nepalNow.DateTime))
+        var isToday = date == DateOnly.FromDateTime(nepalNow.DateTime);
+        var currentTime = TimeOnly.FromDateTime(nepalNow.DateTime);
+        var slotStarts = new HashSet<TimeOnly>();
+        foreach (var window in mergedWindows)
         {
-            var currentTime = TimeOnly.FromDateTime(nepalNow.DateTime);
-            slots = slots
-                .Where(slot => slot.StartTime > currentTime)
-                .ToList();
+            var windowStartMinutes = window.Start.Hour * 60 + window.Start.Minute;
+            var windowEndMinutes = window.End.Hour * 60 + window.End.Minute;
+            for (var candidateMinutes = windowStartMinutes;
+                 candidateMinutes + durationMinutes <= windowEndMinutes;
+                 candidateMinutes += 30)
+            {
+                var candidate = new TimeOnly(candidateMinutes / 60, candidateMinutes % 60);
+                if (!isToday || candidate > currentTime)
+                {
+                    var start = date.ToDateTime(candidate);
+                    var end = start.AddMinutes(durationMinutes);
+                    var conflictsWithBooking = bookings.Any(booking =>
+                        booking.ScheduledDateTime < end && booking.EndDateTime > start);
+                    var conflictsWithPayment = paymentIntents.Any(paymentIntent =>
+                        paymentIntent.ScheduledDateTime < end && paymentIntent.EndDateTime > start);
+
+                    if (!conflictsWithBooking && !conflictsWithPayment)
+                    {
+                        slotStarts.Add(candidate);
+                    }
+                }
+            }
         }
+
+        var slots = slotStarts
+            .OrderBy(start => start)
+            .Select(start => new OpenAvailabilitySlotDto
+            {
+                AvailabilityId = mergedWindows
+                    .First(window => window.Start <= start
+                        && window.End >= start.AddMinutes(durationMinutes)).Id,
+                Date = date,
+                StartTime = start,
+                EndTime = start.AddMinutes(durationMinutes)
+            })
+            .ToList();
 
         return (slots, null);
     }
@@ -171,7 +244,8 @@ public class AvailabilityService : IAvailabilityService
             availability.ProfessionalProfileId == profileId
             && (dto.SpecificDate.HasValue
                 ? availability.SpecificDate == dto.SpecificDate
-                : availability.SpecificDate == null && availability.DayOfWeek == dto.DayOfWeek));
+                : availability.SpecificDate == null && availability.DayOfWeek == dto.DayOfWeek)
+            && availability.IsAvailable);
 
         if (excludedAvailabilityId.HasValue)
         {

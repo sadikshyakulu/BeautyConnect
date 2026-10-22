@@ -17,5 +17,6 @@ public interface IAvailabilityService
 
     Task<(List<OpenAvailabilitySlotDto>? Slots, string? Error)> GetOpenSlotsAsync(
         int professionalProfileId,
-        DateOnly date);
+        DateOnly date,
+        int durationMinutes);
 }

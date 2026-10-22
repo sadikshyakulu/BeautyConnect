@@ -32,6 +32,60 @@ export default function Navbar() {
     }
   }
 
+  if (user) {
+    const dashboardLinks = user.role === 'Professional'
+      ? [
+          { label: 'Studio overview', to: '/dashboard/professional', icon: 'space_dashboard' },
+          { label: 'Profile & services', to: '/dashboard/professional/studio', icon: 'auto_awesome' },
+        ]
+      : user.role === 'Admin'
+        ? [{ label: 'Platform operations', to: '/admin', icon: 'admin_panel_settings' }]
+        : [
+            { label: 'My dashboard', to: '/dashboard/customer', icon: 'space_dashboard' },
+            { label: 'Discover services', to: '/search', icon: 'travel_explore' },
+            { label: 'My profile', to: '/dashboard/customer/profile', icon: 'person' },
+          ]
+    const displayName = user.profile?.fullName?.trim()
+      || user.profile?.businessName?.trim()
+      || user.email?.split('@')[0]
+      || 'Account'
+
+    return (
+      <aside className="dashboard-sidebar">
+        <Link to={roleHome} className="navbar-logo dashboard-sidebar-brand">
+          <img src="/beautyconnectlogo.png" alt="" className="navbar-logo-mark" />
+          <span className="navbar-logo-text">BeautyConnect</span>
+        </Link>
+        <div className="dashboard-sidebar-label">WORKSPACE</div>
+        <nav className="dashboard-sidebar-links" aria-label="Dashboard navigation">
+          {dashboardLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`dashboard-sidebar-link${location.pathname === link.to ? ' dashboard-sidebar-link--active' : ''}`}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">{link.icon}</span>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="dashboard-sidebar-account">
+          <div className="dashboard-sidebar-avatar" aria-hidden="true">
+            {displayName.slice(0, 1).toLocaleUpperCase()}
+          </div>
+          <div className="dashboard-sidebar-user">
+            <strong>{displayName}</strong>
+            <span>{user.role} account</span>
+          </div>
+          <button type="button" className="dashboard-sidebar-signout" onClick={handleSignOut} aria-label="Sign out">
+            <span className="material-symbols-outlined" aria-hidden="true">logout</span>
+          </button>
+        </div>
+        {signOutError && <p className="dashboard-sidebar-error" role="alert">{signOutError}</p>}
+      </aside>
+    )
+  }
+
   return (
     <header className="navbar-root glass">
       <div className="container navbar-inner">
