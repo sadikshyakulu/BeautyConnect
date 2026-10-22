@@ -330,7 +330,7 @@ export default function ProfessionalStudioPage() {
         </div>
       ) : (
         <>
-          <section className="dashboard-panel mb-4" aria-labelledby="studio-profile-heading">
+          <section className="dashboard-panel mb-2" aria-labelledby="studio-profile-heading">
             <div className="dashboard-section-title">
               <div>
                 <span className="dashboard-eyebrow">MAKE IT YOURS</span>
@@ -340,7 +340,7 @@ export default function ProfessionalStudioPage() {
               <span className="material-symbols-outlined dashboard-section-icon" aria-hidden="true">storefront</span>
             </div>
             <form onSubmit={handleProfileSave}>
-              <div className="row g-3">
+              <div className="row g-2">
                 <div className="col-12 col-md-6">
                   <label className="form-label" htmlFor="studio-business-name">Business name</label>
                   <input className="form-control" id="studio-business-name" name="businessName" maxLength="150" required value={profileDraft.businessName} onChange={updateProfileField} />
@@ -387,13 +387,13 @@ export default function ProfessionalStudioPage() {
                   </div>
                 </div>
               </div>
-              <button className="btn btn-primary mt-4" type="submit" disabled={savingProfile}>
+              <button className="btn btn-primary mt-2" type="submit" disabled={savingProfile}>
                 {savingProfile ? 'Saving profile…' : 'Save studio profile'}
               </button>
             </form>
           </section>
 
-          <section className="dashboard-panel mb-4" aria-labelledby="studio-services-heading">
+          <section className="dashboard-panel mb-2" aria-labelledby="studio-services-heading">
             <div className="dashboard-section-title">
               <div>
                 <span className="dashboard-eyebrow">YOUR OFFERINGS</span>
@@ -476,23 +476,23 @@ export default function ProfessionalStudioPage() {
                     <label className="form-label" htmlFor="service-category">Category</label>
                     <input className="form-control" id="service-category" maxLength="100" required value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} />
                   </div>
-                  <div className="col-6 col-md-3 col-xl-2">
+                  <div className="col-6 col-md-3 col-xl-3">
                     <label className="form-label" htmlFor="service-price">Price</label>
                     <input className="form-control" id="service-price" type="number" min="0.01" max="99999999.99" step="0.01" required value={serviceDraft.price} onChange={(event) => setServiceDraft((current) => ({ ...current, price: event.target.value }))} />
                   </div>
-                  <div className="col-6 col-md-3 col-xl-2">
+                  <div className="col-6 col-md-3 col-xl-3">
                     <label className="form-label" htmlFor="service-duration">Duration (minutes)</label>
                     <input className="form-control" id="service-duration" type="number" min="1" max="1439" required value={serviceDraft.durationMinutes} onChange={(event) => setServiceDraft((current) => ({ ...current, durationMinutes: event.target.value }))} />
-                  </div>
-                  <div className="col-12 col-xl-2 studio-service-form-submit">
-                    <button className="btn btn-primary" type="submit" disabled={savingService}>
-                      {savingService ? 'Saving…' : editingServiceId !== null ? 'Save changes' : 'Add service'}
-                    </button>
-                    <button className="btn btn-outline-secondary" type="button" onClick={resetServiceForm}>Cancel</button>
                   </div>
                   <div className="col-12">
                     <label className="form-label" htmlFor="service-description">Service details <span className="text-on-surface-variant fw-normal">(optional)</span></label>
                     <textarea className="form-control" id="service-description" rows="2" maxLength="2000" value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Describe what clients can expect." />
+                  </div>
+                  <div className="col-12 d-flex gap-2 justify-content-end studio-service-form-submit pt-1">
+                    <button className="btn btn-outline-secondary btn-sm px-3" type="button" onClick={resetServiceForm}>Cancel</button>
+                    <button className="btn btn-primary btn-sm px-3" type="submit" disabled={savingService}>
+                      {savingService ? 'Saving…' : editingServiceId !== null ? 'Save changes' : 'Add service'}
+                    </button>
                   </div>
                 </div>
               </form>

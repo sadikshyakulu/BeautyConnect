@@ -1,22 +1,24 @@
 .customer-dashboard {
   width: min(100%, 1440px);
   margin: 0 auto;
-  padding: clamp(1.25rem, 3vw, 3rem);
+  padding: clamp(0.85rem, 2vw, 1.75rem);
 }
 
 .customer-dashboard-hero {
   position: relative;
-  padding: clamp(1.5rem, 3vw, 2.7rem);
+  padding: clamp(1rem, 2vw, 1.6rem);
   overflow: hidden;
   border: 1px solid rgba(149, 71, 65, 0.12);
+  border-radius: 1rem;
   background:
     radial-gradient(ellipse at 89% 0%, rgba(255, 255, 255, 0.85), transparent 32%),
     linear-gradient(112deg, #f7e3df 0%, #fcf2ef 57%, #f1e3d8 100%);
-  box-shadow: 0 15px 42px rgba(94, 51, 47, 0.065);
+  box-shadow: 0 10px 30px rgba(94, 51, 47, 0.05);
 }
 
 .customer-dashboard-hero h1 {
-  font-size: clamp(2.1rem, 4vw, 3rem);
+  font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+  margin-bottom: 0.25rem;
 }
 
 .customer-dashboard-actions {

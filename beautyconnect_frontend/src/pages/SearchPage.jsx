@@ -95,35 +95,35 @@ export default function SearchPage() {
         <p className="text-on-surface-variant">Search live professional profiles and services.</p>
       </header>
 
-      <form className="glass-card rounded-2xl p-4 mb-4" onSubmit={applyFilters}>
-        <div className="row g-3 align-items-end">
-          <div className="col-12 col-md-4">
-            <label className="form-label" htmlFor="search-service">Service or specialty</label>
-            <input id="search-service" className="form-control" name="serviceType" value={filters.serviceType} onChange={updateFilter} />
-          </div>
+      <form className="glass-card rounded-xl p-3 mb-3" onSubmit={applyFilters}>
+        <div className="row g-2 align-items-end">
           <div className="col-12 col-md-3">
+            <label className="form-label" htmlFor="search-service">Service or specialty</label>
+            <input id="search-service" className="form-control" name="serviceType" value={filters.serviceType} onChange={updateFilter} placeholder="e.g. Bridal makeup" />
+          </div>
+          <div className="col-12 col-md-2">
             <label className="form-label" htmlFor="search-city">City</label>
-            <input id="search-city" className="form-control" name="city" value={filters.city} onChange={updateFilter} />
+            <input id="search-city" className="form-control" name="city" value={filters.city} onChange={updateFilter} placeholder="City" />
           </div>
           <div className="col-6 col-md-2">
-            <label className="form-label" htmlFor="search-min-price">Minimum price</label>
+            <label className="form-label" htmlFor="search-min-price">Min price</label>
             <input id="search-min-price" className="form-control" name="minPrice" type="number" min="0" value={filters.minPrice} onChange={updateFilter} />
           </div>
           <div className="col-6 col-md-2">
-            <label className="form-label" htmlFor="search-max-price">Maximum price</label>
+            <label className="form-label" htmlFor="search-max-price">Max price</label>
             <input id="search-max-price" className="form-control" name="maxPrice" type="number" min="0" value={filters.maxPrice} onChange={updateFilter} />
+          </div>
+          <div className="col-12 col-md-2">
+            <label className="form-label" htmlFor="search-rating">Rating</label>
+            <select id="search-rating" className="form-select" name="minRating" value={filters.minRating} onChange={updateFilter}>
+              <option value="">Any rating</option>
+              {[3, 4, 4.5, 5].map((rating) => <option key={rating} value={rating}>{rating}+</option>)}
+            </select>
           </div>
           <div className="col-12 col-md-1">
             <button className="btn btn-primary w-100" type="submit" aria-label="Apply filters">
               <span className="material-symbols-outlined">search</span>
             </button>
-          </div>
-          <div className="col-12 col-md-3">
-            <label className="form-label" htmlFor="search-rating">Minimum rating</label>
-            <select id="search-rating" className="form-select" name="minRating" value={filters.minRating} onChange={updateFilter}>
-              <option value="">Any rating</option>
-              {[3, 4, 4.5, 5].map((rating) => <option key={rating} value={rating}>{rating}+</option>)}
-            </select>
           </div>
         </div>
       </form>

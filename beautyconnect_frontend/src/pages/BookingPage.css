@@ -9,19 +9,19 @@
     radial-gradient(ellipse at 10% 8%, color-mix(in srgb, var(--primary-container) 11%, transparent), transparent 38%),
     radial-gradient(ellipse at 92% 32%, color-mix(in srgb, var(--surface-container-high) 76%, transparent), transparent 42%);
   color: var(--on-surface);
-  padding-top: 2rem;
-  padding-bottom: 5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 2.5rem;
 }
 
 .booking-stepper {
-  max-width: 640px;
-  margin: 0 auto 2.5rem;
+  max-width: 600px;
+  margin: 0 auto 1.5rem;
   padding: 0 1rem;
 }
 
 .booking-card {
-  border-radius: 1.25rem;
-  padding: 1.75rem;
+  border-radius: 1rem;
+  padding: 1.25rem;
 }
 
 .booking-card-header {
