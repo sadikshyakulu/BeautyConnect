@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace BeautyConnect.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreateMySql : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,7 +19,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Email = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -39,7 +39,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "CustomerProfiles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "longtext", nullable: false)
@@ -65,7 +65,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "ProfessionalProfiles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     BusinessName = table.Column<string>(type: "longtext", nullable: false)
@@ -107,7 +107,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Token = table.Column<string>(type: "varchar(255)", nullable: false)
@@ -132,7 +132,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "Availabilities",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     ProfessionalProfileId = table.Column<int>(type: "int", nullable: false),
                     DayOfWeek = table.Column<int>(type: "int", nullable: true),
@@ -157,7 +157,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "Services",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     ProfessionalProfileId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "longtext", nullable: false)
@@ -185,7 +185,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "Bookings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     CustomerProfileId = table.Column<int>(type: "int", nullable: false),
                     ProfessionalProfileId = table.Column<int>(type: "int", nullable: false),
@@ -196,7 +196,17 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     TotalPrice = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
                     CommissionAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    StripePaymentIntentId = table.Column<string>(type: "longtext", nullable: true)
+                    EsewaTransactionUuid = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EsewaTransactionCode = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EsewaTotalAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: true),
+                    RefundStatus = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    RefundAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: true),
+                    RefundRequestedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    RefundedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    RefundGatewayReference = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Notes = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -230,7 +240,7 @@ namespace BeautyConnect.Infrastructure.Migrations
                 name: "Disputes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     BookingId = table.Column<int>(type: "int", nullable: false),
                     RaisedByUserId = table.Column<int>(type: "int", nullable: false),
@@ -255,6 +265,62 @@ namespace BeautyConnect.Infrastructure.Migrations
                         name: "FK_Disputes_Users_RaisedByUserId",
                         column: x => x.RaisedByUserId,
                         principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "PaymentIntents",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    CustomerProfileId = table.Column<int>(type: "int", nullable: false),
+                    ProfessionalProfileId = table.Column<int>(type: "int", nullable: false),
+                    ServiceId = table.Column<int>(type: "int", nullable: false),
+                    ScheduledDateTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    EndDateTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    CommissionAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    EsewaTotalAmount = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    EsewaTransactionUuid = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EsewaTransactionCode = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Notes = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Status = table.Column<string>(type: "varchar(30)", maxLength: 30, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    BookingId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentIntents", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PaymentIntents_Bookings_BookingId",
+                        column: x => x.BookingId,
+                        principalTable: "Bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PaymentIntents_CustomerProfiles_CustomerProfileId",
+                        column: x => x.CustomerProfileId,
+                        principalTable: "CustomerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PaymentIntents_ProfessionalProfiles_ProfessionalProfileId",
+                        column: x => x.ProfessionalProfileId,
+                        principalTable: "ProfessionalProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PaymentIntents_Services_ServiceId",
+                        column: x => x.ServiceId,
+                        principalTable: "Services",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 })
@@ -314,6 +380,12 @@ namespace BeautyConnect.Infrastructure.Migrations
                 column: "CustomerProfileId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bookings_EsewaTransactionUuid",
+                table: "Bookings",
+                column: "EsewaTransactionUuid",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Bookings_ProfessionalProfileId_ScheduledDateTime_Status",
                 table: "Bookings",
                 columns: new[] { "ProfessionalProfileId", "ScheduledDateTime", "Status" });
@@ -341,9 +413,41 @@ namespace BeautyConnect.Infrastructure.Migrations
                 column: "RaisedByUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PaymentIntents_BookingId",
+                table: "PaymentIntents",
+                column: "BookingId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentIntents_CustomerProfileId",
+                table: "PaymentIntents",
+                column: "CustomerProfileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentIntents_EsewaTransactionUuid",
+                table: "PaymentIntents",
+                column: "EsewaTransactionUuid",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentIntents_ProfessionalProfileId_ScheduledDateTime_Statu~",
+                table: "PaymentIntents",
+                columns: new[] { "ProfessionalProfileId", "ScheduledDateTime", "Status", "ExpiresAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentIntents_ServiceId",
+                table: "PaymentIntents",
+                column: "ServiceId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProfessionalProfiles_City",
                 table: "ProfessionalProfiles",
                 column: "City");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProfessionalProfiles_City_VerificationStatus_RatingAverage",
+                table: "ProfessionalProfiles",
+                columns: new[] { "City", "VerificationStatus", "RatingAverage" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProfessionalProfiles_RatingAverage",
@@ -399,6 +503,11 @@ namespace BeautyConnect.Infrastructure.Migrations
                 column: "Category");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Services_Category_Price",
+                table: "Services",
+                columns: new[] { "Category", "Price" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Services_Price",
                 table: "Services",
                 column: "Price");
@@ -423,6 +532,9 @@ namespace BeautyConnect.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Disputes");
+
+            migrationBuilder.DropTable(
+                name: "PaymentIntents");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");

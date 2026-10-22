@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeautyConnect.Infrastructure.Migrations
 {
     [DbContext(typeof(BeautyConnectDbContext))]
-    [Migration("20261007182317_AddBookingRefundTracking")]
-    partial class AddBookingRefundTracking
+    [Migration("20261019043639_InitialCreateMySql")]
+    partial class InitialCreateMySql
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

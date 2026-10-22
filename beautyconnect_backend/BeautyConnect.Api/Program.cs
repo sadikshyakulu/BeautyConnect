@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Switching to MySQL is still supported by setting Database:Provider=MySql and a valid DefaultConnection.
 var databaseProvider = builder.Configuration["Database:Provider"] ?? "Sqlite";
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine($"[DEBUG] ConnectionString=[{connectionString}] Length={connectionString?.Length ?? -1}");
 var sqliteConnectionString = builder.Configuration.GetConnectionString("SqliteConnection") ?? "Data Source=beautyconnect.db";
 var mysqlVersionText = builder.Configuration["Database:MySqlVersion"] ?? "8.0.36";
 var mysqlVersion = ServerVersion.Parse(mysqlVersionText);
