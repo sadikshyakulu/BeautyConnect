@@ -78,6 +78,7 @@ public class BeautyConnectDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Price).HasPrecision(10, 2);
+            entity.Property(e => e.ImagesJson).IsRequired();
             entity.HasIndex(e => e.Category);
             entity.HasIndex(e => new { e.Category, e.Price });
             entity.HasIndex(e => e.Price);

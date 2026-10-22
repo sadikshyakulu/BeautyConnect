@@ -11,13 +11,14 @@ namespace BeautyConnect.Infrastructure.Services;
 public class ProfessionalProfileService : IProfessionalProfileService
 {
     private const long MaximumImageSize = 5 * 1024 * 1024;
+    private const int MaximumServiceImages = 10;
     private readonly BeautyConnectDbContext _context;
-    private readonly string _uploadDirectory;
+    private readonly string _uploadRootDirectory;
 
-    public ProfessionalProfileService(BeautyConnectDbContext context, string uploadDirectory)
+    public ProfessionalProfileService(BeautyConnectDbContext context, string uploadRootDirectory)
     {
         _context = context;
-        _uploadDirectory = uploadDirectory;
+        _uploadRootDirectory = uploadRootDirectory;
     }
 
     public async Task<ProfessionalProfileDto?> GetProfileAsync(int userId)
@@ -132,58 +133,61 @@ public class ProfessionalProfileService : IProfessionalProfileService
             return null;
         }
 
-        if (contentLength <= 0 || contentLength > MaximumImageSize)
-        {
-            return new PortfolioImageUploadResultDto { Error = "Image must be between 1 byte and 5 MB." };
-        }
-
-        var extension = contentType.ToLowerInvariant() switch
-        {
-            "image/jpeg" => ".jpg",
-            "image/png" => ".png",
-            _ => null
-        };
-        if (extension == null)
-        {
-            return new PortfolioImageUploadResultDto { Error = "Only JPEG and PNG images are supported." };
-        }
-
-        var prefix = new byte[8];
-        var bytesRead = await imageStream.ReadAsync(prefix);
-        var isValidImage = contentType.Equals("image/jpeg", StringComparison.OrdinalIgnoreCase)
-            ? bytesRead >= 3 && prefix[0] == 0xFF && prefix[1] == 0xD8 && prefix[2] == 0xFF
-            : bytesRead == 8 && prefix.SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
-        if (!isValidImage || !imageStream.CanSeek)
-        {
-            return new PortfolioImageUploadResultDto { Error = "The uploaded file is not a valid JPEG or PNG image." };
-        }
-
-        imageStream.Position = 0;
-        Directory.CreateDirectory(_uploadDirectory);
-
-        var fileName = $"{Guid.NewGuid():N}{extension}";
-        var filePath = Path.Combine(_uploadDirectory, fileName);
-        var imageUrl = $"/uploads/portfolio/{fileName}";
-
-        await using (var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-        {
-            await imageStream.CopyToAsync(output);
-        }
+        var upload = await StoreImageAsync(imageStream, contentType, contentLength, "portfolio");
+        if (upload.Error != null) return new PortfolioImageUploadResultDto { Error = upload.Error };
 
         try
         {
             var images = JsonSerializer.Deserialize<List<string>>(profile.PortfolioImagesJson) ?? [];
-            images.Add(imageUrl);
+            images.Add(upload.ImageUrl!);
             profile.PortfolioImagesJson = JsonSerializer.Serialize(images);
             await _context.SaveChangesAsync();
         }
         catch
         {
-            File.Delete(filePath);
+            File.Delete(upload.FilePath!);
             throw;
         }
 
-        return new PortfolioImageUploadResultDto { ImageUrl = imageUrl };
+        return new PortfolioImageUploadResultDto { ImageUrl = upload.ImageUrl };
+    }
+
+    public async Task<PortfolioImageUploadResultDto?> AddServiceImageAsync(
+        int userId,
+        int serviceId,
+        Stream imageStream,
+        string contentType,
+        long contentLength)
+    {
+        var service = await _context.Services
+            .Include(item => item.ProfessionalProfile)
+            .FirstOrDefaultAsync(item =>
+                item.Id == serviceId
+                && item.ProfessionalProfile.UserId == userId);
+        if (service == null) return null;
+
+        var images = JsonSerializer.Deserialize<List<string>>(service.ImagesJson) ?? [];
+        if (images.Count >= MaximumServiceImages)
+        {
+            return new PortfolioImageUploadResultDto { Error = $"A service can have up to {MaximumServiceImages} photos." };
+        }
+
+        var upload = await StoreImageAsync(imageStream, contentType, contentLength, "services");
+        if (upload.Error != null) return new PortfolioImageUploadResultDto { Error = upload.Error };
+
+        try
+        {
+            images.Add(upload.ImageUrl!);
+            service.ImagesJson = JsonSerializer.Serialize(images);
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            File.Delete(upload.FilePath!);
+            throw;
+        }
+
+        return new PortfolioImageUploadResultDto { ImageUrl = upload.ImageUrl };
     }
 
     public async Task<bool> SubmitForVerificationAsync(int userId)
@@ -228,6 +232,54 @@ public class ProfessionalProfileService : IProfessionalProfileService
         Description = service.Description,
         Category = service.Category,
         Price = service.Price,
-        DurationMinutes = service.DurationMinutes
+        DurationMinutes = service.DurationMinutes,
+        Images = JsonSerializer.Deserialize<List<string>>(service.ImagesJson) ?? []
     };
+
+    private async Task<(string? ImageUrl, string? FilePath, string? Error)> StoreImageAsync(
+        Stream imageStream,
+        string contentType,
+        long contentLength,
+        string folder)
+    {
+        if (contentLength <= 0 || contentLength > MaximumImageSize)
+        {
+            return (null, null, "Image must be between 1 byte and 5 MB.");
+        }
+
+        var extension = contentType.ToLowerInvariant() switch
+        {
+            "image/jpeg" => ".jpg",
+            "image/png" => ".png",
+            _ => null
+        };
+        if (extension == null)
+        {
+            return (null, null, "Only JPEG and PNG images are supported.");
+        }
+
+        var prefix = new byte[8];
+        var bytesRead = await imageStream.ReadAtLeastAsync(prefix, prefix.Length, throwOnEndOfStream: false);
+        var isValidImage = contentType.Equals("image/jpeg", StringComparison.OrdinalIgnoreCase)
+            ? bytesRead >= 3 && prefix[0] == 0xFF && prefix[1] == 0xD8 && prefix[2] == 0xFF
+            : bytesRead == 8 && prefix.SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+        if (!isValidImage || !imageStream.CanSeek)
+        {
+            return (null, null, "The uploaded file is not a valid JPEG or PNG image.");
+        }
+
+        imageStream.Position = 0;
+        var uploadDirectory = Path.Combine(_uploadRootDirectory, folder);
+        Directory.CreateDirectory(uploadDirectory);
+
+        var fileName = $"{Guid.NewGuid():N}{extension}";
+        var filePath = Path.Combine(uploadDirectory, fileName);
+        var imageUrl = $"/uploads/{folder}/{fileName}";
+        await using (var output = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+        {
+            await imageStream.CopyToAsync(output);
+        }
+
+        return (imageUrl, filePath, null);
+    }
 }

@@ -80,6 +80,7 @@ public class Service
     public string Category { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public int DurationMinutes { get; set; } = 60;
+    public string ImagesJson { get; set; } = "[]";
 
     public ProfessionalProfile ProfessionalProfile { get; set; } = null!;
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();

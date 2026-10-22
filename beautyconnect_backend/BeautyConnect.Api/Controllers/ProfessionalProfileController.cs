@@ -100,6 +100,28 @@ public class ProfessionalProfileController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("services/{serviceId:int}/images")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    public async Task<IActionResult> UploadServiceImage(int serviceId, IFormFile? image)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
+        if (image == null) return BadRequest(new { message = "An image file is required." });
+
+        await using var stream = image.OpenReadStream();
+        var result = await _profileService.AddServiceImageAsync(
+            userId.Value,
+            serviceId,
+            stream,
+            image.ContentType,
+            image.Length);
+
+        if (result == null) return NotFound(new { message = "Service not found." });
+        if (result.Error != null) return BadRequest(new { message = result.Error });
+        return Ok(result);
+    }
+
     [HttpPost("submit-verification")]
     public async Task<IActionResult> SubmitForVerification()
     {

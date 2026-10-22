@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BeautyConnect.Core.DTOs;
 using BeautyConnect.Core.Entities;
 using BeautyConnect.Core.Enums;
@@ -228,6 +229,7 @@ public class SearchService : ISearchService
         Description = service.Description,
         Category = service.Category,
         Price = service.Price,
-        DurationMinutes = service.DurationMinutes
+        DurationMinutes = service.DurationMinutes,
+        Images = JsonSerializer.Deserialize<List<string>>(service.ImagesJson) ?? []
     };
 }

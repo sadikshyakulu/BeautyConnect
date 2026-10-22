@@ -4,6 +4,8 @@ import { getOpenSlots } from '../api/availability'
 import { getReviewsForProfessional } from '../api/review'
 import { getProfessionalById } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import { notify } from '../utils/notifications'
+import { formatTime12Hour } from '../utils/time'
 
 const verificationStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
@@ -128,7 +130,7 @@ export default function ArtistProfilePage() {
     const appointmentTime = slotDateTime(slot)
     if (appointmentTime <= new Date()) {
       setSelectedSlot(null)
-      setSlotError('That appointment time has passed. Please choose another available time.')
+      notify.error('That appointment time has passed. Please choose another available time.')
       return
     }
 
@@ -184,6 +186,13 @@ export default function ArtistProfilePage() {
                     <h3 className="h5">{service.name}</h3>
                     <p className="small text-on-surface-variant">{service.category} · {service.durationMinutes} minutes</p>
                     {service.description && <p className="mb-0">{service.description}</p>}
+                    {service.images?.length > 0 && (
+                      <div className="artist-service-gallery mt-3">
+                        {service.images.map((image, index) => (
+                          <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
+                        ))}
+                      </div>
+                    )}
                     {service.durationMinutes >= 1440 && (
                       <p className="small text-danger mb-0">
                         This service cannot be booked because its duration is 24 hours or longer. Please contact the professional.
@@ -248,7 +257,7 @@ export default function ArtistProfilePage() {
                   type="button"
                   onClick={() => setSelectedSlot(slot)}
                 >
-                  {slot.startTime.slice(0, 5)}
+                  {formatTime12Hour(slot.startTime)}
                 </button>
               ))}
             </div>

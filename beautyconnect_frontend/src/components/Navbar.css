@@ -339,6 +339,12 @@
   font-weight: 700;
 }
 
+.dashboard-sidebar-avatar--image {
+  display: block;
+  border: 2px solid #fff;
+  object-fit: cover;
+}
+
 .dashboard-sidebar-user {
   display: flex;
   flex: 1;

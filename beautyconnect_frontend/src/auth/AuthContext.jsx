@@ -84,6 +84,12 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function updateProfile(profileUpdates) {
+    setUser((current) => current
+      ? { ...current, profile: { ...current.profile, ...profileUpdates } }
+      : current)
+  }
+
   const value = useMemo(() => ({
     user,
     loading,
@@ -91,6 +97,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    updateProfile,
     roleHome: user ? roleHome(user.role) : '/auth',
   }), [user, loading, sessionError])
 

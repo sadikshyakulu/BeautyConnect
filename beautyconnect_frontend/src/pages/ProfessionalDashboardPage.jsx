@@ -17,6 +17,8 @@ import {
 } from '../api/professionalProfile'
 import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
+import { notify } from '../utils/notifications'
+import { formatTime12Hour } from '../utils/time'
 import './ProfessionalDashboardPage.css'
 
 const bookingStatus = (status) => typeof status === 'number'
@@ -37,14 +39,13 @@ export default function ProfessionalDashboardPage() {
   const [availability, setAvailability] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
-  const [notice, setNotice] = useState('')
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('17:00')
   const [dayOfWeek, setDayOfWeek] = useState('1')
   const [availabilityEditorDay, setAvailabilityEditorDay] = useState(null)
+  const [expandedScheduleDay, setExpandedScheduleDay] = useState(null)
   const [editingAvailabilityId, setEditingAvailabilityId] = useState(null)
   const [verifyingRefundId, setVerifyingRefundId] = useState(null)
-  const [refundMessages, setRefundMessages] = useState({})
 
   const loadDashboard = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -93,25 +94,23 @@ export default function ProfessionalDashboardPage() {
     try {
       await action(bookingId)
       await loadDashboard()
-      setNotice('Booking status updated.')
+      notify.success('Booking status updated.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not update this booking.')
+      notify.error(error.response?.data?.message ?? 'Could not update this booking.')
     }
   }
 
   async function handleVerifyRefund(bookingId) {
-    setRefundMessages((current) => ({ ...current, [bookingId]: '' }))
-    setNotice('')
     setVerifyingRefundId(bookingId)
     try {
       const result = await verifyBookingRefund(bookingId)
       await loadDashboard()
-      setNotice(`eSewa confirmed the full refund of ${result.refundAmount}.`)
+      notify.success(`eSewa confirmed the full refund of ${result.refundAmount}.`)
     } catch (error) {
       const message = error.response?.status === 409
         ? 'eSewa has not confirmed this refund yet. If you already processed it through your merchant account, wait for the status to update and check again.'
         : error.response?.data?.message ?? 'Could not verify the eSewa refund.'
-      setRefundMessages((current) => ({ ...current, [bookingId]: message }))
+      notify.warning(message)
     } finally {
       setVerifyingRefundId(null)
     }
@@ -120,11 +119,10 @@ export default function ProfessionalDashboardPage() {
   async function handleAvailability(event) {
     event.preventDefault()
     setErrorMessage('')
-    setNotice('')
     const nextStart = `${startTime}:00`
     const nextEnd = `${endTime}:00`
     if (startTime >= endTime) {
-      setErrorMessage('Choose an end time later than the start time.')
+      notify.error('Choose an end time later than the start time.')
       return
     }
 
@@ -137,7 +135,7 @@ export default function ProfessionalDashboardPage() {
       && endTime > slot.startTime.slice(0, 5),
     )
     if (overlapsExistingHours) {
-      setErrorMessage('These hours overlap another active shift. Edit that shift or choose a different time.')
+      notify.error('These hours overlap another active shift. Edit that shift or choose a different time.')
       return
     }
 
@@ -157,9 +155,9 @@ export default function ProfessionalDashboardPage() {
       await loadDashboard()
       setAvailabilityEditorDay(null)
       setEditingAvailabilityId(null)
-      setNotice(editingAvailabilityId !== null ? 'Working hours updated.' : 'Working hours added.')
+      notify.success(editingAvailabilityId !== null ? 'Working hours updated.' : 'Working hours added.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not save these working hours.')
+      notify.error(error.response?.data?.message ?? 'Could not save these working hours.')
     }
   }
 
@@ -177,6 +175,7 @@ export default function ProfessionalDashboardPage() {
     setEndTime(end)
     setEditingAvailabilityId(null)
     setAvailabilityEditorDay(String(dayIndex))
+    setExpandedScheduleDay(String(dayIndex))
     setErrorMessage('')
   }
 
@@ -186,12 +185,12 @@ export default function ProfessionalDashboardPage() {
     setEndTime(slot.endTime.slice(0, 5))
     setEditingAvailabilityId(slot.id)
     setAvailabilityEditorDay(String(slot.dayOfWeek))
+    setExpandedScheduleDay(String(slot.dayOfWeek))
     setErrorMessage('')
   }
 
   async function toggleAvailability(slot) {
     setErrorMessage('')
-    setNotice('')
     try {
       await updateAvailability(slot.id, {
         dayOfWeek: slot.dayOfWeek,
@@ -201,9 +200,9 @@ export default function ProfessionalDashboardPage() {
         isAvailable: !slot.isAvailable,
       })
       await loadDashboard()
-      setNotice(slot.isAvailable ? 'This shift is now paused.' : 'This shift is available again.')
+      notify.success(slot.isAvailable ? 'This shift is now paused.' : 'This shift is available again.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not update this shift.')
+      notify.error(error.response?.data?.message ?? 'Could not update this shift.')
     }
   }
 
@@ -212,9 +211,9 @@ export default function ProfessionalDashboardPage() {
     try {
       await submitForVerification()
       await loadDashboard()
-      setNotice('Your profile has been submitted for verification.')
+      notify.success('Your profile has been submitted for verification.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not submit your profile for verification.')
+      notify.error(error.response?.data?.message ?? 'Could not submit your profile for verification.')
     }
   }
 
@@ -240,7 +239,6 @@ export default function ProfessionalDashboardPage() {
       </header>
 
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
       {profile && profileStatus(profile.verificationStatus) === 'Pending' && (
         <div className="alert alert-warning d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3" role="status">
           <span>Your profile is pending Admin verification and won’t appear publicly until it is approved.</span>
@@ -257,7 +255,7 @@ export default function ProfessionalDashboardPage() {
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Services</span><strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong></div></div>
       </div>
 
-      <div className="row g-4">
+      <div className="row g-4 align-items-start">
         <section className="col-12">
           <div className="glass-card rounded-2xl p-4">
             <h2 className="h4 mb-3">Incoming bookings</h2>
@@ -316,11 +314,6 @@ export default function ProfessionalDashboardPage() {
                         <span className="small text-on-surface-variant d-block mt-1">
                           Booking #{booking.id} · Full refund: {booking.refundAmount} · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
                         </span>
-                        {refundMessages[booking.id] && (
-                          <div className="alert alert-warning small mt-3 mb-0" role="status">
-                            {refundMessages[booking.id]}
-                          </div>
-                        )}
                         <button
                           className="btn btn-sm btn-primary mt-3"
                           type="button"
@@ -359,7 +352,7 @@ export default function ProfessionalDashboardPage() {
         )}
 
           <section className="col-12 col-xl-6">
-            <div className="glass-card rounded-2xl p-4 h-100">
+            <div className="glass-card rounded-2xl p-4">
             <div className="d-flex justify-content-between align-items-start gap-3 mb-2">
               <div>
                 <h2 className="h5 mb-1">Weekly working hours</h2>
@@ -373,45 +366,73 @@ export default function ProfessionalDashboardPage() {
                   .filter((slot) => Number(slot.dayOfWeek) === dayIndex)
                   .sort((left, right) => left.startTime.localeCompare(right.startTime))
                 const isEditingThisDay = availabilityEditorDay === String(dayIndex)
+                const isExpanded = expandedScheduleDay === String(dayIndex)
                 const hasActiveWindow = daySlots.some((slot) => slot.isAvailable)
                 return (
-                  <article className="professional-schedule-day" key={day}>
+                  <article className={`professional-schedule-day${isExpanded ? ' professional-schedule-day--expanded' : ''}`} key={day}>
                     <div className="professional-schedule-day-heading">
                       <div>
                         <strong>{day}</strong>
                         <span className={`professional-day-status${hasActiveWindow ? ' professional-day-status--open' : ''}`}>
-                          {hasActiveWindow ? 'Open for bookings' : 'Day off'}
+                          {hasActiveWindow ? 'Open' : 'Day off'}
                         </span>
                       </div>
                       <button
                         className="btn btn-sm btn-outline-primary"
                         type="button"
-                        onClick={() => isEditingThisDay
-                          ? setAvailabilityEditorDay(null)
-                          : beginAddAvailability(dayIndex, daySlots)}
+                        aria-expanded={isExpanded}
+                        onClick={() => {
+                          if (isExpanded) {
+                            setExpandedScheduleDay(null)
+                            setAvailabilityEditorDay(null)
+                            setEditingAvailabilityId(null)
+                          } else {
+                            setExpandedScheduleDay(String(dayIndex))
+                          }
+                        }}
                       >
-                        {isEditingThisDay ? 'Close' : daySlots.length ? 'Add shift' : 'Set hours'}
+                        {isExpanded ? 'Done' : daySlots.length ? 'Manage' : 'Set hours'}
                       </button>
                     </div>
-                    {daySlots.length === 0 ? (
-                      <p className="professional-day-empty">No working hours set.</p>
-                    ) : (
-                      <div className="professional-shift-list">
+                    {daySlots.length > 0 ? (
+                      <div className="professional-shift-summary">
                         {daySlots.map((slot) => (
-                          <div className={`professional-shift${slot.isAvailable ? '' : ' professional-shift--paused'}`} key={slot.id}>
-                            <div className="professional-shift-time">
-                              <span className="material-symbols-outlined" aria-hidden="true">{slot.isAvailable ? 'schedule' : 'pause_circle'}</span>
-                              <span>{slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
-                              {!slot.isAvailable && <small>Paused</small>}
-                            </div>
-                            <div className="professional-shift-actions">
-                              <button className="btn btn-sm btn-light" type="button" onClick={() => beginEditAvailability(slot)}>Edit</button>
-                              <button className="btn btn-sm btn-light" type="button" onClick={() => toggleAvailability(slot)}>
-                                {slot.isAvailable ? 'Pause' : 'Open'}
-                              </button>
-                            </div>
-                          </div>
+                          <span className={`professional-shift-chip${slot.isAvailable ? '' : ' professional-shift-chip--paused'}`} key={slot.id}>
+                            {!slot.isAvailable && <span className="material-symbols-outlined" aria-hidden="true">pause</span>}
+                            {formatTime12Hour(slot.startTime)}–{formatTime12Hour(slot.endTime)}
+                          </span>
                         ))}
+                      </div>
+                    ) : (
+                      <p className="professional-day-empty">No hours</p>
+                    )}
+                    {isExpanded && (
+                      <div className="professional-day-details">
+                        {daySlots.length > 0 && (
+                          <div className="professional-shift-list">
+                            {daySlots.map((slot) => (
+                              <div className={`professional-shift${slot.isAvailable ? '' : ' professional-shift--paused'}`} key={slot.id}>
+                                <div className="professional-shift-time">
+                                  <span className="material-symbols-outlined" aria-hidden="true">{slot.isAvailable ? 'schedule' : 'pause_circle'}</span>
+                                  <span>{formatTime12Hour(slot.startTime)}–{formatTime12Hour(slot.endTime)}</span>
+                                  {!slot.isAvailable && <small>Paused</small>}
+                                </div>
+                                <div className="professional-shift-actions">
+                                  <button className="btn btn-sm btn-light" type="button" onClick={() => beginEditAvailability(slot)}>Edit</button>
+                                  <button className="btn btn-sm btn-light" type="button" onClick={() => toggleAvailability(slot)}>
+                                    {slot.isAvailable ? 'Pause' : 'Open'}
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {!isEditingThisDay && (
+                          <button className="btn btn-sm btn-outline-primary mt-2" type="button" onClick={() => beginAddAvailability(dayIndex, daySlots)}>
+                            <span className="material-symbols-outlined" aria-hidden="true">add</span>
+                            Add shift
+                          </button>
+                        )}
                       </div>
                     )}
                     {isEditingThisDay && (
@@ -445,7 +466,7 @@ export default function ProfessionalDashboardPage() {
                 <h3 className="small fw-bold mb-2">Date-specific hours</h3>
                 {dateOverrides.map((slot) => (
                   <div className="professional-date-override" key={slot.id}>
-                    <span>{slot.specificDate} · {slot.startTime.slice(0, 5)}–{slot.endTime.slice(0, 5)}</span>
+                    <span>{slot.specificDate} · {formatTime12Hour(slot.startTime)}–{formatTime12Hour(slot.endTime)}</span>
                     <span className={slot.isAvailable ? 'text-success' : 'text-secondary'}>
                       {slot.isAvailable ? 'Extra hours' : 'Closed'}
                     </span>
@@ -457,22 +478,30 @@ export default function ProfessionalDashboardPage() {
           </section>
 
           <section className="col-12 col-xl-6">
-            <div className="glass-card rounded-2xl p-4 h-100">
+            <div className="glass-card rounded-2xl p-4">
             <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
               <div>
                 <h2 className="h5 mb-1">Services</h2>
                 <p className="small text-on-surface-variant mb-0">Your current offerings</p>
               </div>
-              <Link className="btn btn-sm btn-outline-primary text-nowrap" to="/dashboard/professional/studio">Manage studio</Link>
+              <Link className="btn btn-sm btn-outline-primary text-nowrap" to="/dashboard/professional/studio">Manage services</Link>
             </div>
             {profile?.services?.length ? (
-              <div className="d-flex flex-column gap-2 mb-3">
+              <div className="professional-service-list mb-3">
                 {profile.services.map((service) => (
-                  <article className="glass-card rounded-2xl p-3" key={service.id}>
-                    <strong className="d-block">{service.name}</strong>
-                    <span className="small text-on-surface-variant">
-                      {service.category} · {service.price} · {service.durationMinutes} min
-                    </span>
+                  <article className="professional-service-card" key={service.id}>
+                    <span className="professional-service-icon material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+                    <div className="professional-service-content">
+                      <div className="professional-service-heading">
+                        <strong>{service.name}</strong>
+                        <span className="professional-service-category">{service.category}</span>
+                      </div>
+                      {service.description && <p>{service.description}</p>}
+                      <div className="professional-service-meta">
+                        <strong>{service.price}</strong>
+                        <span><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{service.durationMinutes} min</span>
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>

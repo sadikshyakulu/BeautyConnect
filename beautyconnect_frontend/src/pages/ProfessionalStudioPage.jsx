@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAssetUrl } from '../api/assets'
+import { uploadAvatar } from '../api/profileImage'
 import {
   addService,
   getMyProfile,
@@ -8,8 +9,10 @@ import {
   updateMyProfile,
   updateService,
   uploadPortfolioImage,
+  uploadServiceImage,
 } from '../api/professionalProfile'
 import { useAuth } from '../auth/useAuth'
+import { notify } from '../utils/notifications'
 import './DashboardPages.css'
 
 const emptyService = {
@@ -25,18 +28,19 @@ const verificationStatus = (status) => typeof status === 'number'
   : status
 
 export default function ProfessionalStudioPage() {
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [profile, setProfile] = useState(null)
   const [profileDraft, setProfileDraft] = useState(null)
   const [serviceDraft, setServiceDraft] = useState(emptyService)
   const [editingServiceId, setEditingServiceId] = useState(null)
+  const [showServiceForm, setShowServiceForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingService, setSavingService] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadingServiceId, setUploadingServiceId] = useState(null)
   const [submittingVerification, setSubmittingVerification] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [notice, setNotice] = useState('')
 
   async function loadProfile() {
     const result = await getMyProfile()
@@ -92,7 +96,6 @@ export default function ProfessionalStudioPage() {
     event.preventDefault()
     if (!profileDraft) return
     setErrorMessage('')
-    setNotice('')
     setSavingProfile(true)
     try {
       const updated = await updateMyProfile({
@@ -117,9 +120,9 @@ export default function ProfessionalStudioPage() {
         avatarUrl: updated.avatarUrl ?? '',
         serviceCategories: (updated.serviceCategories ?? []).join(', '),
       })
-      setNotice('Your studio profile has been saved.')
+      notify.success('Your studio profile has been saved.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not save your studio profile.')
+      notify.error(error.response?.data?.message ?? 'Could not save your studio profile.')
     } finally {
       setSavingProfile(false)
     }
@@ -127,6 +130,7 @@ export default function ProfessionalStudioPage() {
 
   function startServiceEdit(service) {
     setEditingServiceId(service.id)
+    setShowServiceForm(true)
     setServiceDraft({
       name: service.name ?? '',
       description: service.description ?? '',
@@ -139,12 +143,12 @@ export default function ProfessionalStudioPage() {
   function resetServiceForm() {
     setEditingServiceId(null)
     setServiceDraft(emptyService)
+    setShowServiceForm(false)
   }
 
   async function handleServiceSave(event) {
     event.preventDefault()
     setErrorMessage('')
-    setNotice('')
     setSavingService(true)
     const service = {
       ...serviceDraft,
@@ -158,12 +162,36 @@ export default function ProfessionalStudioPage() {
         await addService(service)
       }
       await loadProfile()
-      setNotice(editingServiceId !== null ? 'Service details updated.' : 'Service added to your profile.')
+      notify.success(editingServiceId !== null ? 'Service details updated.' : 'Service added to your profile.')
       resetServiceForm()
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not save this service.')
+      notify.error(error.response?.data?.message ?? 'Could not save this service.')
     } finally {
       setSavingService(false)
+    }
+  }
+
+  async function handleAvatarUpload(event) {
+    const image = event.target.files?.[0]
+    event.target.value = ''
+    if (!image) return
+    if (!['image/jpeg', 'image/png'].includes(image.type) || image.size <= 0 || image.size > 5 * 1024 * 1024) {
+      notify.error('Choose a JPEG or PNG image smaller than 5 MB.')
+      return
+    }
+
+    setErrorMessage('')
+    setUploading(true)
+    try {
+      const result = await uploadAvatar(image)
+      setProfile((current) => ({ ...current, avatarUrl: result.avatarUrl }))
+      setProfileDraft((current) => ({ ...current, avatarUrl: result.avatarUrl }))
+      updateProfile({ avatarUrl: result.avatarUrl })
+      notify.success('Your studio profile photo has been updated.')
+    } catch (error) {
+      notify.error(error.response?.data?.message ?? 'Could not upload your profile photo.')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -176,12 +204,11 @@ export default function ProfessionalStudioPage() {
       !['image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024 || file.size === 0,
     )
     if (invalidFile) {
-      setErrorMessage('Choose JPEG or PNG images smaller than 5 MB each.')
+      notify.error('Choose JPEG or PNG images smaller than 5 MB each.')
       return
     }
 
     setErrorMessage('')
-    setNotice('')
     setUploading(true)
     let uploadedCount = 0
     let uploadError = ''
@@ -197,28 +224,77 @@ export default function ProfessionalStudioPage() {
       }
       if (uploadedCount > 0) {
         await loadProfile()
-        setNotice(`${uploadedCount} portfolio photo${uploadedCount === 1 ? '' : 's'} uploaded.`)
+        notify.success(`${uploadedCount} portfolio photo${uploadedCount === 1 ? '' : 's'} uploaded.`)
       }
       if (uploadError) {
-        setErrorMessage(uploadedCount ? `${uploadError} ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded successfully.` : uploadError)
+        notify[uploadedCount ? 'warning' : 'error'](
+          uploadedCount ? `${uploadError} ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded successfully.` : uploadError,
+        )
       }
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Your portfolio was updated, but the latest photos could not be loaded.')
+      notify.error(error.response?.data?.message ?? 'Your portfolio was updated, but the latest photos could not be loaded.')
     } finally {
       setUploading(false)
     }
   }
 
+  async function handleServiceImagesUpload(service, event) {
+    const files = Array.from(event.target.files ?? [])
+    event.target.value = ''
+    if (!files.length) return
+
+    const validFiles = files.every((file) =>
+      ['image/jpeg', 'image/png'].includes(file.type)
+      && file.size > 0
+      && file.size <= 5 * 1024 * 1024,
+    )
+    if (!validFiles) {
+      notify.error('Choose JPEG or PNG images smaller than 5 MB each.')
+      return
+    }
+    if (files.length + (service.images?.length ?? 0) > 10) {
+      notify.error('A service can have up to 10 photos.')
+      return
+    }
+
+    setUploadingServiceId(service.id)
+    let uploadedCount = 0
+    let uploadError = ''
+    try {
+      for (const file of files) {
+        try {
+          await uploadServiceImage(service.id, file)
+          uploadedCount += 1
+        } catch (error) {
+          uploadError = error.response?.data?.message ?? `Could not upload ${file.name}.`
+          break
+        }
+      }
+      if (uploadedCount > 0) {
+        await loadProfile()
+        notify.success(`${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} added to ${service.name}.`)
+      }
+      if (uploadError) {
+        notify[uploadedCount ? 'warning' : 'error'](
+          uploadedCount ? `${uploadError} ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded successfully.` : uploadError,
+        )
+      }
+    } catch (error) {
+      notify.error(error.response?.data?.message ?? `Could not refresh photos for ${service.name}.`)
+    } finally {
+      setUploadingServiceId(null)
+    }
+  }
+
   async function handleVerificationSubmit() {
     setErrorMessage('')
-    setNotice('')
     setSubmittingVerification(true)
     try {
       await submitForVerification()
       await loadProfile()
-      setNotice('Your profile has been submitted for verification.')
+      notify.success('Your profile has been submitted for verification.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not submit your profile for verification.')
+      notify.error(error.response?.data?.message ?? 'Could not submit your profile for verification.')
     } finally {
       setSubmittingVerification(false)
     }
@@ -247,7 +323,6 @@ export default function ProfessionalStudioPage() {
       </header>
 
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
       {!profile || !profileDraft ? (
         <div className="dashboard-panel">
           <h2 className="h5">Studio profile not available</h2>
@@ -276,7 +351,7 @@ export default function ProfessionalStudioPage() {
                 </div>
                 <div className="col-12">
                   <label className="form-label" htmlFor="studio-bio">About your studio</label>
-                  <textarea className="form-control" id="studio-bio" name="bio" rows="4" maxLength="2000" value={profileDraft.bio} onChange={updateProfileField} placeholder="Share your experience, approach and what clients can expect." />
+                  <textarea className="form-control" id="studio-bio" name="bio" rows="2" maxLength="2000" value={profileDraft.bio} onChange={updateProfileField} placeholder="Share your experience, approach and what clients can expect." />
                   <div className="form-text text-end">{profileDraft.bio.length}/2000</div>
                 </div>
                 <div className="col-12 col-md-6">
@@ -292,10 +367,24 @@ export default function ProfessionalStudioPage() {
                   <input className="form-control" id="studio-categories" name="serviceCategories" maxLength="1200" value={profileDraft.serviceCategories} onChange={updateProfileField} placeholder="Makeup, Hair, Bridal" />
                   <div className="form-text">Separate categories with commas.</div>
                 </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="studio-avatar-url">Profile image URL</label>
-                  <input className="form-control" id="studio-avatar-url" name="avatarUrl" type="url" maxLength="500" value={profileDraft.avatarUrl} onChange={updateProfileField} placeholder="https://…" />
-                  <div className="form-text">Use a direct image URL. Upload gallery photos below.</div>
+                <div className="col-12">
+                  <label className="form-label d-block" htmlFor="studio-avatar-upload">Studio profile photo</label>
+                  <div className="studio-avatar-uploader">
+                    {profile.avatarUrl ? (
+                      <img className="studio-avatar-preview" src={getAssetUrl(profile.avatarUrl)} alt={`${profile.businessName} profile`} />
+                    ) : (
+                      <span className="studio-avatar-placeholder material-symbols-outlined" aria-hidden="true">storefront</span>
+                    )}
+                    <div>
+                      <strong>Make your studio recognizable</strong>
+                      <p className="small text-on-surface-variant mb-2">JPEG or PNG, up to 5 MB. This photo appears with your public profile.</p>
+                      <label className="btn btn-sm btn-outline-primary mb-0" htmlFor="studio-avatar-upload">
+                        <span className="material-symbols-outlined align-middle" aria-hidden="true">upload</span>
+                        {uploading ? 'Uploading…' : profile.avatarUrl ? 'Replace photo' : 'Upload photo'}
+                      </label>
+                      <input id="studio-avatar-upload" className="visually-hidden" type="file" accept="image/jpeg,image/png" disabled={uploading} onChange={handleAvatarUpload} />
+                    </div>
+                  </div>
                 </div>
               </div>
               <button className="btn btn-primary mt-4" type="submit" disabled={savingProfile}>
@@ -309,9 +398,22 @@ export default function ProfessionalStudioPage() {
               <div>
                 <span className="dashboard-eyebrow">YOUR OFFERINGS</span>
                 <h2 id="studio-services-heading">Services &amp; pricing</h2>
-                <p>Give every service a clear description so clients know what to expect.</p>
+                <p>Give every service clear details and up to 10 photos so clients know what to expect.</p>
               </div>
-              <span className="material-symbols-outlined dashboard-section-icon" aria-hidden="true">spa</span>
+              <div className="studio-services-heading-actions">
+                <button
+                  className="btn btn-sm btn-primary"
+                  type="button"
+                  onClick={() => {
+                    if (showServiceForm) resetServiceForm()
+                    else setShowServiceForm(true)
+                  }}
+                >
+                  <span className="material-symbols-outlined align-middle" aria-hidden="true">{showServiceForm ? 'close' : 'add'}</span>
+                  {showServiceForm ? 'Close form' : 'Add a service'}
+                </button>
+                <span className="material-symbols-outlined dashboard-section-icon" aria-hidden="true">spa</span>
+              </div>
             </div>
             {services.length === 0 ? (
               <div className="studio-empty-state">
@@ -330,6 +432,28 @@ export default function ProfessionalStudioPage() {
                       </div>
                       <p>{service.description || 'Add a description to help clients understand what this service includes.'}</p>
                       <strong>{service.price} <span>· {service.durationMinutes} minutes</span></strong>
+                      {service.images?.length > 0 && (
+                        <div className="studio-service-gallery">
+                          {service.images.map((image, index) => (
+                            <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
+                          ))}
+                        </div>
+                      )}
+                      <div className="studio-service-photo-actions">
+                        <label className="btn btn-sm btn-outline-primary studio-service-photo-button">
+                          <span className="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+                          {uploadingServiceId === service.id ? 'Uploading…' : 'Add photos'}
+                          <input
+                            className="visually-hidden"
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            multiple
+                            disabled={uploadingServiceId !== null || (service.images?.length ?? 0) >= 10}
+                            onChange={(event) => handleServiceImagesUpload(service, event)}
+                          />
+                        </label>
+                        <span className="studio-service-photo-count">{service.images?.length ?? 0}/10</span>
+                      </div>
                     </div>
                     <button className="btn btn-sm btn-outline-primary align-self-start" type="button" onClick={() => startServiceEdit(service)}>Edit</button>
                   </article>
@@ -337,37 +461,42 @@ export default function ProfessionalStudioPage() {
               </div>
             )}
 
-            <form className="studio-service-form" onSubmit={handleServiceSave}>
-              <h3>{editingServiceId !== null ? 'Edit service' : 'Add a service'}</h3>
-              <div className="row g-3">
-                <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="service-name">Service name</label>
-                  <input className="form-control" id="service-name" maxLength="150" required value={serviceDraft.name} onChange={(event) => setServiceDraft((current) => ({ ...current, name: event.target.value }))} />
+            {showServiceForm && (
+              <form className="studio-service-form" onSubmit={handleServiceSave}>
+                <div className="studio-service-form-heading">
+                  <h3>{editingServiceId !== null ? 'Edit service' : 'New service'}</h3>
+                  <span>Name, price and appointment length are shown to clients.</span>
                 </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="service-category">Category</label>
-                  <input className="form-control" id="service-category" maxLength="100" required value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} />
+                <div className="row g-2">
+                  <div className="col-12 col-md-6 col-xl-3">
+                    <label className="form-label" htmlFor="service-name">Service name</label>
+                    <input className="form-control" id="service-name" maxLength="150" required value={serviceDraft.name} onChange={(event) => setServiceDraft((current) => ({ ...current, name: event.target.value }))} />
+                  </div>
+                  <div className="col-12 col-md-6 col-xl-3">
+                    <label className="form-label" htmlFor="service-category">Category</label>
+                    <input className="form-control" id="service-category" maxLength="100" required value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} />
+                  </div>
+                  <div className="col-6 col-md-3 col-xl-2">
+                    <label className="form-label" htmlFor="service-price">Price</label>
+                    <input className="form-control" id="service-price" type="number" min="0.01" max="99999999.99" step="0.01" required value={serviceDraft.price} onChange={(event) => setServiceDraft((current) => ({ ...current, price: event.target.value }))} />
+                  </div>
+                  <div className="col-6 col-md-3 col-xl-2">
+                    <label className="form-label" htmlFor="service-duration">Duration (minutes)</label>
+                    <input className="form-control" id="service-duration" type="number" min="1" max="1439" required value={serviceDraft.durationMinutes} onChange={(event) => setServiceDraft((current) => ({ ...current, durationMinutes: event.target.value }))} />
+                  </div>
+                  <div className="col-12 col-xl-2 studio-service-form-submit">
+                    <button className="btn btn-primary" type="submit" disabled={savingService}>
+                      {savingService ? 'Saving…' : editingServiceId !== null ? 'Save changes' : 'Add service'}
+                    </button>
+                    <button className="btn btn-outline-secondary" type="button" onClick={resetServiceForm}>Cancel</button>
+                  </div>
+                  <div className="col-12">
+                    <label className="form-label" htmlFor="service-description">Service details <span className="text-on-surface-variant fw-normal">(optional)</span></label>
+                    <textarea className="form-control" id="service-description" rows="2" maxLength="2000" value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Describe what clients can expect." />
+                  </div>
                 </div>
-                <div className="col-12">
-                  <label className="form-label" htmlFor="service-description">Full service details</label>
-                  <textarea className="form-control" id="service-description" rows="3" maxLength="2000" value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Describe the steps, products, preparation and results clients can expect." />
-                </div>
-                <div className="col-6 col-md-4">
-                  <label className="form-label" htmlFor="service-price">Price</label>
-                  <input className="form-control" id="service-price" type="number" min="0.01" max="99999999.99" step="0.01" required value={serviceDraft.price} onChange={(event) => setServiceDraft((current) => ({ ...current, price: event.target.value }))} />
-                </div>
-                <div className="col-6 col-md-4">
-                  <label className="form-label" htmlFor="service-duration">Duration (minutes)</label>
-                  <input className="form-control" id="service-duration" type="number" min="1" max="1439" required value={serviceDraft.durationMinutes} onChange={(event) => setServiceDraft((current) => ({ ...current, durationMinutes: event.target.value }))} />
-                </div>
-              </div>
-              <div className="d-flex flex-wrap gap-2 mt-3">
-                <button className="btn btn-primary" type="submit" disabled={savingService}>
-                  {savingService ? 'Saving service…' : editingServiceId !== null ? 'Save service changes' : 'Add service'}
-                </button>
-                {editingServiceId !== null && <button className="btn btn-outline-secondary" type="button" onClick={resetServiceForm}>Cancel</button>}
-              </div>
-            </form>
+              </form>
+            )}
           </section>
 
           <section className="dashboard-panel" aria-labelledby="studio-portfolio-heading">
@@ -381,8 +510,8 @@ export default function ProfessionalStudioPage() {
             </div>
             <label className="studio-upload-dropzone" htmlFor="studio-portfolio-upload">
               <span className="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
-              <strong>{uploading ? 'Uploading your photos…' : 'Choose portfolio photos'}</strong>
-              <span>Multiple images welcome · JPEG or PNG</span>
+              <strong>{uploading ? 'Uploading…' : 'Add portfolio photos'}</strong>
+              <span>JPEG or PNG · up to 5 MB each</span>
               <input id="studio-portfolio-upload" className="visually-hidden" type="file" accept="image/jpeg,image/png" multiple disabled={uploading} onChange={handleImageUpload} />
             </label>
             {portfolioImages.length === 0 ? (

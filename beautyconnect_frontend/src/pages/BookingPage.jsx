@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { initiatePayment, refreshPayment } from '../api/payment'
 import { getProfessionalById } from '../api/search'
+import { notify } from '../utils/notifications'
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams()
@@ -69,11 +70,11 @@ export default function BookingPage() {
   async function handleBooking(event) {
     event.preventDefault()
     if (!service || !hasValidScheduledTime) {
-      setErrorMessage('The selected service or appointment time is no longer available. Please choose another slot.')
+      notify.error('The selected service or appointment time is no longer available. Please choose another slot.')
       return
     }
     if (Date.parse(scheduledDateTime) <= Date.now()) {
-      setErrorMessage('This appointment time has passed. Go back to the professional profile and choose another available time.')
+      notify.error('This appointment time has passed. Go back to the professional profile and choose another available time.')
       return
     }
 
@@ -87,7 +88,7 @@ export default function BookingPage() {
       })
       setPayment(paymentForm)
     } catch (error) {
-      setErrorMessage(
+      notify.error(
         error.response?.data?.message ??
         'Could not prepare payment. No booking has been created. Please try again.',
       )
@@ -113,7 +114,7 @@ export default function BookingPage() {
       submitRefreshedPaymentRef.current = true
       setPayment(refreshedPayment)
     } catch (error) {
-      setErrorMessage(
+      notify.error(
         error.response?.data?.message ??
         'Could not refresh the eSewa payment. Choose the appointment again and retry.',
       )

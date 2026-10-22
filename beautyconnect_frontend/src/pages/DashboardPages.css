@@ -84,6 +84,68 @@
   font-size: clamp(2rem, 4vw, 3.4rem);
 }
 
+.profile-avatar-wrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.profile-avatar-large--image {
+  display: block;
+  object-fit: cover;
+}
+
+.profile-avatar-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.38rem 0.65rem;
+  border: 1px solid rgba(149, 71, 65, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-avatar-upload .material-symbols-outlined {
+  font-size: 0.95rem;
+}
+
+.studio-avatar-uploader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 1rem;
+  background: linear-gradient(120deg, #fff, var(--surface-container-low));
+}
+
+.studio-avatar-preview,
+.studio-avatar-placeholder {
+  display: grid;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-container);
+  color: var(--primary);
+  font-size: 2rem;
+  box-shadow: 0 4px 15px rgba(71, 43, 42, 0.1);
+}
+
+.studio-avatar-uploader strong {
+  font-size: 0.88rem;
+}
+
 .dashboard-panel {
   padding: clamp(1.2rem, 2.6vw, 2rem);
   border: 1px solid rgba(149, 71, 65, 0.12);
@@ -290,6 +352,42 @@
   font-weight: 500;
 }
 
+.studio-service-gallery,
+.artist-service-gallery {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  overflow-x: auto;
+}
+
+.studio-service-gallery img,
+.artist-service-gallery img {
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  border-radius: 0.65rem;
+  background: var(--surface-container);
+  object-fit: cover;
+}
+
+.studio-service-photo-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.8rem;
+  cursor: pointer;
+}
+
+.studio-service-photo-button .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.studio-service-photo-count {
+  margin-left: 0.45rem;
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+}
+
 .studio-category-tag {
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
@@ -446,6 +544,10 @@
 @media (max-width: 480px) {
   .dashboard-profile-hero {
     flex-direction: column-reverse;
+  }
+
+  .profile-avatar-wrap {
+    align-self: center;
   }
 
   .profile-detail-list > div {

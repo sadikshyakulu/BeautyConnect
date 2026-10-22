@@ -56,7 +56,11 @@ Directory.CreateDirectory(webRootPath);
 builder.Services.AddScoped<IProfessionalProfileService>(serviceProvider =>
     new ProfessionalProfileService(
         serviceProvider.GetRequiredService<BeautyConnectDbContext>(),
-        Path.Combine(webRootPath, "uploads", "portfolio")));
+        Path.Combine(webRootPath, "uploads")));
+builder.Services.AddScoped<IProfileImageService>(serviceProvider =>
+    new ProfileImageService(
+        serviceProvider.GetRequiredService<BeautyConnectDbContext>(),
+        Path.Combine(webRootPath, "uploads", "avatars")));
 builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
@@ -169,7 +173,7 @@ static async Task SeedAdminAsync(WebApplication app)
         if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(password))
         {
             email = "admin.test@beautyconnect.local";
-            password = "BeautyConnect_TestAdmin_2026!";
+            password = "admin@123";
         }
     }
 

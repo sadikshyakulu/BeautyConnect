@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { getAssetUrl } from '../api/assets'
+import { notify } from '../utils/notifications'
 import './Navbar.css'
 
 export default function Navbar() {
@@ -8,7 +10,6 @@ export default function Navbar() {
   const navigate = useNavigate()
   const { user, loading, roleHome, signOut } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [signOutError, setSignOutError] = useState('')
   const displayName = user?.profile?.fullName?.trim()
     || user?.profile?.businessName?.trim()
     || user?.email?.split('@')[0]
@@ -22,12 +23,11 @@ export default function Navbar() {
   ]
 
   async function handleSignOut() {
-    setSignOutError('')
     try {
       await signOut()
       navigate('/', { replace: true })
     } catch (error) {
-      setSignOutError(error.response?.data?.message ?? 'Could not contact the server to end the session.')
+      notify.error(error.response?.data?.message ?? 'Could not contact the server to end the session.')
       navigate('/', { replace: true })
     }
   }
@@ -70,9 +70,13 @@ export default function Navbar() {
           ))}
         </nav>
         <div className="dashboard-sidebar-account">
-          <div className="dashboard-sidebar-avatar" aria-hidden="true">
-            {displayName.slice(0, 1).toLocaleUpperCase()}
-          </div>
+          {user.profile?.avatarUrl ? (
+            <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--image" src={getAssetUrl(user.profile.avatarUrl)} alt="" />
+          ) : (
+            <div className="dashboard-sidebar-avatar" aria-hidden="true">
+              {displayName.slice(0, 1).toLocaleUpperCase()}
+            </div>
+          )}
           <div className="dashboard-sidebar-user">
             <strong>{displayName}</strong>
             <span>{user.role} account</span>
@@ -81,7 +85,6 @@ export default function Navbar() {
             <span className="material-symbols-outlined" aria-hidden="true">logout</span>
           </button>
         </div>
-        {signOutError && <p className="dashboard-sidebar-error" role="alert">{signOutError}</p>}
       </aside>
     )
   }
@@ -168,7 +171,6 @@ export default function Navbar() {
           )}
         </div>
       )}
-      {signOutError && <div className="container"><div className="alert alert-warning mb-0" role="alert">{signOutError}</div></div>}
     </header>
   )
 }

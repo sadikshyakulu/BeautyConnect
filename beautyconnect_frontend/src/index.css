@@ -93,6 +93,17 @@
 /* ============================================================
    Base Resets & Typography
    ============================================================ */
+.beautyconnect-toast {
+  border-radius: 0.875rem;
+  box-shadow: 0 0.75rem 2rem rgba(54, 31, 30, 0.16);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.beautyconnect-toast-progress {
+  background: var(--primary-container);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -1124,4 +1135,3 @@ input[type="number"] {
     transform: none !important;
   }
 }
-

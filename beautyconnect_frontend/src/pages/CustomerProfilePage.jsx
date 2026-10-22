@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getCustomerBookings } from '../api/booking'
+import { getAssetUrl } from '../api/assets'
+import { uploadAvatar } from '../api/profileImage'
 import { useAuth } from '../auth/useAuth'
+import { notify } from '../utils/notifications'
 import './DashboardPages.css'
 
 const statusName = (status) => typeof status === 'number'
@@ -9,10 +12,11 @@ const statusName = (status) => typeof status === 'number'
   : status
 
 export default function CustomerProfilePage() {
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const avatarUrl = user?.profile?.avatarUrl
   const displayName = user?.profile?.fullName?.trim()
     || user?.fullName?.trim()
     || user?.email?.split('@')[0]
@@ -26,7 +30,7 @@ export default function CustomerProfilePage() {
         if (active) setBookings(result ?? [])
       })
       .catch((error) => {
-        if (active) setErrorMessage(error.response?.data?.message ?? 'Your appointment summary could not be loaded.')
+        if (active) notify.error(error.response?.data?.message ?? 'Your appointment summary could not be loaded.')
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -39,6 +43,27 @@ export default function CustomerProfilePage() {
   const completedCount = bookings.filter((booking) => statusName(booking.status) === 'Completed').length
   const upcomingCount = bookings.filter((booking) => ['Pending', 'Confirmed'].includes(statusName(booking.status))).length
 
+  async function handleAvatarUpload(event) {
+    const image = event.target.files?.[0]
+    event.target.value = ''
+    if (!image) return
+    if (!['image/jpeg', 'image/png'].includes(image.type) || image.size <= 0 || image.size > 5 * 1024 * 1024) {
+      notify.error('Choose a JPEG or PNG image smaller than 5 MB.')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const result = await uploadAvatar(image)
+      updateProfile({ avatarUrl: result.avatarUrl })
+      notify.success('Your profile photo has been updated.')
+    } catch (error) {
+      notify.error(error.response?.data?.message ?? 'Could not upload your profile photo.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   return (
     <div className="dashboard-page dashboard-profile-page">
       <header className="dashboard-hero dashboard-profile-hero">
@@ -47,13 +72,22 @@ export default function CustomerProfilePage() {
           <h1 className="font-headline">Your profile</h1>
           <p>Your account details and appointment activity, together in one place.</p>
         </div>
-        <div className="profile-avatar-large" aria-label={`${displayName} profile`}>
-          {initials || 'BC'}
+        <div className="profile-avatar-wrap">
+          {avatarUrl ? (
+            <img className="profile-avatar-large profile-avatar-large--image" src={getAssetUrl(avatarUrl)} alt={`${displayName} profile`} />
+          ) : (
+            <div className="profile-avatar-large" aria-label={`${displayName} profile`}>
+              {initials || 'BC'}
+            </div>
+          )}
+          <label className="profile-avatar-upload" htmlFor="customer-avatar-upload">
+            <span className="material-symbols-outlined" aria-hidden="true">{uploading ? 'progress_activity' : 'photo_camera'}</span>
+            <span>{uploading ? 'Uploading…' : 'Change photo'}</span>
+            <input id="customer-avatar-upload" className="visually-hidden" type="file" accept="image/jpeg,image/png" disabled={uploading} onChange={handleAvatarUpload} />
+          </label>
         </div>
         <div className="dashboard-hero-decoration" aria-hidden="true">✳</div>
       </header>
-
-      {errorMessage && <div className="alert alert-warning" role="alert">{errorMessage}</div>}
 
       <div className="row g-4">
         <section className="col-12 col-lg-7">

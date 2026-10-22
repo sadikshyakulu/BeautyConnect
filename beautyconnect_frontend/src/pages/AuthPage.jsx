@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { notify } from '../utils/notifications'
 import './AuthPage.css'
 
 export default function AuthPage() {
@@ -17,11 +18,8 @@ export default function AuthPage() {
   const [businessName, setBusinessName] = useState('')
   const [city, setCity] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-
   const changeMode = (nextMode) => {
     setMode(nextMode)
-    setErrorMessage('')
   }
 
   useEffect(() => {
@@ -30,7 +28,6 @@ export default function AuthPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setErrorMessage('')
     setSubmitting(true)
     try {
       const authenticatedUser = mode === 'login'
@@ -52,7 +49,7 @@ export default function AuthPage() {
           : '/dashboard/customer'
       navigate(location.state?.from ?? destination, { replace: true })
     } catch (error) {
-      setErrorMessage(
+      notify.error(
         error.response?.data?.message ??
         error.response?.data?.title ??
         'Authentication failed. Please check your details and try again.',
@@ -309,8 +306,6 @@ export default function AuthPage() {
                   </label>
                 </div>
               )}
-
-              {errorMessage && <div className="alert alert-danger mb-0" role="alert">{errorMessage}</div>}
 
               <button type="submit" className="auth-submit-btn" disabled={submitting}>
                 <span>{submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In to BeautyConnect'}</span>

@@ -4,6 +4,8 @@ import { cancelBooking, getCustomerBookings } from '../api/booking'
 import { createReview } from '../api/review'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import { notify } from '../utils/notifications'
+import './CustomerDashboardPage.css'
 import { useAuth } from '../auth/useAuth'
 
 const statusName = (status) => typeof status === 'number'
@@ -31,7 +33,6 @@ export default function CustomerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [notice, setNotice] = useState('')
 
   async function loadBookings() {
     try {
@@ -90,6 +91,21 @@ export default function CustomerDashboardPage() {
     })
   }, [navigate, searchParams])
 
+  useEffect(() => {
+    const { payment, bookingId } = location.state ?? {}
+    if (!payment) return
+
+    const messages = {
+      success: `Payment successful. Your appointment is confirmed.${bookingId ? ` Booking #${bookingId}.` : ''}`,
+      pending: 'Payment is still processing. No booking has been created yet; it will appear here after eSewa confirms payment.',
+      failed: 'Payment was not completed, so no booking was created. You can select the appointment again and retry.',
+      error: 'We could not verify the payment. Please check your bookings or contact support.',
+    }
+    const toastType = payment === 'success' ? 'success' : payment === 'error' ? 'error' : 'warning'
+    if (messages[payment]) notify[toastType](messages[payment])
+    navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null })
+  }, [location.hash, location.pathname, location.search, location.state, navigate])
+
   const upcoming = useMemo(
     () => bookings.filter((booking) => ['Pending', 'Confirmed'].includes(statusName(booking.status))),
     [bookings],
@@ -133,13 +149,13 @@ export default function CustomerDashboardPage() {
     try {
       const cancelledBooking = await cancelBooking(bookingId)
       await loadBookings()
-      setNotice(
+      notify.success(
         refundStatusName(cancelledBooking.refundStatus) === 'Requested'
           ? 'Booking cancelled. A full refund has been requested from the professional; it will show as refunded after eSewa confirms it.'
           : 'Booking cancelled.',
       )
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not cancel this booking.')
+      notify.error(error.response?.data?.message ?? 'Could not cancel this booking.')
     }
   }
 
@@ -152,60 +168,50 @@ export default function CustomerDashboardPage() {
       await createReview({ bookingId: reviewing.id, rating, comment })
       setReviewing(null)
       setComment('')
-      setNotice('Your review was submitted.')
+      notify.success('Your review was submitted.')
     } catch (error) {
-      setErrorMessage(error.response?.data?.message ?? 'Could not submit your review.')
+      notify.error(error.response?.data?.message ?? 'Could not submit your review.')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="container py-5">
-      <header className="glass-card rounded-2xl p-4 p-lg-5 mb-4">
+    <div className="customer-dashboard">
+      <header className="glass-card rounded-2xl customer-dashboard-hero mb-4">
         <div className="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4">
           <div>
             <p className="text-uppercase text-secondary fw-semibold small mb-2">Your BeautyConnect</p>
             <h1 className="font-headline mb-2">Welcome, {customerName}</h1>
             <p className="text-on-surface-variant mb-0">Manage your appointments and discover your next beauty service.</p>
           </div>
-          <Link className="btn btn-primary" to="/search">Explore all professionals</Link>
+          <div className="customer-dashboard-actions">
+            {user?.profile?.avatarUrl ? (
+              <img className="customer-dashboard-avatar" src={getAssetUrl(user.profile.avatarUrl)} alt="" />
+            ) : (
+              <Link className="customer-dashboard-avatar customer-dashboard-avatar--empty" to="/dashboard/customer/profile" aria-label="Add a profile photo">
+                <span className="material-symbols-outlined" aria-hidden="true">person</span>
+              </Link>
+            )}
+            <Link className="btn btn-primary" to="/search">Explore professionals</Link>
+            <Link className="customer-dashboard-profile-link" to="/dashboard/customer/profile">My profile</Link>
+          </div>
         </div>
       </header>
 
-      {location.state?.payment === 'success' && (
-        <div className="alert alert-success" role="status">
-          Payment successful. Your appointment is confirmed.
-          {location.state.bookingId && ` Booking #${location.state.bookingId}.`}
-        </div>
-      )}
-      {location.state?.payment === 'pending' && (
-        <div className="alert alert-warning" role="status">
-          Payment is still processing. No booking has been created yet; it will appear here after eSewa confirms payment.
-        </div>
-      )}
-      {location.state?.payment === 'failed' && (
-        <div className="alert alert-warning" role="status">
-          Payment was not completed, so no booking was created. You can select the appointment again and retry.
-        </div>
-      )}
-      {location.state?.payment === 'error' && (
-        <div className="alert alert-danger" role="alert">
-          We could not verify the payment. Please check your bookings or contact support.
-        </div>
-      )}
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
 
-      <div className="row g-3 mb-4">
-        <div className="col-6 col-lg-3">
+      <div className="customer-dashboard-stats mb-5">
+        <div className="customer-dashboard-stat">
           <article className="glass-card rounded-2xl p-3 p-md-4 h-100">
+            <span className="material-symbols-outlined customer-stat-icon" aria-hidden="true">event_upcoming</span>
             <span className="small text-on-surface-variant">Upcoming appointments</span>
             <strong className="d-block fs-3">{upcoming.length}</strong>
           </article>
         </div>
-        <div className="col-6 col-lg-3">
+        <div className="customer-dashboard-stat">
           <article className="glass-card rounded-2xl p-3 p-md-4 h-100">
+            <span className="material-symbols-outlined customer-stat-icon" aria-hidden="true">history</span>
             <span className="small text-on-surface-variant">Past appointments</span>
             <strong className="d-block fs-3">{history.length}</strong>
           </article>
@@ -255,15 +261,14 @@ export default function CustomerDashboardPage() {
             <p className="text-on-surface-variant mb-0">Try another search or category. New services appear here as professionals are verified.</p>
           </div>
         ) : (
-          <div className="row g-3">
+          <div className={`customer-professional-grid${displayedProfessionals.length === 1 ? ' customer-professional-grid--featured' : ''}`}>
             {displayedProfessionals.map((professional) => (
-              <div className="col-12 col-md-6 col-xl-4" key={professional.id}>
-                <article className="glass-card rounded-2xl p-3 p-md-4 h-100">
-                  <div className="d-flex align-items-center gap-3 mb-3">
+                <article className="glass-card rounded-2xl customer-professional-card" key={professional.id}>
+                  <div className="customer-professional-summary">
                     {professional.avatarUrl ? (
                       <img
                         className="rounded-circle object-fit-cover"
-                        style={{ width: 56, height: 56 }}
+                        style={{ width: 72, height: 72 }}
                         src={getAssetUrl(professional.avatarUrl)}
                         alt=""
                       />
@@ -273,15 +278,16 @@ export default function CustomerDashboardPage() {
                       </span>
                     )}
                     <div className="min-w-0">
-                      <h3 className="h5 mb-1 text-truncate">{professional.businessName}</h3>
+                      <p className="customer-card-kicker mb-1">BEAUTY PROFESSIONAL</p>
+                      <h3 className="h5 mb-1">{professional.businessName}</h3>
                       <p className="small text-on-surface-variant mb-0">
                         {[professional.speciality, professional.city].filter(Boolean).join(' · ')}
                       </p>
                     </div>
                   </div>
-                  <div className="d-flex flex-column gap-2 mb-3">
+                  <div className="customer-professional-offerings">
                     {professional.visibleServices.map((service) => (
-                      <div className="d-flex justify-content-between gap-2 border-top pt-2" key={service.id}>
+                      <div className="customer-offering" key={service.id}>
                         <div>
                           <strong className="d-block">{service.name}</strong>
                           <span className="small text-on-surface-variant">
@@ -292,11 +298,10 @@ export default function CustomerDashboardPage() {
                       </div>
                     ))}
                   </div>
-                  <Link className="btn btn-outline-primary w-100 mt-auto" to={`/artist/${professional.id}`}>
+                  <Link className="btn btn-outline-primary customer-professional-cta" to={`/artist/${professional.id}`}>
                     View times &amp; book
                   </Link>
                 </article>
-              </div>
             ))}
           </div>
         )}

@@ -28,6 +28,14 @@ export async function uploadPortfolioImage(image) {
   return data
 }
 
+export async function uploadServiceImage(serviceId, image) {
+  const formData = new FormData()
+  formData.append('image', image)
+
+  const { data } = await client.post(`/ProfessionalProfile/services/${serviceId}/images`, formData)
+  return data
+}
+
 export async function submitForVerification() {
   const { data } = await client.post('/ProfessionalProfile/submit-verification')
   return data

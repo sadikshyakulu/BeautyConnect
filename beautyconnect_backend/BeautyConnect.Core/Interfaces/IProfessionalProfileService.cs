@@ -14,5 +14,11 @@ public interface IProfessionalProfileService
         Stream imageStream,
         string contentType,
         long contentLength);
+    Task<PortfolioImageUploadResultDto?> AddServiceImageAsync(
+        int userId,
+        int serviceId,
+        Stream imageStream,
+        string contentType,
+        long contentLength);
     Task<bool> SubmitForVerificationAsync(int userId);
 }

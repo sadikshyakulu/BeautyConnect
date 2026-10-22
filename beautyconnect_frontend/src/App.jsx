@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
@@ -15,6 +16,7 @@ import ProfessionalStudioPage from './pages/ProfessionalStudioPage'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import RouteGuard from './auth/RouteGuard'
+import { notify } from './utils/notifications'
 
 function ScrollToRoute() {
   const { pathname, search, hash } = useLocation()
@@ -34,18 +36,30 @@ function ScrollToRoute() {
 function AppLayout() {
   const { user, sessionError } = useAuth()
 
+  useEffect(() => {
+    if (sessionError) notify.warning(sessionError)
+  }, [sessionError])
+
   return (
     <>
+      <ToastContainer
+        position="top-right"
+        autoClose={4500}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        pauseOnHover
+        draggable
+        limit={4}
+        theme="light"
+        toastClassName="beautyconnect-toast"
+        progressClassName="beautyconnect-toast-progress"
+      />
       <ScrollToRoute />
       <div className={`app-layout${user ? ' app-layout--authenticated' : ''}`}>
         <Navbar />
         <div className="app-content">
           <main className="app-main">
-            {sessionError && (
-              <div className="container pt-3">
-                <div className="alert alert-warning" role="alert">{sessionError}</div>
-              </div>
-            )}
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchRoute />} />

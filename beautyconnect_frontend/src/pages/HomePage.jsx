@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import HeroPortrait from '../components/HeroPortrait'
+import { notify } from '../utils/notifications'
 import './HomePage.css'
 
 export default function HomePage() {
@@ -20,7 +21,11 @@ export default function HomePage() {
         if (active) setProfessionals(response.results ?? [])
       })
       .catch((error) => {
-        if (active) setErrorMessage(error.response?.data?.message ?? 'Featured professionals could not be loaded.')
+        if (active) {
+          const message = error.response?.data?.message ?? 'Featured professionals could not be loaded.'
+          setErrorMessage(message)
+          notify.error(message)
+        }
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -103,7 +108,6 @@ export default function HomePage() {
             </div>
             <Link to="/search" className="btn btn-outline-primary">Browse all professionals</Link>
           </div>
-          {errorMessage && <div className="alert alert-warning" role="alert">{errorMessage}</div>}
           {loading ? (
             <p role="status">Loading professionals…</p>
           ) : !errorMessage && professionals.length === 0 ? (

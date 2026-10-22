@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import { notify } from '../utils/notifications'
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -43,10 +44,10 @@ export default function SearchPage() {
       })
       .catch((error) => {
         if (!active) return
-        setErrorMessage(
-          error.response?.data?.message ??
-          'Could not load professionals. Please try again.',
-        )
+        const message = error.response?.data?.message ??
+          'Could not load professionals. Please try again.'
+        setErrorMessage(message)
+        notify.error(message)
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -127,7 +128,6 @@ export default function SearchPage() {
         </div>
       </form>
 
-      {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="h5 mb-0">Professionals</h2>
         {!loading && <span className="text-on-surface-variant small">{totalCount} results</span>}
