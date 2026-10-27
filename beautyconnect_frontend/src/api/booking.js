@@ -25,7 +25,7 @@ export async function completeBooking(bookingId) {
   return data
 }
 
-export async function cancelBooking(bookingId) {
-  const { data } = await client.post(`/Booking/${bookingId}/cancel`)
+export async function cancelBooking(bookingId, reason) {
+  const { data } = await client.post(`/Booking/${bookingId}/cancel`, { reason })
   return data
 }

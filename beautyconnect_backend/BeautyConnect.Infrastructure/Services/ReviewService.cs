@@ -124,6 +124,7 @@ public class ReviewService : IReviewService
         Comment = review.Comment,
         CreatedAt = review.CreatedAt,
         CustomerName = review.CustomerProfile.FullName,
+        CustomerAvatarUrl = review.CustomerProfile.AvatarUrl,
         ServiceName = review.Booking.Service.Name
     };
 }

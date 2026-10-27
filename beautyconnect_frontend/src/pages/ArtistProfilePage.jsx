@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { getOpenSlots } from '../api/availability'
-import { getReviewsForProfessional } from '../api/review'
 import { getProfessionalById } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import { aggregateServiceRatings, getReviewsForProfessional, serviceRatingKey } from '../api/review'
+import RatingStars from '../components/RatingStars'
 import { notify } from '../utils/notifications'
 import { formatTime12Hour } from '../utils/time'
+import { formatNpr } from '../utils/currency'
+import './ArtistProfilePage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
@@ -31,30 +34,33 @@ function slotDateTime(slot) {
 export default function ArtistProfilePage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedServiceId = Number(searchParams.get('serviceId'))
+  const [serviceSelection, setServiceSelection] = useState(() => ({
+    professionalId: id,
+    serviceId: requestedServiceId || null,
+  }))
   const [professional, setProfessional] = useState(null)
+  const [serviceRatings, setServiceRatings] = useState(new Map())
+  const [serviceRatingsError, setServiceRatingsError] = useState(false)
   const [loadedProfileId, setLoadedProfileId] = useState(null)
-  const [reviews, setReviews] = useState([])
   const [selectedDate, setSelectedDate] = useState(() => nepalDateString(new Date()))
   const [slots, setSlots] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
-  const [selectedServiceId, setSelectedServiceId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [slotLoading, setSlotLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [slotError, setSlotError] = useState('')
-  const [reviewError, setReviewError] = useState('')
   const [availabilityKey, setAvailabilityKey] = useState('')
+  const selectedServiceId = serviceSelection.professionalId === id
+    ? serviceSelection.serviceId
+    : requestedServiceId || null
 
   useEffect(() => {
     let active = true
-    Promise.allSettled([
-      getProfessionalById(id),
-      getReviewsForProfessional(id),
-    ])
-      .then(([profileResult, reviewResult]) => {
+    getProfessionalById(id)
+      .then((profile) => {
         if (!active) return
-        if (profileResult.status === 'rejected') throw profileResult.reason
-        const profile = profileResult.value
         if (!profile) {
           setErrorMessage('This professional profile could not be found.')
           setLoadedProfileId(id)
@@ -62,13 +68,6 @@ export default function ArtistProfilePage() {
         }
         setProfessional(profile)
         setErrorMessage('')
-        setReviewError('')
-        if (reviewResult.status === 'fulfilled') {
-          setReviews(reviewResult.value ?? [])
-          setReviewError('')
-        } else {
-          setReviewError(reviewResult.reason.response?.data?.message ?? 'Reviews could not be loaded.')
-        }
       })
       .catch((error) => {
         if (active) {
@@ -87,6 +86,26 @@ export default function ArtistProfilePage() {
       active = false
     }
   }, [id])
+
+  useEffect(() => {
+    if (!professional) return undefined
+
+    let active = true
+    getReviewsForProfessional(professional.id)
+      .then((reviews) => {
+        if (active) {
+          setServiceRatings(aggregateServiceRatings(reviews))
+          setServiceRatingsError(false)
+        }
+      })
+      .catch(() => {
+        if (active) setServiceRatingsError(true)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [professional])
 
   useEffect(() => {
     if (!professional) return undefined
@@ -141,88 +160,167 @@ export default function ArtistProfilePage() {
   }
 
   if (loading || loadedProfileId !== id) return <div className="container py-5" role="status">Loading professional profile…</div>
-  if (errorMessage) return <div className="container py-5"><div className="alert alert-warning" role="alert">{errorMessage}</div><Link to="/search">Back to search</Link></div>
+  if (errorMessage) return <div className="container py-5"><div className="alert alert-warning" role="alert">{errorMessage}</div></div>
   if (!professional) return null
 
   const services = professional.matchingServices ?? []
+  const profileGalleryImages = [...new Set(
+    services.flatMap((service) => service.images ?? []),
+  )].slice(0, 3)
+  const profileCoverImages = profileGalleryImages.length
+    ? profileGalleryImages
+    : professional.avatarUrl ? [professional.avatarUrl] : []
   const activeAvailabilityKey = `${professional.id}:${selectedDate}:${selectedServiceId ?? 'none'}`
   const selectedService = services.find((service) => service.id === selectedServiceId)
   const visibleSlots = availabilityKey === activeAvailabilityKey ? slots : []
 
   return (
-    <div className="container py-5">
-      <Link to="/search" className="small">← Back to professionals</Link>
+    <div className="container py-4 py-md-5 artist-profile-page">
       {verificationStatus(professional.verificationStatus) === 'Pending' && (
         <div className="alert alert-warning mt-3" role="status">
           This profile is pending verification and is not visible to the public until an Admin approves it.
         </div>
       )}
-      <section className="glass-card rounded-2xl p-4 p-md-5 mt-3">
-        <div className="d-flex flex-column flex-md-row gap-4 align-items-start">
-          {professional.avatarUrl && (
-            <img className="rounded-circle object-fit-cover" style={{ width: 132, height: 132 }} src={getAssetUrl(professional.avatarUrl)} alt="" />
+      <section className={`artist-profile-hero${profileCoverImages.length ? ` artist-profile-hero--images-${profileCoverImages.length}` : ''}`} aria-labelledby="artist-profile-name">
+        {profileCoverImages.length > 0 ? (
+          <div className="artist-profile-cover" aria-label={`${professional.businessName} portfolio images`}>
+            {profileCoverImages.map((image, index) => (
+              <img
+                className={`artist-profile-cover-image artist-profile-cover-image--${index + 1}`}
+                key={`${image}-${index}`}
+                src={getAssetUrl(image)}
+                alt={`${professional.businessName} service portfolio ${index + 1}`}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="artist-profile-cover artist-profile-cover--empty" aria-hidden="true">
+            <span className="material-symbols-outlined">auto_awesome</span>
+          </div>
+        )}
+        <div className="glass-card artist-profile-identity">
+          {professional.avatarUrl ? (
+            <img className="artist-profile-avatar" src={getAssetUrl(professional.avatarUrl)} alt="" />
+          ) : (
+            <span className="artist-profile-avatar artist-profile-avatar--fallback" aria-hidden="true">
+              {professional.businessName?.trim()?.charAt(0)?.toLocaleUpperCase() || '?'}
+            </span>
           )}
-          <div className="flex-grow-1">
-            <h1 className="font-headline">{professional.businessName}</h1>
-            <p className="text-secondary mb-2">
-              {[professional.speciality, professional.city].filter(Boolean).join(' · ')}
-            </p>
-            <p className="mb-2">★ {Number(professional.ratingAverage ?? 0).toFixed(1)} · {professional.totalReviews ?? 0} reviews</p>
-            {professional.bio && <p>{professional.bio}</p>}
+          <div className="artist-profile-identity-copy">
+            <div className="artist-profile-name-row">
+              <div>
+                <p className="artist-profile-eyebrow mb-1">{professional.speciality || 'Beauty professional'}</p>
+                <h1 className="font-headline mb-1" id="artist-profile-name">{professional.businessName}</h1>
+              </div>
+              {verificationStatus(professional.verificationStatus) === 'Approved' && (
+                <span className="artist-profile-verified">
+                  <span className="material-symbols-outlined" aria-hidden="true">verified</span>
+                  Verified
+                </span>
+              )}
+            </div>
+            {professional.city && (
+              <p className="artist-profile-location">
+                <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+                {professional.city}
+              </p>
+            )}
+            <div className="artist-rating-summary">
+              {professional.totalReviews > 0 ? (
+                <>
+                  <span className="artist-rating-summary-score">
+                    <RatingStars rating={professional.ratingAverage} />
+                    <strong>{Number(professional.ratingAverage ?? 0).toFixed(1)}</strong>
+                  </span>
+                  <span className="artist-rating-summary-count">
+                    {professional.totalReviews} {professional.totalReviews === 1 ? 'review' : 'reviews'}
+                  </span>
+                </>
+              ) : (
+                <span className="artist-rating-summary-count">No reviews yet</span>
+              )}
+              <span className="artist-rating-summary-note">Overall rating · all services</span>
+            </div>
+            {professional.bio && <p className="artist-profile-bio">{professional.bio}</p>}
           </div>
         </div>
       </section>
 
       <div className="row g-4 mt-1">
-        <section className="col-lg-7">
+        <section className="col-lg-7" id="services">
           <h2 className="h4 mb-3">Services</h2>
           {services.length === 0 ? (
             <p className="text-on-surface-variant">No services are listed yet.</p>
           ) : (
             <div className="d-flex flex-column gap-3">
-              {services.map((service) => (
-                <article key={service.id} className={`glass-card rounded-2xl p-4 d-flex flex-column flex-sm-row justify-content-between gap-3${selectedServiceId === service.id ? ' border border-primary' : ''}`}>
-                  <div>
-                    <h3 className="h5">{service.name}</h3>
-                    <p className="small text-on-surface-variant">{service.category} · {service.durationMinutes} minutes</p>
-                    {service.description && <p className="mb-0">{service.description}</p>}
+              {services.map((service) => {
+                const serviceRating = serviceRatings.get(serviceRatingKey(service))
+                  ?? serviceRatings.get(`name:${service.name.trim().toLocaleLowerCase()}`)
+                return (
+                <article key={service.id} className={`glass-card rounded-2xl artist-service-card${selectedServiceId === service.id ? ' artist-service-card--selected' : ''}`}>
+                  <div className={`artist-service-card-main${service.images?.length ? ' artist-service-card-main--with-gallery' : ''}`}>
                     {service.images?.length > 0 && (
-                      <div className="artist-service-gallery mt-3">
+                      <div className="artist-service-gallery" aria-label={`${service.name} photos`}>
                         {service.images.map((image, index) => (
                           <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
                         ))}
                       </div>
                     )}
-                    {service.durationMinutes >= 1440 && (
-                      <p className="small text-danger mb-0">
-                        This service cannot be booked because its duration is 24 hours or longer. Please contact the professional.
-                      </p>
-                    )}
+                    <div className="artist-service-card-copy">
+                      <p className="artist-service-category">{service.category}</p>
+                      <h3 className="h5 mb-2">{service.name}</h3>
+                      <p className="small text-on-surface-variant mb-2">{service.durationMinutes} minutes</p>
+                      {service.description && <p className="artist-service-description">{service.description}</p>}
+                      <div className="artist-service-rating" aria-live="polite">
+                        {serviceRatingsError ? (
+                            <span className="small text-on-surface-variant">Rating unavailable</span>
+                          ) : serviceRating ? (
+                            <>
+                              <RatingStars rating={serviceRating.total / serviceRating.count} className="rating-stars--compact" />
+                              <strong>{(serviceRating.total / serviceRating.count).toFixed(1)}</strong>
+                              <span className="small text-on-surface-variant">
+                                ({serviceRating.count} {serviceRating.count === 1 ? 'review' : 'reviews'})
+                              </span>
+                            </>
+                          ) : (
+                            <span className="small text-on-surface-variant">No reviews yet</span>
+                          )}
+                      </div>
+                    </div>
+                    <div className="artist-service-card-actions">
+                      <strong className="artist-service-price">{formatNpr(service.price)}</strong>
+                      <Link className="btn btn-outline-primary" to={`/artist/${professional.id}/service/${service.id}`}>
+                        Service details
+                      </Link>
+                      <button
+                        className={`btn ${selectedServiceId === service.id ? 'btn-primary' : 'btn-outline-primary'}`}
+                        type="button"
+                        disabled={service.durationMinutes >= 1440}
+                        aria-pressed={selectedServiceId === service.id}
+                        onClick={() => {
+                          setServiceSelection({ professionalId: id, serviceId: service.id })
+                          setSelectedSlot(null)
+                          setSlotError('')
+                        }}
+                      >
+                        {selectedServiceId === service.id ? 'Selected' : 'Choose service'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-sm-end">
-                    <strong className="d-block mb-2">{service.price}</strong>
-                    <button
-                      className={`btn ${selectedServiceId === service.id ? 'btn-primary' : 'btn-outline-primary'}`}
-                      type="button"
-                      disabled={service.durationMinutes >= 1440}
-                      aria-pressed={selectedServiceId === service.id}
-                      onClick={() => {
-                        setSelectedServiceId(service.id)
-                        setSelectedSlot(null)
-                        setSlotError('')
-                      }}
-                    >
-                      {selectedServiceId === service.id ? 'Selected' : 'Choose service'}
-                    </button>
-                  </div>
+                  {service.durationMinutes >= 1440 && (
+                    <p className="small text-danger mb-0">
+                      This service cannot be booked because its duration is 24 hours or longer. Please contact the professional.
+                    </p>
+                  )}
                 </article>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>
 
         <aside className="col-lg-5">
-          <div className="glass-card rounded-2xl p-4">
+          <div className="glass-card rounded-2xl p-4" id="appointments">
             <h2 className="h5">Available appointments</h2>
             {!selectedService ? (
               <p className="text-on-surface-variant">Choose a service first to see appointment times that fit its duration.</p>
@@ -270,28 +368,6 @@ export default function ArtistProfilePage() {
         </aside>
       </div>
 
-      <section className="mt-5">
-        <h2 className="h4 mb-3">Client reviews</h2>
-        {reviewError && <div className="alert alert-warning" role="alert">{reviewError}</div>}
-        {!reviewError && reviews.length === 0 ? (
-          <p className="text-on-surface-variant">There are no reviews to show.</p>
-        ) : reviews.length > 0 ? (
-          <div className="row g-3">
-            {reviews.map((review) => (
-              <article key={review.id} className="col-12 col-md-6">
-                <div className="glass-card rounded-2xl p-4 h-100">
-                  <div className="d-flex justify-content-between gap-2">
-                    <strong>{review.customerName}</strong>
-                    <span>★ {review.rating}/5</span>
-                  </div>
-                  {review.serviceName && <p className="small text-secondary mt-2 mb-1">{review.serviceName}</p>}
-                  <p className="mb-0">{review.comment}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : null}
-      </section>
     </div>
   )
 }

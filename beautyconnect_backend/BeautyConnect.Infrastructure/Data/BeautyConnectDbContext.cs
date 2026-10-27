@@ -114,6 +114,7 @@ public class BeautyConnectDbContext : DbContext
             entity.Property(e => e.RefundStatus).HasConversion<string>().HasMaxLength(30);
             entity.Property(e => e.RefundAmount).HasPrecision(10, 2);
             entity.Property(e => e.RefundGatewayReference).HasMaxLength(200);
+            entity.Property(e => e.CancellationReason).HasMaxLength(1000);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
 
             entity.HasOne(e => e.CustomerProfile)

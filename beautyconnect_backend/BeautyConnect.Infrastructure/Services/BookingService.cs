@@ -82,15 +82,25 @@ public class BookingService : IBookingService
             professional: true);
     }
 
-    public Task<(BookingDto? Booking, string? Error)> CancelBookingAsync(int userId, int bookingId)
+    public Task<(BookingDto? Booking, string? Error)> CancelBookingAsync(
+        int userId,
+        int bookingId,
+        string reason)
     {
-        return CancelBookingForCustomerAsync(userId, bookingId);
+        return CancelBookingForCustomerAsync(userId, bookingId, reason);
     }
 
     private async Task<(BookingDto? Booking, string? Error)> CancelBookingForCustomerAsync(
         int userId,
-        int bookingId)
+        int bookingId,
+        string reason)
     {
+        var cancellationReason = reason.Trim();
+        if (cancellationReason.Length < 3)
+        {
+            return (null, "Cancellation reason must contain at least 3 characters.");
+        }
+
         var booking = await _context.Bookings
             .Include(item => item.CustomerProfile)
                 .ThenInclude(customer => customer.User)
@@ -109,6 +119,7 @@ public class BookingService : IBookingService
         }
 
         booking.Status = BookingStatus.Cancelled;
+        booking.CancellationReason = cancellationReason;
         if (!string.IsNullOrWhiteSpace(booking.EsewaTransactionUuid)
             && !string.IsNullOrWhiteSpace(booking.EsewaTransactionCode)
             && booking.EsewaTotalAmount.HasValue)
@@ -132,8 +143,8 @@ public class BookingService : IBookingService
         IQueryable<Booking> query = _context.Bookings
             .Include(booking => booking.CustomerProfile)
                 .ThenInclude(customer => customer.User)
-            .Include(booking => booking.ProfessionalProfile)
-            .Include(booking => booking.Service);
+                .Include(booking => booking.ProfessionalProfile)
+                .Include(booking => booking.Service);
         query = professional
             ? query.Where(booking => booking.ProfessionalProfile.UserId == userId)
             : query.Where(booking => booking.CustomerProfile.UserId == userId);
@@ -174,7 +185,8 @@ public class BookingService : IBookingService
             .Include(booking => booking.CustomerProfile)
                 .ThenInclude(customer => customer.User)
             .Include(booking => booking.ProfessionalProfile)
-            .Include(booking => booking.Service);
+                .Include(booking => booking.Service)
+                .Include(booking => booking.Review);
     }
 
     private static BookingDto ToDto(Booking booking) => new()
@@ -194,10 +206,12 @@ public class BookingService : IBookingService
         RefundedAt = booking.RefundedAt,
         RefundGatewayReference = booking.RefundGatewayReference,
         Notes = booking.Notes,
+        CancellationReason = booking.CancellationReason,
         CreatedAt = booking.CreatedAt,
         CustomerName = booking.CustomerProfile.FullName,
         CustomerEmail = booking.CustomerProfile.User.Email,
         ProfessionalBusinessName = booking.ProfessionalProfile.BusinessName,
+        HasReview = booking.Review != null,
         Service = new ServiceDto
         {
             Id = booking.Service.Id,

@@ -15,6 +15,12 @@ public class BookingCreateDto
     public string? Notes { get; set; }
 }
 
+public class BookingCancellationDto
+{
+    [Required, StringLength(1000, MinimumLength = 3)]
+    public string Reason { get; set; } = string.Empty;
+}
+
 public class BookingDto
 {
     public int Id { get; set; }
@@ -32,9 +38,11 @@ public class BookingDto
     public DateTime? RefundedAt { get; set; }
     public string? RefundGatewayReference { get; set; }
     public string? Notes { get; set; }
+    public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public string ProfessionalBusinessName { get; set; } = string.Empty;
+    public bool HasReview { get; set; }
     public ServiceDto Service { get; set; } = new();
 }

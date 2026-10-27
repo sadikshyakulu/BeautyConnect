@@ -65,6 +65,10 @@ namespace BeautyConnect.Infrastructure.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
                     b.Property<decimal>("CommissionAmount")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");

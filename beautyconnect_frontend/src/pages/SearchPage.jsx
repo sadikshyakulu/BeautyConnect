@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import RatingStars from '../components/RatingStars'
 import { notify } from '../utils/notifications'
+import { formatNpr } from '../utils/currency'
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -106,11 +108,11 @@ export default function SearchPage() {
             <input id="search-city" className="form-control" name="city" value={filters.city} onChange={updateFilter} placeholder="City" />
           </div>
           <div className="col-6 col-md-2">
-            <label className="form-label" htmlFor="search-min-price">Min price</label>
+            <label className="form-label" htmlFor="search-min-price">Min price (NPR)</label>
             <input id="search-min-price" className="form-control" name="minPrice" type="number" min="0" value={filters.minPrice} onChange={updateFilter} />
           </div>
           <div className="col-6 col-md-2">
-            <label className="form-label" htmlFor="search-max-price">Max price</label>
+            <label className="form-label" htmlFor="search-max-price">Max price (NPR)</label>
             <input id="search-max-price" className="form-control" name="maxPrice" type="number" min="0" value={filters.maxPrice} onChange={updateFilter} />
           </div>
           <div className="col-12 col-md-2">
@@ -156,13 +158,16 @@ export default function SearchPage() {
                         {[professional.speciality, professional.city].filter(Boolean).join(' · ')}
                       </p>
                     </div>
-                    <span className="badge text-bg-light">★ {Number(professional.ratingAverage ?? 0).toFixed(1)}</span>
+                    <span className="badge text-bg-light d-inline-flex align-items-center gap-1">
+                      <RatingStars rating={professional.ratingAverage} className="rating-stars--compact" />
+                      {Number(professional.ratingAverage ?? 0).toFixed(1)}
+                    </span>
                   </div>
                   {professional.bio && <p className="small">{professional.bio}</p>}
                   <div className="d-flex flex-wrap gap-2 mb-3">
                     {(professional.matchingServices ?? []).map((service) => (
                       <span key={service.id} className="badge rounded-pill text-bg-light">
-                        {service.name} · {service.price}
+                        {service.name} · {formatNpr(service.price)}
                       </span>
                     ))}
                   </div>

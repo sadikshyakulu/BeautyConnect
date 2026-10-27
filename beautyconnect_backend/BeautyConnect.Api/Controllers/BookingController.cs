@@ -70,10 +70,10 @@ public class BookingController : ControllerBase
 
     [Authorize(Roles = "Customer")]
     [HttpPost("{bookingId:int}/cancel")]
-    public Task<IActionResult> CancelBooking(int bookingId)
+    public Task<IActionResult> CancelBooking(int bookingId, [FromBody] BookingCancellationDto dto)
     {
         return ChangeBookingStatusAsync(
-            userId => _bookingService.CancelBookingAsync(userId, bookingId));
+            userId => _bookingService.CancelBookingAsync(userId, bookingId, dto.Reason));
     }
 
     private async Task<IActionResult> ChangeBookingStatusAsync(

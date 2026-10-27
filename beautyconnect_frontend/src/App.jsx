@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import HomePage from './pages/HomePage'
 import SearchPage from './pages/SearchPage'
 import ArtistProfilePage from './pages/ArtistProfilePage'
+import ServiceDetailPage from './pages/ServiceDetailPage'
 import BookingPage from './pages/BookingPage'
 import AuthPage from './pages/AuthPage'
 import ProfessionalDashboardPage from './pages/ProfessionalDashboardPage'
@@ -64,6 +65,7 @@ function AppLayout() {
               <Route path="/" element={<HomePage />} />
               <Route path="/search" element={<SearchRoute />} />
               <Route path="/artist/:id" element={<ArtistProfilePage />} />
+              <Route path="/artist/:id/service/:serviceId" element={<ServiceDetailPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route element={<RouteGuard allowedRoles={['Customer']} />}>
                 <Route path="/booking" element={<BookingPage />} />

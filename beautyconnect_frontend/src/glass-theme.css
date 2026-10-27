@@ -1,0 +1,309 @@
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.2);
+  --glass-bg-strong: rgba(255, 255, 255, 0.34);
+  --glass-border: rgba(255, 255, 255, 0.56);
+  --glass-highlight: rgba(255, 255, 255, 0.76);
+  --glass-shadow: 0 18px 48px rgba(20, 20, 24, 0.14);
+  --glass-blur: 30px;
+  --surface-glass: rgba(255, 255, 255, 0.28);
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  background-color: #e8e8eb;
+  background-image:
+    radial-gradient(ellipse at 8% 7%, rgba(255, 255, 255, 0.78), transparent 36%),
+    radial-gradient(ellipse at 92% 16%, rgba(205, 207, 214, 0.52), transparent 34%),
+    radial-gradient(ellipse at 78% 70%, rgba(255, 255, 255, 0.54), transparent 40%),
+    linear-gradient(145deg, #f0f0f2 0%, #e1e1e5 50%, #ededee 100%);
+  background-attachment: fixed;
+}
+
+.app-layout,
+.app-content,
+.app-main,
+.auth-page-root,
+.booking-page-container,
+.featured-artists-section,
+.charter-section,
+.hero-section,
+.home-page {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+.bg-surface,
+.bg-surface-bright,
+.bg-surface-container,
+.bg-surface-container-low,
+.bg-surface-container-lowest,
+.bg-surface-container-high,
+.bg-surface-container-highest {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  -webkit-backdrop-filter: saturate(175%) blur(22px);
+  backdrop-filter: saturate(175%) blur(22px);
+}
+
+.glass-card,
+.glass-card:not(.glass-card--strong),
+.glass,
+.card,
+.dashboard-panel,
+[class$="-card"]:not(.landing-step-card):not(.landing-specialty-card):not(.landing-final-cta-card),
+[class$="-panel"]:not(.landing-trust-panel) {
+  background: var(--glass-bg) !important;
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.04) 46%, rgba(255, 255, 255, 0.12)) !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.78),
+    inset 1px 0 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(20, 20, 24, 0.08),
+    0 18px 48px rgba(20, 20, 24, 0.14) !important;
+  -webkit-backdrop-filter: saturate(190%) blur(var(--glass-blur)) !important;
+  backdrop-filter: saturate(190%) blur(var(--glass-blur)) !important;
+}
+
+.glass-card--strong,
+.glass-card--selected,
+.artist-profile-identity,
+.admin-dashboard-hero,
+.admin-queue-panel,
+.service-detail-header,
+.service-detail-price,
+.auth-card,
+.booking-card {
+  background: var(--glass-bg-strong) !important;
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08) 48%, rgba(255, 255, 255, 0.16)) !important;
+  -webkit-backdrop-filter: saturate(200%) blur(34px) !important;
+  backdrop-filter: saturate(200%) blur(34px) !important;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.82) !important;
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.9),
+    inset 1px 0 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(20, 20, 24, 0.08),
+    0 22px 54px rgba(20, 20, 24, 0.18) !important;
+}
+
+.admin-metric-card,
+.booking-card-inner-box,
+.professional-schedule-day,
+.professional-hours-editor {
+  background: var(--glass-bg) !important;
+  background-image: linear-gradient(140deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0.06) 54%, rgba(255, 255, 255, 0.12)) !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 rgba(20, 20, 24, 0.08),
+    0 12px 32px rgba(20, 20, 24, 0.12) !important;
+  -webkit-backdrop-filter: saturate(185%) blur(26px) !important;
+  backdrop-filter: saturate(185%) blur(26px) !important;
+}
+
+.navbar-root {
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.62) !important;
+  box-shadow: 0 8px 30px rgba(20, 20, 24, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: saturate(195%) blur(30px) !important;
+  backdrop-filter: saturate(195%) blur(30px) !important;
+}
+
+.hero-search-wrapper {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.64) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 1px 0 0 rgba(255, 255, 255, 0.3),
+    0 18px 42px rgba(20, 20, 24, 0.14) !important;
+  -webkit-backdrop-filter: saturate(195%) blur(32px) !important;
+  backdrop-filter: saturate(195%) blur(32px) !important;
+}
+
+.hero-search-field {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  -webkit-backdrop-filter: saturate(175%) blur(18px);
+  backdrop-filter: saturate(175%) blur(18px);
+}
+
+.hero-search-field:hover {
+  background: rgba(255, 255, 255, 0.32) !important;
+}
+
+.footer-root {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-top-color: rgba(255, 255, 255, 0.58) !important;
+  -webkit-backdrop-filter: saturate(185%) blur(26px) !important;
+  backdrop-filter: saturate(185%) blur(26px) !important;
+}
+
+.form-control,
+.form-select,
+.booking-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.hero-input),
+textarea,
+select:not(.hero-select) {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  box-shadow:
+    inset 0 1px 3px rgba(20, 20, 24, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72) !important;
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  backdrop-filter: saturate(150%) blur(12px);
+}
+
+.form-control:focus,
+.form-select:focus,
+.booking-input:focus,
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.hero-input):focus,
+textarea:focus,
+select:not(.hero-select):focus {
+  background-color: rgba(255, 255, 255, 0.48) !important;
+  border-color: rgba(149, 71, 65, 0.42) !important;
+  box-shadow:
+    0 0 0 3px rgba(149, 71, 65, 0.13),
+    inset 0 1px 2px rgba(20, 20, 24, 0.04) !important;
+}
+
+.auth-card input.auth-input-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  background-color: rgba(198, 204, 216, 0.46) !important;
+  border-color: rgba(255, 255, 255, 0.88) !important;
+  box-shadow:
+    inset 0 2px 5px rgba(43, 47, 57, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 2px 8px rgba(43, 47, 57, 0.07) !important;
+  -webkit-backdrop-filter: saturate(155%) blur(16px);
+  backdrop-filter: saturate(155%) blur(16px);
+}
+
+.auth-card input.auth-input-control:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+  background-color: rgba(222, 227, 236, 0.64) !important;
+  border-color: rgba(149, 71, 65, 0.5) !important;
+  box-shadow:
+    0 0 0 3px rgba(149, 71, 65, 0.13),
+    inset 0 2px 5px rgba(43, 47, 57, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+}
+
+.btn-light,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-secondary,
+.auth-segmented-pill,
+.admin-queue-tabs {
+  background-color: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(255, 255, 255, 0.58) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
+}
+
+.btn-primary,
+.booking-primary-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 8px 20px rgba(149, 71, 65, 0.24) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus-visible,
+.btn-outline-primary:active {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus-visible,
+.btn-outline-secondary:active {
+  background-color: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  color: var(--on-secondary) !important;
+}
+
+.btn-light:hover,
+.btn-light:focus-visible,
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+  background-color: rgba(215, 215, 220, 0.78) !important;
+  border-color: rgba(110, 110, 118, 0.4) !important;
+  color: var(--on-surface) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background-color: #793932 !important;
+  border-color: #793932 !important;
+  color: var(--on-primary) !important;
+}
+
+.btn:disabled,
+.btn.disabled {
+  background-color: rgba(255, 255, 255, 0.46) !important;
+  border-color: rgba(90, 90, 96, 0.22) !important;
+  color: rgba(31, 26, 27, 0.7) !important;
+  opacity: 0.72;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+.btn:disabled:hover,
+.btn.disabled:hover {
+  background-color: rgba(255, 255, 255, 0.46) !important;
+  border-color: rgba(90, 90, 96, 0.22) !important;
+  color: rgba(31, 26, 27, 0.7) !important;
+}
+
+.dropdown-menu,
+.modal-content,
+.popover,
+.toast,
+.beautyconnect-toast {
+  background: rgba(255, 255, 255, 0.52) !important;
+  border: 1px solid rgba(255, 255, 255, 0.68) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 18px 48px rgba(20, 20, 24, 0.18) !important;
+  -webkit-backdrop-filter: saturate(195%) blur(30px);
+  backdrop-filter: saturate(195%) blur(30px);
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.28);
+  color: var(--on-surface);
+}
+
+.table > :not(caption) > * > * {
+  background-color: transparent;
+  border-bottom-color: rgba(149, 71, 65, 0.1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-card,
+  .glass,
+  .card,
+  .dashboard-panel,
+  [class$="-card"],
+  [class$="-panel"] {
+  background: rgba(255, 255, 255, 0.92) !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-card,
+  .glass,
+  .card,
+  .dashboard-panel,
+  [class$="-card"],
+  [class$="-panel"],
+  .navbar-root,
+  .footer-root {
+    background: rgba(255, 255, 255, 0.94) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

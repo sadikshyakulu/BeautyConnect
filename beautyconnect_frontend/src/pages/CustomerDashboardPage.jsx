@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { cancelBooking, getCustomerBookings } from '../api/booking'
-import { createReview } from '../api/review'
+import { aggregateServiceRatings, createReview, getReviewsForProfessional, serviceRatingKey } from '../api/review'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import RatingStars from '../components/RatingStars'
 import { notify } from '../utils/notifications'
+import { formatNpr } from '../utils/currency'
 import './CustomerDashboardPage.css'
 import { useAuth } from '../auth/useAuth'
 
@@ -22,17 +24,25 @@ export default function CustomerDashboardPage() {
   const [searchParams] = useSearchParams()
   const [bookings, setBookings] = useState([])
   const [professionals, setProfessionals] = useState([])
+  const [serviceRatings, setServiceRatings] = useState(new Map())
+  const [serviceRatingFailures, setServiceRatingFailures] = useState(new Set())
+  const [serviceRatingsLoading, setServiceRatingsLoading] = useState(true)
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError, setCatalogError] = useState('')
   const [serviceFilter, setServiceFilter] = useState('All services')
   const [serviceSearch, setServiceSearch] = useState('')
   const [tab, setTab] = useState('upcoming')
   const [reviewing, setReviewing] = useState(null)
+  const [cancelling, setCancelling] = useState(null)
+  const [reviewedBookingIds, setReviewedBookingIds] = useState([])
+  const reviewFormRef = useRef(null)
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
+  const [cancellationReason, setCancellationReason] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const reviewServiceId = Number(searchParams.get('reviewServiceId'))
 
   async function loadBookings() {
     try {
@@ -49,7 +59,31 @@ export default function CustomerDashboardPage() {
     let active = true
     getCustomerBookings()
       .then((result) => {
-        if (active) setBookings(result ?? [])
+        if (!active) return
+        const customerBookings = result ?? []
+        setBookings(customerBookings)
+
+        if (reviewServiceId) {
+          const completedBookings = customerBookings.filter((booking) =>
+            statusName(booking.status) === 'Completed'
+            && booking.service?.id === reviewServiceId,
+          )
+          const completedBooking = completedBookings.find((booking) => !booking.hasReview)
+          if (completedBooking) {
+            setTab('history')
+            setRating(5)
+            setComment('')
+            setCancelling(null)
+            setReviewing(completedBooking)
+          } else {
+            notify.info(
+              completedBookings.length
+                ? 'You have already reviewed this service.'
+                : 'You can review this service after completing an appointment.',
+            )
+          }
+          navigate('/dashboard/customer', { replace: true })
+        }
       })
       .catch((error) => {
         if (active) setErrorMessage(error.response?.data?.message ?? 'Could not load your bookings.')
@@ -60,7 +94,7 @@ export default function CustomerDashboardPage() {
     return () => {
       active = false
     }
-  }, [])
+  }, [navigate, reviewServiceId])
 
   useEffect(() => {
     let active = true
@@ -80,6 +114,35 @@ export default function CustomerDashboardPage() {
       active = false
     }
   }, [])
+
+  useEffect(() => {
+    if (catalogLoading) return undefined
+
+    let active = true
+    Promise.allSettled(professionals.map(async (professional) => ({
+      professionalId: professional.id,
+      ratings: aggregateServiceRatings(await getReviewsForProfessional(professional.id)),
+    })))
+      .then((results) => {
+        if (!active) return
+        const ratings = new Map()
+        const failedProfessionalIds = new Set()
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            ratings.set(result.value.professionalId, result.value.ratings)
+          } else {
+            failedProfessionalIds.add(professionals[index].id)
+          }
+        })
+        setServiceRatings(ratings)
+        setServiceRatingFailures(failedProfessionalIds)
+        setServiceRatingsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [catalogLoading, professionals])
 
   useEffect(() => {
     const payment = searchParams.get('payment')
@@ -105,6 +168,12 @@ export default function CustomerDashboardPage() {
     if (messages[payment]) notify[toastType](messages[payment])
     navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null })
   }, [location.hash, location.pathname, location.search, location.state, navigate])
+
+  useEffect(() => {
+    if (!reviewing) return
+    reviewFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    reviewFormRef.current?.focus({ preventScroll: true })
+  }, [reviewing])
 
   const upcoming = useMemo(
     () => bookings.filter((booking) => ['Pending', 'Confirmed'].includes(statusName(booking.status))),
@@ -144,18 +213,28 @@ export default function CustomerDashboardPage() {
     || user?.email?.split('@')[0]
     || 'there'
 
-  async function handleCancel(bookingId) {
+  async function handleCancel(event) {
+    event.preventDefault()
+    if (!cancelling) return
     setErrorMessage('')
+    setSubmitting(true)
     try {
-      const cancelledBooking = await cancelBooking(bookingId)
+      const cancelledBooking = await cancelBooking(cancelling.id, cancellationReason.trim())
+      setBookings((current) => current.map((booking) =>
+        booking.id === cancelledBooking.id ? cancelledBooking : booking,
+      ))
       await loadBookings()
+      setCancelling(null)
+      setCancellationReason('')
       notify.success(
         refundStatusName(cancelledBooking.refundStatus) === 'Requested'
-          ? 'Booking cancelled. A full refund has been requested from the professional; it will show as refunded after eSewa confirms it.'
-          : 'Booking cancelled.',
+          ? 'Booking cancelled and your reason was shared with the professional. A full refund was requested; it will show as refunded after eSewa confirms it.'
+          : 'Booking cancelled and your reason was shared with the professional.',
       )
     } catch (error) {
       notify.error(error.response?.data?.message ?? 'Could not cancel this booking.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -166,6 +245,7 @@ export default function CustomerDashboardPage() {
     setErrorMessage('')
     try {
       await createReview({ bookingId: reviewing.id, rating, comment })
+      setReviewedBookingIds((current) => [...current, reviewing.id])
       setReviewing(null)
       setComment('')
       notify.success('Your review was submitted.')
@@ -286,17 +366,65 @@ export default function CustomerDashboardPage() {
                     </div>
                   </div>
                   <div className="customer-professional-offerings">
-                    {professional.visibleServices.map((service) => (
-                      <div className="customer-offering" key={service.id}>
-                        <div>
-                          <strong className="d-block">{service.name}</strong>
-                          <span className="small text-on-surface-variant">
-                            {service.category} · {service.durationMinutes} min
-                          </span>
+                    {professional.visibleServices.map((service) => {
+                      const serviceRating = serviceRatings.get(professional.id)?.get(serviceRatingKey(service))
+                        ?? serviceRatings.get(professional.id)?.get(`name:${service.name.trim().toLocaleLowerCase()}`)
+                      return (
+                      <div className={`customer-offering${service.images?.length ? ' customer-offering--with-gallery' : ''}`} key={service.id}>
+                        {service.images?.length > 0 && (
+                          <div className="customer-offering-gallery" aria-label={`${service.name} photos`}>
+                            {service.images.slice(0, 3).map((image, index) => (
+                              <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
+                            ))}
+                          </div>
+                        )}
+                        <div className="customer-offering-info">
+                          <Link
+                            className="customer-offering-name"
+                            to={`/artist/${professional.id}/service/${service.id}`}
+                          >
+                            {service.name}
+                          </Link>
+                          <div className="customer-offering-meta">
+                            <span>{service.category}</span>
+                            <span>{service.durationMinutes} min</span>
+                          </div>
+                          {service.description && (
+                            <p className="customer-offering-description">{service.description}</p>
+                          )}
+                          <div className="customer-offering-rating" aria-live="polite">
+                            {serviceRatingsLoading ? (
+                              <span className="small text-on-surface-variant">Loading rating…</span>
+                            ) : serviceRatingFailures.has(professional.id) ? (
+                              <span className="small text-on-surface-variant">Rating unavailable</span>
+                            ) : serviceRating ? (
+                              <>
+                                <RatingStars
+                                  rating={serviceRating.total / serviceRating.count}
+                                  className="rating-stars--compact"
+                                />
+                                <strong>
+                                  {(serviceRating.total / serviceRating.count).toFixed(1)}
+                                </strong>
+                                <span className="small text-on-surface-variant">
+                                  ({serviceRating.count})
+                                </span>
+                              </>
+                            ) : (
+                              <span className="small text-on-surface-variant">No reviews yet</span>
+                            )}
+                          </div>
+                          <Link
+                            className="customer-offering-link"
+                            to={`/artist/${professional.id}/service/${service.id}`}
+                          >
+                            Service details
+                          </Link>
                         </div>
-                        <strong className="text-nowrap">{service.price}</strong>
+                        <strong className="customer-offering-price">{formatNpr(service.price)}</strong>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                   <Link className="btn btn-outline-primary customer-professional-cta" to={`/artist/${professional.id}`}>
                     View times &amp; book
@@ -336,47 +464,119 @@ export default function CustomerDashboardPage() {
                     <h2 className="h5">{booking.service?.name ?? 'Service appointment'}</h2>
                     <p className="mb-1">{booking.professionalBusinessName}</p>
                     <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                    <p className="small mb-0">Status: <strong>{status}</strong> · Total: {booking.totalPrice}</p>
+                    <p className="small mb-0">Status: <strong>{status}</strong> · Total: {formatNpr(booking.totalPrice)}</p>
                     {refundStatusName(booking.refundStatus) !== 'Not requested' && (
                       <p className="small mb-0 mt-1">
                         Refund: <strong>{refundStatusName(booking.refundStatus)}</strong>
-                        {booking.refundAmount != null && ` · ${booking.refundAmount}`}
+                        {booking.refundAmount != null && ` · ${formatNpr(booking.refundAmount)}`}
                       </p>
                     )}
                     {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}
+                    {status === 'Cancelled' && booking.cancellationReason && (
+                      <p className="small mt-2 mb-0">
+                        <strong>Your cancellation reason:</strong> {booking.cancellationReason}
+                      </p>
+                    )}
                   </div>
                   <div className="d-flex flex-wrap gap-2 align-items-start">
                     {['Pending', 'Confirmed'].includes(status) && (
-                      <button type="button" className="btn btn-outline-danger" onClick={() => handleCancel(booking.id)}>Cancel booking</button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger"
+                        onClick={() => {
+                          setCancelling(booking)
+                          setCancellationReason('')
+                          setReviewing(null)
+                        }}
+                      >
+                        Cancel booking
+                      </button>
                     )}
-                    {status === 'Completed' && (
-                      <button type="button" className="btn btn-outline-primary" onClick={() => setReviewing(booking)}>Write review</button>
+                    {status === 'Completed' && !booking.hasReview && !reviewedBookingIds.includes(booking.id) && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary"
+                        onClick={() => {
+                          setRating(5)
+                          setReviewing(booking)
+                          setCancelling(null)
+                        }}
+                      >
+                        Write review
+                      </button>
+                    )}
+                    {status === 'Completed' && (booking.hasReview || reviewedBookingIds.includes(booking.id)) && (
+                      <span className="badge text-bg-success">Review submitted</span>
                     )}
                   </div>
                 </div>
+                {reviewing?.id === booking.id && (
+                  <div className="customer-feedback-form mt-4" ref={reviewFormRef} tabIndex="-1">
+                    <h3 className="h5">Review {booking.service?.name ?? booking.professionalBusinessName}</h3>
+                    <form onSubmit={handleReview}>
+                      <fieldset className="mb-3">
+                        <legend className="form-label">Your rating</legend>
+                        <div className="review-rating" role="radiogroup" aria-label="Choose a rating from one to five stars">
+                          {[5, 4, 3, 2, 1].map((value) => (
+                            <Fragment key={value}>
+                              <input
+                                id={`review-rating-${booking.id}-${value}`}
+                                name={`review-rating-${booking.id}`}
+                                type="radio"
+                                value={value}
+                                checked={rating === value}
+                                onChange={() => setRating(value)}
+                                aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
+                              />
+                              <label htmlFor={`review-rating-${booking.id}-${value}`} title={`${value} ${value === 1 ? 'star' : 'stars'}`} aria-hidden="true" />
+                            </Fragment>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <label className="form-label" htmlFor={`review-comment-${booking.id}`}>Your review</label>
+                      <textarea
+                        id={`review-comment-${booking.id}`}
+                        className="form-control mb-3"
+                        maxLength="2000"
+                        required
+                        value={comment}
+                        onChange={(event) => setComment(event.target.value)}
+                      />
+                      <div className="d-flex gap-2">
+                        <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit review'}</button>
+                        <button type="button" className="btn btn-outline-secondary" onClick={() => setReviewing(null)}>Cancel</button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+                {cancelling?.id === booking.id && (
+                  <form className="customer-feedback-form mt-4" onSubmit={handleCancel}>
+                    <h3 className="h5">Why are you cancelling?</h3>
+                    <p className="small text-on-surface-variant">Your reason will be shared with the professional and saved with this appointment.</p>
+                    <label className="form-label" htmlFor={`cancellation-reason-${booking.id}`}>Cancellation reason</label>
+                    <textarea
+                      id={`cancellation-reason-${booking.id}`}
+                      className="form-control mb-3"
+                      maxLength="1000"
+                      minLength="3"
+                      required
+                      value={cancellationReason}
+                      onChange={(event) => setCancellationReason(event.target.value)}
+                    />
+                    <div className="d-flex gap-2">
+                      <button type="submit" className="btn btn-danger" disabled={submitting}>
+                        {submitting ? 'Cancelling…' : 'Confirm cancellation'}
+                      </button>
+                      <button type="button" className="btn btn-outline-secondary" onClick={() => setCancelling(null)}>Keep booking</button>
+                    </div>
+                  </form>
+                )}
               </article>
             )
           })}
         </div>
       )}
 
-      {reviewing && (
-        <div className="glass-card rounded-2xl p-4 mt-4">
-          <h2 className="h5">Review {reviewing.professionalBusinessName}</h2>
-          <form onSubmit={handleReview}>
-            <label className="form-label" htmlFor="review-rating">Rating</label>
-            <select id="review-rating" className="form-select mb-3" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
-              {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} / 5</option>)}
-            </select>
-            <label className="form-label" htmlFor="review-comment">Your review</label>
-            <textarea id="review-comment" className="form-control mb-3" maxLength="2000" required value={comment} onChange={(event) => setComment(event.target.value)} />
-            <div className="d-flex gap-2">
-              <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit review'}</button>
-              <button type="button" className="btn btn-outline-secondary" onClick={() => setReviewing(null)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
       </section>
     </div>
   )

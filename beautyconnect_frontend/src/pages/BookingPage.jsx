@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { initiatePayment, refreshPayment } from '../api/payment'
 import { getProfessionalById } from '../api/search'
 import { notify } from '../utils/notifications'
+import { formatNpr } from '../utils/currency'
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams()
@@ -163,7 +164,6 @@ export default function BookingPage() {
 
   return (
     <section className="container py-5">
-      <Link to={`/artist/${professionalId}`}>← Back to profile</Link>
       <div className="glass-card rounded-2xl p-4 p-md-5 mt-3 mx-auto" style={{ maxWidth: 760 }}>
         <h1 className="font-headline mb-4">{payment ? 'Complete payment' : 'Confirm your appointment'}</h1>
 
@@ -172,7 +172,7 @@ export default function BookingPage() {
             <div className="mb-4">
               <h2 className="h4">{professional?.businessName}</h2>
               <p className="mb-1">{service?.name ?? 'Selected service'}</p>
-              {service && <p className="text-on-surface-variant">{service.durationMinutes} minutes · {service.price}</p>}
+              {service && <p className="text-on-surface-variant">{service.durationMinutes} minutes · {formatNpr(service.price)}</p>}
               <p className="mb-0">{hasValidScheduledTime ? new Date(scheduledDateTime).toLocaleString() : 'No appointment time selected'}</p>
             </div>
             {hasValidScheduledTime && appointmentHasPassed && (
@@ -195,7 +195,7 @@ export default function BookingPage() {
             <div className="alert alert-success" role="status">
               No booking has been created yet. Your appointment will be confirmed only after eSewa verifies successful payment.
             </div>
-            <p>{service?.name} · {payment.total_amount}</p>
+            <p>{service?.name} · {formatNpr(payment.total_amount)}</p>
             {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
             <form
               ref={paymentFormRef}

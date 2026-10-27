@@ -9,6 +9,7 @@ import {
 } from '../api/admin'
 import { getAssetUrl } from '../api/assets'
 import { notify } from '../utils/notifications'
+import { formatNpr } from '../utils/currency'
 import './AdminPanelPage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
@@ -124,7 +125,7 @@ export default function AdminPanelPage() {
           <article className={`admin-metric-card admin-metric-card--${tone}`} key={label}>
             <span className="admin-metric-icon material-symbols-outlined" aria-hidden="true">{icon}</span>
             <span className="admin-metric-label">{label}</span>
-            <strong>{value ?? '—'}</strong>
+            <strong>{label === 'Platform revenue' ? formatNpr(value) : value ?? '—'}</strong>
           </article>
         ))}
       </section>
@@ -225,7 +226,7 @@ export default function AdminPanelPage() {
                   <div className="admin-dispute-meta">
                     <span><span className="material-symbols-outlined" aria-hidden="true">mail</span>{dispute.raisedByEmail}</span>
                     <span><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{new Date(dispute.createdAt).toLocaleDateString()}</span>
-                    <strong>Booking total {dispute.bookingTotalPrice}</strong>
+                    <strong>Booking total {formatNpr(dispute.bookingTotalPrice)}</strong>
                   </div>
                   <form onSubmit={(event) => handleResolve(event, dispute.id)} className="admin-resolution-form">
                     <label className="form-label" htmlFor={`resolution-${dispute.id}`}>Resolution notes</label>

@@ -9,5 +9,5 @@ public interface IBookingService
     Task<(BookingDto? Booking, string? Error)> AcceptBookingAsync(int userId, int bookingId);
     Task<(BookingDto? Booking, string? Error)> RejectBookingAsync(int userId, int bookingId);
     Task<(BookingDto? Booking, string? Error)> CompleteBookingAsync(int userId, int bookingId);
-    Task<(BookingDto? Booking, string? Error)> CancelBookingAsync(int userId, int bookingId);
+    Task<(BookingDto? Booking, string? Error)> CancelBookingAsync(int userId, int bookingId, string reason);
 }

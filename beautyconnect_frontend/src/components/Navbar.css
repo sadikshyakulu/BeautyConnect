@@ -213,6 +213,7 @@
   transition: background 0.2s ease;
 }
 
+
 .navbar-hamburger:hover {
   background: var(--surface-container);
 }

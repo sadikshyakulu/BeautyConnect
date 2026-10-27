@@ -13,6 +13,7 @@ import {
 } from '../api/professionalProfile'
 import { useAuth } from '../auth/useAuth'
 import { notify } from '../utils/notifications'
+import { formatNpr } from '../utils/currency'
 import './DashboardPages.css'
 
 const emptyService = {
@@ -431,7 +432,7 @@ export default function ProfessionalStudioPage() {
                         <span className="studio-category-tag">{service.category}</span>
                       </div>
                       <p>{service.description || 'Add a description to help clients understand what this service includes.'}</p>
-                      <strong>{service.price} <span>· {service.durationMinutes} minutes</span></strong>
+                      <strong>{formatNpr(service.price)} <span>· {service.durationMinutes} minutes</span></strong>
                       {service.images?.length > 0 && (
                         <div className="studio-service-gallery">
                           {service.images.map((image, index) => (
@@ -477,7 +478,7 @@ export default function ProfessionalStudioPage() {
                     <input className="form-control" id="service-category" maxLength="100" required value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} />
                   </div>
                   <div className="col-6 col-md-3 col-xl-3">
-                    <label className="form-label" htmlFor="service-price">Price</label>
+                    <label className="form-label" htmlFor="service-price">Price (NPR)</label>
                     <input className="form-control" id="service-price" type="number" min="0.01" max="99999999.99" step="0.01" required value={serviceDraft.price} onChange={(event) => setServiceDraft((current) => ({ ...current, price: event.target.value }))} />
                   </div>
                   <div className="col-6 col-md-3 col-xl-3">

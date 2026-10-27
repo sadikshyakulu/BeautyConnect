@@ -119,6 +119,7 @@ public class Booking
     public DateTime? RefundedAt { get; set; }
     public string? RefundGatewayReference { get; set; }
     public string? Notes { get; set; }
+    public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public CustomerProfile CustomerProfile { get; set; } = null!;

@@ -101,7 +101,6 @@
 
 .customer-professional-grid--featured {
   grid-template-columns: minmax(0, 1fr);
-  max-width: 1080px;
 }
 
 .customer-professional-card {
@@ -152,25 +151,176 @@
 }
 
 .customer-offering {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.8rem 1rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.customer-offering-gallery {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 0.7rem 0;
-  border-top: 1px solid var(--surface-container-high);
+  flex-wrap: nowrap;
+  gap: 0.45rem;
+  grid-column: 1;
+  grid-row: 1;
 }
 
-.customer-offering > div {
+.customer-offering-gallery img {
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  border-radius: 0.55rem;
+  object-fit: cover;
+}
+
+.customer-offering-info {
   min-width: 0;
+  grid-column: 1;
+  grid-row: 1;
 }
 
-.customer-offering > strong {
+.customer-offering--with-gallery {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+}
+
+.customer-offering--with-gallery .customer-offering-info {
+  grid-column: 2;
+}
+
+.customer-offering-name {
+  display: inline-block;
+  margin-bottom: 0.3rem;
+  color: var(--on-surface);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.customer-offering-name:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.customer-offering-meta,
+.customer-offering-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.customer-offering-meta {
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+}
+
+.customer-offering-meta > span + span::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.customer-offering-description {
+  margin: 0.45rem 0;
+  color: var(--on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.customer-offering-rating {
+  margin-top: 0.45rem;
+}
+
+.customer-offering-link {
+  display: inline-block;
+  margin-top: 0.45rem;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.customer-offering-link:hover {
+  text-decoration: underline;
+}
+
+.customer-offering-price {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--primary);
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.customer-offering--with-gallery .customer-offering-price {
+  grid-column: 3;
+}
+
+.customer-professional-cta {
+  grid-column: 1 / -1;
+}
+
+.customer-professional-grid--featured .customer-offering > strong {
   color: var(--primary);
 }
 
 .customer-professional-cta {
   width: 100%;
   margin-top: auto;
+}
+
+.customer-feedback-form {
+  padding-top: 1rem;
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.review-rating {
+  display: inline-block;
+  direction: rtl;
+  min-height: 2.5rem;
+}
+
+.review-rating:not(:checked) > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.review-rating:not(:checked) > label {
+  float: right;
+  cursor: pointer;
+  color: #666;
+  font-size: 2rem;
+  line-height: 1.2;
+  user-select: none;
+}
+
+.review-rating:not(:checked) > label::before {
+  content: '★';
+}
+
+.review-rating > input:checked ~ label,
+.review-rating:not(:checked) > label:hover,
+.review-rating:not(:checked) > label:hover ~ label {
+  color: #ff9e0b;
+}
+
+.review-rating > input:checked + label:hover,
+.review-rating > input:checked + label:hover ~ label,
+.review-rating > input:checked ~ label:hover,
+.review-rating > input:checked ~ label:hover ~ label {
+  color: #e58e09;
+}
+
+.review-rating > input:focus-visible + label {
+  border-radius: 0.2rem;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .customer-professional-grid--featured .customer-professional-cta {
@@ -206,6 +356,36 @@
 
   .customer-professional-grid--featured .customer-professional-cta {
     grid-column: 1;
+  }
+
+  .customer-professional-grid--featured .customer-offering > strong {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .customer-offering {
+    gap: 0.5rem;
+    padding: 0.8rem;
+  }
+
+  .customer-offering--with-gallery {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .customer-offering--with-gallery .customer-offering-price {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .customer-offering-gallery {
+    gap: 0.3rem;
+  }
+
+  .customer-offering-gallery img {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
   }
 }
 

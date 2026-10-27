@@ -54,7 +54,7 @@
   right: 5%;
   bottom: -6.1rem;
   color: rgba(149, 71, 65, 0.09);
-  font-family: Georgia, serif;
+  font-family: var(--font-headline);
   font-size: 19rem;
   line-height: 1;
   transform: rotate(-13deg);

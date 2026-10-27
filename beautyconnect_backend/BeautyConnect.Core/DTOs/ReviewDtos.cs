@@ -24,5 +24,6 @@ public class ReviewDto
     public string Comment { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerAvatarUrl { get; set; }
     public string ServiceName { get; set; } = string.Empty;
 }

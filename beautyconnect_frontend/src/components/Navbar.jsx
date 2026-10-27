@@ -17,8 +17,6 @@ export default function Navbar() {
 
   const navLinks = [
     { label: 'Explore Services', to: '/search' },
-    { label: 'Featured Artists', to: '/search' },
-    { label: 'Bridal & Editorial', to: '/search?serviceType=bridal' },
     { label: 'How It Works', to: '/#how-it-works' },
   ]
 

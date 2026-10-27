@@ -58,11 +58,11 @@
   --on-error-container: #93000a;
 
   /* ─── Typography Tokens ─────────────────────────────────────── */
-  --font-headline: "Playfair Display", Georgia, serif;
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-serif: "Playfair Display", Georgia, serif;
-  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-headline: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-serif: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
 
   /* ─── Elevation / Glass ─────────────────────────────────────── */
   --glass-bg: rgba(255, 248, 248, 0.55);
@@ -1080,27 +1080,21 @@ input[type="number"] {
   .lg\:items-center { align-items: center !important; }
 }
 
-/* Liquid-glass surface utility; declared last to win over surface utilities. */
+/* Warm editorial surfaces used across public, customer, professional, and admin pages. */
 .glass-card,
 .glass {
   position: relative;
-  background:
-    linear-gradient(135deg, var(--glass-highlight), rgba(255, 255, 255, 0.12) 20%, transparent 46%),
-    linear-gradient(315deg, color-mix(in srgb, var(--primary-container) 7%, transparent), transparent 52%),
-    var(--glass-bg) !important;
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
-  border: 1px solid var(--glass-border) !important;
+  background: color-mix(in srgb, var(--surface) 94%, white) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(149, 71, 65, 0.12) !important;
   border-radius: var(--radius-xl);
-  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 rgba(255, 255, 255, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 8px 24px rgba(71, 43, 42, 0.055) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
 
 .glass-card--strong {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), rgba(255, 255, 255, 0.035) 22%, transparent 48%),
-    linear-gradient(315deg, color-mix(in srgb, var(--primary-container) 5%, transparent), transparent 52%),
-    color-mix(in srgb, var(--glass-bg-strong) 86%, transparent) !important;
+  background: #ffffff !important;
 }
 
 .glass-card--selected {
@@ -1109,30 +1103,17 @@ input[type="number"] {
 }
 
 .glass-card:not(.glass-card--strong) {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), rgba(255, 255, 255, 0.035) 22%, transparent 48%),
-    linear-gradient(315deg, color-mix(in srgb, var(--primary-container) 5%, transparent), transparent 52%),
-    color-mix(in srgb, var(--glass-bg) 78%, transparent) !important;
-  backdrop-filter: blur(calc(var(--glass-blur) + 12px)) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 12px)) saturate(180%) !important;
+  background: color-mix(in srgb, var(--surface) 94%, white) !important;
 }
 
 .glass-card:hover {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--glass-highlight) 45%, transparent), rgba(255, 255, 255, 0.035) 22%, transparent 48%),
-    linear-gradient(315deg, color-mix(in srgb, var(--primary-container) 5%, transparent), transparent 52%),
-    color-mix(in srgb, var(--glass-bg-strong) 86%, transparent) !important;
-  backdrop-filter: blur(calc(var(--glass-blur) + 18px)) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 18px)) saturate(190%) !important;
-  box-shadow: 0 12px 36px rgba(149, 71, 65, 0.16), inset 0 1px 0 var(--glass-highlight) !important;
-  transform: translateY(-2px) !important;
+  border-color: rgba(149, 71, 65, 0.2) !important;
+  box-shadow: 0 12px 30px rgba(71, 43, 42, 0.09) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-card,
-  .glass-card:hover {
+  .glass-card {
     transition: none !important;
-    transform: none !important;
   }
 }
 

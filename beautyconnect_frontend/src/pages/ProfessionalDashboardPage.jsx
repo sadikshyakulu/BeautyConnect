@@ -19,6 +19,7 @@ import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
 import { notify } from '../utils/notifications'
 import { formatTime12Hour } from '../utils/time'
+import { formatNpr } from '../utils/currency'
 import './ProfessionalDashboardPage.css'
 
 const bookingStatus = (status) => typeof status === 'number'
@@ -105,7 +106,7 @@ export default function ProfessionalDashboardPage() {
     try {
       const result = await verifyBookingRefund(bookingId)
       await loadDashboard()
-      notify.success(`eSewa confirmed the full refund of ${result.refundAmount}.`)
+      notify.success(`eSewa confirmed the full refund of ${formatNpr(result.refundAmount)}.`)
     } catch (error) {
       const message = error.response?.status === 409
         ? 'eSewa has not confirmed this refund yet. If you already processed it through your merchant account, wait for the status to update and check again.'
@@ -220,6 +221,9 @@ export default function ProfessionalDashboardPage() {
   if (loading) return <div className="container py-5" role="status">Loading professional dashboard…</div>
 
   const incoming = bookings.filter((booking) => ['Pending', 'Confirmed'].includes(bookingStatus(booking.status)))
+  const cancellationFeedback = bookings.filter((booking) =>
+    bookingStatus(booking.status) === 'Cancelled' && booking.cancellationReason,
+  )
   const pendingCount = bookings.filter((booking) => bookingStatus(booking.status) === 'Pending').length
   const weeklyAvailability = availability.filter((slot) => slot.specificDate == null)
   const dateOverrides = availability.filter((slot) => slot.specificDate != null)
@@ -272,7 +276,7 @@ export default function ProfessionalDashboardPage() {
                           <h3 className="h6 mb-1">{booking.service?.name ?? 'Service booking'}</h3>
                           <p className="small mb-1">{booking.customerName} · {booking.customerEmail}</p>
                           <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                          <span className="small">{status} · {booking.totalPrice}</span>
+                          <span className="small">{status} · {formatNpr(booking.totalPrice)}</span>
                           {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}
                         </div>
                         <div className="d-flex flex-wrap align-items-start gap-2">
@@ -295,6 +299,27 @@ export default function ProfessionalDashboardPage() {
           </div>
         </section>
 
+        {cancellationFeedback.length > 0 && (
+          <section className="col-12">
+            <div className="glass-card rounded-2xl p-4">
+              <h2 className="h5">Customer cancellation feedback</h2>
+              <div className="row g-3">
+                {cancellationFeedback.map((booking) => (
+                  <div className="col-12 col-md-6 col-xxl-4" key={booking.id}>
+                    <article className="border rounded-3 p-3 h-100">
+                      <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
+                      <span className="small text-on-surface-variant d-block mt-1">
+                        {new Date(booking.scheduledDateTime).toLocaleString()}
+                      </span>
+                      <p className="mb-0 mt-2">{booking.cancellationReason}</p>
+                    </article>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {bookings.some((booking) => refundStatus(booking.refundStatus) === 'Requested' || refundStatus(booking.refundStatus) === 'Refunded') && (
           <div className="col-12 d-flex flex-column gap-4">
           {bookings.some((booking) => refundStatus(booking.refundStatus) === 'Requested') && (
@@ -312,7 +337,7 @@ export default function ProfessionalDashboardPage() {
                       <article className="glass-card rounded-2xl p-3 h-100">
                         <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
                         <span className="small text-on-surface-variant d-block mt-1">
-                          Booking #{booking.id} · Full refund: {booking.refundAmount} · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
+                          Booking #{booking.id} · Full refund: {formatNpr(booking.refundAmount)} · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
                         </span>
                         <button
                           className="btn btn-sm btn-primary mt-3"
@@ -340,7 +365,7 @@ export default function ProfessionalDashboardPage() {
                       <article className="glass-card rounded-2xl p-3 h-100">
                         <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
                         <span className="small text-on-surface-variant">
-                          Booking #{booking.id} · Refunded {booking.refundAmount} · eSewa reference {booking.refundGatewayReference}
+                          Booking #{booking.id} · Refunded {formatNpr(booking.refundAmount)} · eSewa reference {booking.refundGatewayReference}
                         </span>
                       </article>
                     </div>
@@ -498,7 +523,7 @@ export default function ProfessionalDashboardPage() {
                       </div>
                       {service.description && <p>{service.description}</p>}
                       <div className="professional-service-meta">
-                        <strong>{service.price}</strong>
+                        <strong>{formatNpr(service.price)}</strong>
                         <span><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{service.durationMinutes} min</span>
                       </div>
                     </div>
