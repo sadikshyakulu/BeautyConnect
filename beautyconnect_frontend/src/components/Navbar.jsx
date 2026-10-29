@@ -37,7 +37,10 @@ export default function Navbar() {
           { label: 'Profile & services', to: '/dashboard/professional/studio', icon: 'auto_awesome' },
         ]
       : user.role === 'Admin'
-        ? [{ label: 'Platform operations', to: '/admin', icon: 'admin_panel_settings' }]
+        ? [
+            { label: 'Platform operations', to: '/admin', icon: 'admin_panel_settings' },
+            { label: 'Users & professionals', to: '/admin/users', icon: 'groups' },
+          ]
         : [
             { label: 'My dashboard', to: '/dashboard/customer', icon: 'space_dashboard' },
             { label: 'Discover services', to: '/search', icon: 'travel_explore' },
@@ -48,6 +51,15 @@ export default function Navbar() {
       || user.email?.split('@')[0]
       || 'Account'
 
+    const activeLink = dashboardLinks.reduce((bestMatch, link) => {
+      const matchesExactly = location.pathname === link.to
+      const matchesNested = location.pathname.startsWith(`${link.to}/`)
+      if (!matchesExactly && !matchesNested) return bestMatch
+
+      if (!bestMatch || link.to.length > bestMatch.to.length) return link
+      return bestMatch
+    }, null)
+
     return (
       <aside className="dashboard-sidebar">
         <Link to={roleHome} className="navbar-logo dashboard-sidebar-brand">
@@ -56,16 +68,19 @@ export default function Navbar() {
         </Link>
         <div className="dashboard-sidebar-label">WORKSPACE</div>
         <nav className="dashboard-sidebar-links" aria-label="Dashboard navigation">
-          {dashboardLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`dashboard-sidebar-link${location.pathname === link.to ? ' dashboard-sidebar-link--active' : ''}`}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">{link.icon}</span>
-              {link.label}
-            </Link>
-          ))}
+          {dashboardLinks.map((link) => {
+            const isActive = activeLink?.to === link.to
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`dashboard-sidebar-link${isActive ? ' dashboard-sidebar-link--active' : ''}`}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">{link.icon}</span>
+                {link.label}
+              </Link>
+            )
+          })}
         </nav>
         <div className="dashboard-sidebar-account">
           {user.profile?.avatarUrl ? (

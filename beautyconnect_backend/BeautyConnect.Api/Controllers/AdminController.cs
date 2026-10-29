@@ -65,6 +65,18 @@ public class AdminController : ControllerBase
         return Ok(await _adminService.GetAnalyticsAsync());
     }
 
+    [HttpGet("recent-activity")]
+    public async Task<IActionResult> GetRecentActivity()
+    {
+        return Ok(await _adminService.GetRecentActivityAsync());
+    }
+
+    [HttpGet("customers")]
+    public async Task<IActionResult> GetCustomers()
+    {
+        return Ok(await _adminService.GetCustomersAsync());
+    }
+
     private async Task<IActionResult> UpdateVerificationAsync(
         Func<Task<(PendingProfessionalVerificationDto? Profile, string? Error)>> update)
     {

@@ -12,4 +12,6 @@ public interface IAdminService
         int disputeId,
         ResolveDisputeDto dto);
     Task<PlatformAnalyticsDto> GetAnalyticsAsync();
+    Task<List<AdminRecentActivityDto>> GetRecentActivityAsync();
+    Task<List<AdminCustomerDto>> GetCustomersAsync();
 }

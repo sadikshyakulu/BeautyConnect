@@ -77,6 +77,7 @@ public class SearchService : ISearchService
 
         var candidates = await professionals
             .Include(profile => profile.Services)
+            .Include(profile => profile.User)
             .ToListAsync();
 
         var ranked = candidates
@@ -157,6 +158,7 @@ public class SearchService : ISearchService
         {
             Id = profile.Id,
             UserId = profile.UserId,
+            Email = profile.User?.Email,
             BusinessName = profile.BusinessName,
             Bio = profile.Bio,
             Speciality = profile.Speciality,

@@ -45,3 +45,22 @@ public class PlatformAnalyticsDto
     public int VerifiedProfessionalCount { get; set; }
     public DateTime ActiveUsersSinceUtc { get; set; }
 }
+
+public class AdminCustomerDto
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Location { get; set; } = "Not provided";
+    public string Status { get; set; } = "Active";
+}
+
+public class AdminRecentActivityDto
+{
+    public string Type { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Detail { get; set; } = string.Empty;
+    public string TimeLabel { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

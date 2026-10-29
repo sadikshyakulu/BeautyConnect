@@ -11,6 +11,7 @@ import BookingPage from './pages/BookingPage'
 import AuthPage from './pages/AuthPage'
 import ProfessionalDashboardPage from './pages/ProfessionalDashboardPage'
 import AdminPanelPage from './pages/AdminPanelPage'
+import AdminUsersPage from './pages/AdminUsersPage'
 import CustomerDashboardPage from './pages/CustomerDashboardPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import ProfessionalStudioPage from './pages/ProfessionalStudioPage'
@@ -78,6 +79,7 @@ function AppLayout() {
               </Route>
               <Route element={<RouteGuard allowedRoles={['Admin']} />}>
                 <Route path="/admin" element={<AdminPanelPage />} />
+                <Route path="/admin/users" element={<AdminUsersPage />} />
               </Route>
               <Route path="*" element={<HomePage />} />
             </Routes>

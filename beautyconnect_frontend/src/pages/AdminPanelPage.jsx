@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   approveProfessional,
   getAnalytics,
   getOpenDisputes,
   getPendingVerifications,
+  getRecentActivity,
   rejectProfessional,
   resolveDispute,
 } from '../api/admin'
 import { getAssetUrl } from '../api/assets'
+import { getProfessionals } from '../api/search'
 import { notify } from '../utils/notifications'
 import { formatNpr } from '../utils/currency'
 import './AdminPanelPage.css'
@@ -23,21 +25,45 @@ export default function AdminPanelPage() {
   const [tab, setTab] = useState('verifications')
   const [verifications, setVerifications] = useState([])
   const [disputes, setDisputes] = useState([])
+  const [professionals, setProfessionals] = useState([])
   const [analytics, setAnalytics] = useState(null)
+  const [recentActivities, setRecentActivities] = useState([])
   const [resolution, setResolution] = useState({})
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [updatingProfileId, setUpdatingProfileId] = useState(null)
+
+  const recentFeed = useMemo(() => {
+    const mappedActivities = recentActivities.length
+      ? recentActivities.map((activity) => ({
+          kind: activity.type || 'default',
+          title: activity.title || 'Recent platform activity',
+          detail: activity.detail || 'No details available.',
+          time: activity.timeLabel || 'Now',
+        }))
+      : [{
+          kind: 'default',
+          title: 'Admin dashboard is ready',
+          detail: 'No new activity has been recorded yet.',
+          time: 'Now',
+        }]
+
+    return mappedActivities.slice(0, 5)
+  }, [recentActivities])
 
   const loadData = useCallback(async () => {
     const results = await Promise.allSettled([
       getPendingVerifications(),
       getOpenDisputes(),
       getAnalytics(),
+      getRecentActivity(),
+      getProfessionals({ page: 1, pageSize: 12 }),
     ])
     if (results[0].status === 'fulfilled') setVerifications(results[0].value ?? [])
     if (results[1].status === 'fulfilled') setDisputes(results[1].value ?? [])
     if (results[2].status === 'fulfilled') setAnalytics(results[2].value)
+    if (results[3].status === 'fulfilled') setRecentActivities(results[3].value ?? [])
+    if (results[4].status === 'fulfilled') setProfessionals(results[4].value?.results ?? [])
     const failures = results
       .filter((result) => result.status === 'rejected')
       .map((result) => result.reason.response?.data?.message ?? 'Some administrative data could not be loaded.')
@@ -51,12 +77,16 @@ export default function AdminPanelPage() {
       getPendingVerifications(),
       getOpenDisputes(),
       getAnalytics(),
+      getRecentActivity(),
+      getProfessionals({ page: 1, pageSize: 12 }),
     ])
       .then((results) => {
         if (!active) return
         if (results[0].status === 'fulfilled') setVerifications(results[0].value ?? [])
         if (results[1].status === 'fulfilled') setDisputes(results[1].value ?? [])
         if (results[2].status === 'fulfilled') setAnalytics(results[2].value)
+        if (results[3].status === 'fulfilled') setRecentActivities(results[3].value ?? [])
+        if (results[4].status === 'fulfilled') setProfessionals(results[4].value?.results ?? [])
         const failures = results
           .filter((result) => result.status === 'rejected')
           .map((result) => result.reason.response?.data?.message ?? 'Some administrative data could not be loaded.')
@@ -118,16 +148,39 @@ export default function AdminPanelPage() {
       <section className="admin-metric-grid" aria-label="Platform metrics">
         {[
           { label: 'Total bookings', value: analytics?.totalBookings, icon: 'calendar_month', tone: 'rose' },
-          { label: 'Platform revenue', value: analytics?.revenue, icon: 'payments', tone: 'gold' },
+          { label: 'Platform commission', value: analytics?.revenue, icon: 'payments', tone: 'gold' },
           { label: 'Active users', value: analytics?.activeUsers, icon: 'group', tone: 'sage' },
           { label: 'Verified professionals', value: analytics?.verifiedProfessionalCount, icon: 'verified', tone: 'plum' },
         ].map(({ label, value, icon, tone }) => (
           <article className={`admin-metric-card admin-metric-card--${tone}`} key={label}>
             <span className="admin-metric-icon material-symbols-outlined" aria-hidden="true">{icon}</span>
             <span className="admin-metric-label">{label}</span>
-            <strong>{label === 'Platform revenue' ? formatNpr(value) : value ?? '—'}</strong>
+            <strong>{label === 'Platform commission' ? formatNpr(value) : value ?? '—'}</strong>
           </article>
         ))}
+      </section>
+
+      <section className="admin-activity-panel" aria-labelledby="recent-activity-heading">
+        <div className="admin-queue-heading">
+          <div>
+            <span className="admin-eyebrow">OPERATIONS</span>
+            <h2 id="recent-activity-heading">Recent activity</h2>
+          </div>
+          <span className="admin-queue-total">{recentFeed.length} updates</span>
+        </div>
+
+        <ul className="admin-activity-list">
+          {recentFeed.map((activity) => (
+            <li key={`${activity.kind}-${activity.title}-${activity.time}`} className="admin-activity-item">
+              <span className={`admin-activity-bullet admin-activity-bullet--${activity.kind}`} aria-hidden="true" />
+              <div>
+                <strong>{activity.title}</strong>
+                <p>{activity.detail}</p>
+              </div>
+              <span className="admin-activity-time">{activity.time}</span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <nav className="admin-queue-tabs" aria-label="Administration queues">

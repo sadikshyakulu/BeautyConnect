@@ -42,6 +42,7 @@ public class ProfessionalSearchResultDto
 {
     public int Id { get; set; }
     public int UserId { get; set; }
+    public string? Email { get; set; }
     public string BusinessName { get; set; } = string.Empty;
     public string? Bio { get; set; }
     public string? Speciality { get; set; }

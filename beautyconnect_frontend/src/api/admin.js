@@ -31,3 +31,13 @@ export async function getAnalytics() {
   const { data } = await client.get('/Admin/analytics')
   return data
 }
+
+export async function getRecentActivity() {
+  const { data } = await client.get('/Admin/recent-activity')
+  return data
+}
+
+export async function getCustomers() {
+  const { data } = await client.get('/Admin/customers')
+  return data
+}
