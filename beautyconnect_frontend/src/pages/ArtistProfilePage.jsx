@@ -5,6 +5,7 @@ import { getProfessionalById } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import { aggregateServiceRatings, getReviewsForProfessional, serviceRatingKey } from '../api/review'
 import RatingStars from '../components/RatingStars'
+import ExpandableText from '../components/ExpandableText'
 import { notify } from '../utils/notifications'
 import { formatTime12Hour } from '../utils/time'
 import { formatNpr } from '../utils/currency'
@@ -241,7 +242,13 @@ export default function ArtistProfilePage() {
               )}
               <span className="artist-rating-summary-note">Overall rating · all services</span>
             </div>
-            {professional.bio && <p className="artist-profile-bio">{professional.bio}</p>}
+            {professional.bio && (
+              <ExpandableText
+                className="artist-profile-bio"
+                text={professional.bio}
+                lines={3}
+              />
+            )}
           </div>
         </div>
       </section>
@@ -270,7 +277,13 @@ export default function ArtistProfilePage() {
                       <p className="artist-service-category">{service.category}</p>
                       <h3 className="h5 mb-2">{service.name}</h3>
                       <p className="small text-on-surface-variant mb-2">{service.durationMinutes} minutes</p>
-                      {service.description && <p className="artist-service-description">{service.description}</p>}
+                      {service.description && (
+                        <ExpandableText
+                          className="artist-service-description"
+                          text={service.description}
+                          lines={2}
+                        />
+                      )}
                       <div className="artist-service-rating" aria-live="polite">
                         {serviceRatingsError ? (
                             <span className="small text-on-surface-variant">Rating unavailable</span>
@@ -320,7 +333,7 @@ export default function ArtistProfilePage() {
         </section>
 
         <aside className="col-lg-5">
-          <div className="glass-card rounded-2xl p-4" id="appointments">
+          <div className="glass-card rounded-2xl p-4 mt-5" id="appointments">
             <h2 className="h5">Available appointments</h2>
             {!selectedService ? (
               <p className="text-on-surface-variant">Choose a service first to see appointment times that fit its duration.</p>

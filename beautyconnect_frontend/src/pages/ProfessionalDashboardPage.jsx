@@ -225,6 +225,11 @@ export default function ProfessionalDashboardPage() {
     bookingStatus(booking.status) === 'Cancelled' && booking.cancellationReason,
   )
   const pendingCount = bookings.filter((booking) => bookingStatus(booking.status) === 'Pending').length
+  const revenue = bookings.reduce((total, booking) => (
+    bookingStatus(booking.status) === 'Completed'
+      ? total + Number(booking.totalPrice ?? 0)
+      : total
+  ), 0)
   const weeklyAvailability = availability.filter((slot) => slot.specificDate == null)
   const dateOverrides = availability.filter((slot) => slot.specificDate != null)
 
@@ -255,7 +260,7 @@ export default function ProfessionalDashboardPage() {
       <div className="row g-3 mb-4">
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active bookings</span><strong className="d-block fs-3">{incoming.length}</strong></div></div>
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Pending requests</span><strong className="d-block fs-3">{pendingCount}</strong></div></div>
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active work shifts</span><strong className="d-block fs-3">{weeklyAvailability.filter((slot) => slot.isAvailable).length}</strong></div></div>
+        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Revenue</span><strong className="d-block fs-3">{formatNpr(revenue)}</strong></div></div>
         <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Services</span><strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong></div></div>
       </div>
 

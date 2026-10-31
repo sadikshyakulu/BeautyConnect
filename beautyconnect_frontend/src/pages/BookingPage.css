@@ -118,7 +118,6 @@
 }
 
 .booking-primary-btn:hover {
-  background: linear-gradient(135deg, #823832 0%, #6f2e29 100%);
   box-shadow: 0 6px 22px rgba(149, 71, 65, 0.38);
   transform: translateY(-1px);
 }

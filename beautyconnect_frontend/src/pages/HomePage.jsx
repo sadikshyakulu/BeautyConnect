@@ -4,6 +4,7 @@ import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import HeroPortrait from '../components/HeroPortrait'
 import RatingStars from '../components/RatingStars'
+import ExpandableText from '../components/ExpandableText'
 import { notify } from '../utils/notifications'
 import { formatNpr } from '../utils/currency'
 import './HomePage.css'
@@ -239,7 +240,13 @@ export default function HomePage() {
                           <span className="artist-count">({professional.totalReviews ?? 0})</span>
                         </div>
                       </div>
-                      {professional.bio && <p className="small">{professional.bio}</p>}
+                      {professional.bio && (
+                        <ExpandableText
+                          className="small artist-card-bio"
+                          text={professional.bio}
+                          lines={3}
+                        />
+                      )}
                       <div className="artist-footer">
                         <div>
                           <span className="artist-price-label">Starting at</span>

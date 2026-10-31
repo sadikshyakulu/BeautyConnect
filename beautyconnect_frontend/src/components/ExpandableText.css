@@ -1,0 +1,35 @@
+.expandable-text-content {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 0 0.25rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--expandable-text-lines, 3);
+}
+
+.expandable-text-content--expanded {
+  display: block;
+  overflow: visible;
+}
+
+.expandable-text-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.expandable-text-toggle:hover {
+  text-decoration: underline;
+}
+
+.expandable-text-toggle:focus-visible {
+  border-radius: 0.15rem;
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

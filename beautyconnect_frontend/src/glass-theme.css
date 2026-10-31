@@ -209,38 +209,6 @@ select:not(.hero-select):focus {
     0 8px 20px rgba(149, 71, 65, 0.24) !important;
 }
 
-.btn-outline-primary:hover,
-.btn-outline-primary:focus-visible,
-.btn-outline-primary:active {
-  background-color: var(--primary) !important;
-  border-color: var(--primary) !important;
-  color: var(--on-primary) !important;
-}
-
-.btn-outline-secondary:hover,
-.btn-outline-secondary:focus-visible,
-.btn-outline-secondary:active {
-  background-color: var(--secondary) !important;
-  border-color: var(--secondary) !important;
-  color: var(--on-secondary) !important;
-}
-
-.btn-light:hover,
-.btn-light:focus-visible,
-.btn-secondary:hover,
-.btn-secondary:focus-visible {
-  background-color: rgba(215, 215, 220, 0.78) !important;
-  border-color: rgba(110, 110, 118, 0.4) !important;
-  color: var(--on-surface) !important;
-}
-
-.btn-primary:hover,
-.btn-primary:focus-visible {
-  background-color: #793932 !important;
-  border-color: #793932 !important;
-  color: var(--on-primary) !important;
-}
-
 .btn:disabled,
 .btn.disabled {
   background-color: rgba(255, 255, 255, 0.46) !important;
@@ -269,6 +237,99 @@ select:not(.hero-select):focus {
     0 18px 48px rgba(20, 20, 24, 0.18) !important;
   -webkit-backdrop-filter: saturate(195%) blur(30px);
   backdrop-filter: saturate(195%) blur(30px);
+}
+
+.btn {
+  --bs-btn-hover-bg: var(--bs-btn-bg);
+  --bs-btn-hover-border-color: var(--bs-btn-border-color);
+  --bs-btn-hover-color: var(--bs-btn-color);
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle),
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button),
+input[type="button"]:not(:disabled),
+input[type="submit"]:not(:disabled) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle)::after,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button)::after,
+input[type="button"]:not(:disabled)::after,
+input[type="submit"]:not(:disabled)::after {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to right, #8e2de2, #4a00e0);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle)::before,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button)::before,
+input[type="button"]:not(:disabled)::before,
+input[type="submit"]:not(:disabled)::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: -10%;
+  width: 120%;
+  height: 100%;
+  border-radius: inherit;
+  background: #000;
+  content: "";
+  pointer-events: none;
+  transform: translateX(-100%) skewX(30deg);
+  transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle):hover::after,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):hover::after,
+input[type="button"]:not(:disabled):hover::after,
+input[type="submit"]:not(:disabled):hover::after,
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle):focus-visible::after,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):focus-visible::after,
+input[type="button"]:not(:disabled):focus-visible::after,
+input[type="submit"]:not(:disabled):focus-visible::after {
+  opacity: 1;
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle):hover,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):hover,
+input[type="button"]:not(:disabled):hover,
+input[type="submit"]:not(:disabled):hover,
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle):focus-visible,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):focus-visible,
+input[type="button"]:not(:disabled):focus-visible,
+input[type="submit"]:not(:disabled):focus-visible {
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: ghostwhite !important;
+}
+
+button:not(:disabled):not([aria-disabled="true"]):not(.auth-toggle-pwd):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):not(.expandable-text-toggle):hover::before,
+.btn:not(:disabled):not(.disabled):not([aria-disabled="true"]):not(.auth-persona-btn):not(.auth-mode-tab):not(.auth-mode-prompt button):hover::before,
+input[type="button"]:not(:disabled):hover::before,
+input[type="submit"]:not(:disabled):hover::before {
+  transform: translateX(100%) skewX(30deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button::before,
+  .btn::before,
+  input[type="button"]::before,
+  input[type="submit"]::before,
+  button::after,
+  .btn::after,
+  input[type="button"]::after,
+  input[type="submit"]::after {
+    transition: none;
+  }
 }
 
 .table {

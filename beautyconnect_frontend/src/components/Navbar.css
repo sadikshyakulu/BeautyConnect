@@ -99,10 +99,6 @@
   white-space: nowrap;
 }
 
-.btn-ghost-sm:hover {
-  background: var(--surface-container);
-}
-
 .navbar-icon-btn {
   position: relative;
   display: flex;
@@ -115,11 +111,6 @@
   text-decoration: none;
   transition: all 0.2s ease;
   flex-shrink: 0;
-}
-
-.navbar-icon-btn:hover {
-  background: var(--surface-container);
-  color: var(--primary);
 }
 
 .navbar-badge {
@@ -198,10 +189,6 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-.btn-pro-pill:hover {
-  opacity: 0.9;
-}
-
 .navbar-hamburger {
   display: none;
   background: none;
@@ -213,10 +200,6 @@
   transition: background 0.2s ease;
 }
 
-
-.navbar-hamburger:hover {
-  background: var(--surface-container);
-}
 
 .navbar-mobile-menu {
   display: flex;
@@ -378,11 +361,6 @@
   place-items: center;
   border-radius: 0.65rem;
   color: var(--on-surface-variant);
-}
-
-.dashboard-sidebar-signout:hover {
-  color: var(--error);
-  background: var(--surface-container);
 }
 
 .dashboard-sidebar-error {

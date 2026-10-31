@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import RatingStars from '../components/RatingStars'
+import ExpandableText from '../components/ExpandableText'
 import { notify } from '../utils/notifications'
 import { formatNpr } from '../utils/currency'
 
@@ -163,7 +164,13 @@ export default function SearchPage() {
                       {Number(professional.ratingAverage ?? 0).toFixed(1)}
                     </span>
                   </div>
-                  {professional.bio && <p className="small">{professional.bio}</p>}
+                  {professional.bio && (
+                    <ExpandableText
+                      className="small"
+                      text={professional.bio}
+                      lines={3}
+                    />
+                  )}
                   <div className="d-flex flex-wrap gap-2 mb-3">
                     {(professional.matchingServices ?? []).map((service) => (
                       <span key={service.id} className="badge rounded-pill text-bg-light">

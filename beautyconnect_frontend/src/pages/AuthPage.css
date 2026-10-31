@@ -345,7 +345,6 @@
 }
 
 .auth-submit-btn:hover {
-  background-color: #7d3a35;
   transform: translateY(-1px);
 }
 
@@ -364,9 +363,4 @@
   color: var(--on-surface);
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.auth-social-btn:hover {
-  background-color: var(--surface-container-low);
-  border-color: var(--outline-variant);
 }

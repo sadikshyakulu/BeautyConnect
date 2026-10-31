@@ -265,7 +265,6 @@
 }
 
 .hero-btn-discover:hover {
-  background: var(--on-primary-fixed-variant);
   box-shadow: 0 6px 18px rgba(149, 71, 65, 0.35);
 }
 
@@ -519,10 +518,6 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.filter-pill:hover {
-  background: var(--surface-container-high);
 }
 
 .filter-pill--active {
@@ -794,11 +789,6 @@
   white-space: nowrap;
 }
 
-.btn-lookbook:hover {
-  background: var(--primary);
-  color: var(--on-primary);
-}
-
 .view-all-cta {
   margin-top: 2.5rem;
   text-align: center;
@@ -815,10 +805,6 @@
   text-decoration: none;
   font-weight: 600;
   transition: all 0.2s ease;
-}
-
-.btn-explore-all:hover {
-  background: var(--surface-container-highest);
 }
 
 /* 4. How It Works */
@@ -991,10 +977,6 @@
   font-size: 0.875rem;
   text-decoration: none;
   transition: background 0.2s ease;
-}
-
-.btn-charter:hover {
-  background: var(--on-primary-fixed-variant);
 }
 
 .charter-proof {
@@ -1276,10 +1258,6 @@
   box-shadow: 0 4px 12px rgba(149, 71, 65, 0.2);
 }
 
-.btn-primary-large:hover {
-  background: var(--on-primary-fixed-variant);
-}
-
 .btn-secondary-large {
   padding: 0.875rem 1.75rem;
   border-radius: var(--radius-full);
@@ -1289,10 +1267,6 @@
   font-size: 0.9375rem;
   text-decoration: none;
   transition: all 0.2s ease;
-}
-
-.btn-secondary-large:hover {
-  background: var(--surface-container-high);
 }
 
 /* Responsive adjustments */
@@ -1647,11 +1621,6 @@
   color: var(--primary);
 }
 
-.landing-professionals .btn-lookbook:hover {
-  background: var(--primary);
-  color: #fff;
-}
-
 .landing-empty-state {
   display: grid;
   justify-items: center;
@@ -1697,8 +1666,6 @@
 
 .landing-outline-cta:hover {
   transform: translateY(-1px);
-  background: var(--primary);
-  color: #fff;
 }
 
 .landing-how-it-works {
@@ -1957,8 +1924,6 @@
 
 .landing-search-button:hover {
   transform: translateY(-1px);
-  background: var(--on-primary-fixed-variant);
-  color: #fff;
   box-shadow: 0 11px 24px rgba(149, 71, 65, 0.25);
 }
 

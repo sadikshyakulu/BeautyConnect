@@ -4,6 +4,7 @@ import { getAssetUrl } from '../api/assets'
 import { getReviewAvatarUrl, getReviewsForProfessional } from '../api/review'
 import { getProfessionalById } from '../api/search'
 import { useAuth } from '../auth/useAuth'
+import ExpandableText from '../components/ExpandableText'
 import RatingStars from '../components/RatingStars'
 import { formatNpr } from '../utils/currency'
 import './ServiceDetailPage.css'
@@ -148,9 +149,67 @@ export default function ServiceDetailPage() {
         <div className="service-detail-main">
           <article className="glass-card rounded-2xl p-4 p-md-5">
             <h2 className="h4 mb-3">About this service</h2>
-            <p className="mb-0">{service.description || 'Contact the professional for more information about this service.'}</p>
+            <ExpandableText
+              className="service-detail-description"
+              text={service.description || 'Contact the professional for more information about this service.'}
+              lines={3}
+            />
           </article>
 
+          <section className="service-detail-reviews mt-5" aria-labelledby="service-reviews-heading">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-3">
+              <div>
+                <p className="service-detail-eyebrow mb-1">Customer feedback</p>
+                <h2 className="font-headline h3 mb-0" id="service-reviews-heading">Reviews for {service.name}</h2>
+              </div>
+              <Link className="btn btn-outline-primary" to={`/dashboard/customer?reviewServiceId=${service.id}`}>
+                Write a review
+              </Link>
+            </div>
+            <p className="small text-on-surface-variant">
+              Reviews are available after a completed appointment. You can submit one from your appointments.
+            </p>
+            {reviewError && <div className="alert alert-warning" role="alert">{reviewError}</div>}
+            {!reviewError && serviceReviews.length === 0 && (
+              <div className="glass-card rounded-2xl p-4">
+                <p className="mb-0 text-on-surface-variant">There are no reviews for this service yet.</p>
+              </div>
+            )}
+            {!reviewError && serviceReviews.length > 0 && (
+              <div className="service-review-list">
+                {serviceReviews.map((review) => {
+                  const avatarUrl = getReviewAvatarUrl(review, user)
+                  return (
+                    <article className="glass-card rounded-2xl p-4" key={review.id}>
+                      <div className="d-flex justify-content-between align-items-start gap-3">
+                        <div className="d-flex align-items-center gap-3">
+                          {avatarUrl ? (
+                            <img
+                              className="service-review-avatar rounded-circle"
+                              src={getAssetUrl(avatarUrl)}
+                              alt=""
+                            />
+                          ) : (
+                            <span className="service-review-avatar service-review-avatar--fallback rounded-circle" aria-hidden="true">
+                              {review.customerName?.trim()?.charAt(0)?.toLocaleUpperCase() || '?'}
+                            </span>
+                          )}
+                          <div>
+                            <h3 className="h6 mb-1">{review.customerName}</h3>
+                            <time className="small text-on-surface-variant" dateTime={review.createdAt}>
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </time>
+                          </div>
+                        </div>
+                        <RatingStars rating={review.rating} className="service-review-stars" />
+                      </div>
+                      <p className="mb-0 mt-3">{review.comment}</p>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </section>
         </div>
 
         <aside className="service-detail-sidebar">
@@ -175,67 +234,18 @@ export default function ServiceDetailPage() {
                 </p>
               </div>
             </div>
-            {professional.bio && <p className="mb-0">{professional.bio}</p>}
+            {professional.bio && (
+              <ExpandableText
+                className="service-detail-professional-bio"
+                text={professional.bio}
+                lines={4}
+              />
+            )}
             <Link className="btn btn-outline-primary w-100 mt-3" to={`/artist/${professional.id}`}>
               View all services
             </Link>
           </section>
         </aside>
-      </section>
-
-      <section className="service-detail-reviews" aria-labelledby="service-reviews-heading">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-3">
-          <div>
-            <p className="service-detail-eyebrow mb-1">Customer feedback</p>
-            <h2 className="font-headline h3 mb-0" id="service-reviews-heading">Reviews for {service.name}</h2>
-          </div>
-          <Link className="btn btn-outline-primary" to={`/dashboard/customer?reviewServiceId=${service.id}`}>
-            Write a review
-          </Link>
-        </div>
-        <p className="small text-on-surface-variant">
-          Reviews are available after a completed appointment. You can submit one from your appointments.
-        </p>
-        {reviewError && <div className="alert alert-warning" role="alert">{reviewError}</div>}
-        {!reviewError && serviceReviews.length === 0 && (
-          <div className="glass-card rounded-2xl p-4">
-            <p className="mb-0 text-on-surface-variant">There are no reviews for this service yet.</p>
-          </div>
-        )}
-        {!reviewError && serviceReviews.length > 0 && (
-          <div className="service-review-list">
-            {serviceReviews.map((review) => {
-              const avatarUrl = getReviewAvatarUrl(review, user)
-              return (
-              <article className="glass-card rounded-2xl p-4" key={review.id}>
-                <div className="d-flex justify-content-between align-items-start gap-3">
-                  <div className="d-flex align-items-center gap-3">
-                    {avatarUrl ? (
-                      <img
-                        className="service-review-avatar rounded-circle"
-                        src={getAssetUrl(avatarUrl)}
-                        alt=""
-                      />
-                    ) : (
-                      <span className="service-review-avatar service-review-avatar--fallback rounded-circle" aria-hidden="true">
-                        {review.customerName?.trim()?.charAt(0)?.toLocaleUpperCase() || '?'}
-                      </span>
-                    )}
-                    <div>
-                      <h3 className="h6 mb-1">{review.customerName}</h3>
-                      <time className="small text-on-surface-variant" dateTime={review.createdAt}>
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </time>
-                    </div>
-                  </div>
-                  <RatingStars rating={review.rating} className="service-review-stars" />
-                </div>
-                <p className="mb-0 mt-3">{review.comment}</p>
-              </article>
-              )
-            })}
-          </div>
-        )}
       </section>
     </div>
   )

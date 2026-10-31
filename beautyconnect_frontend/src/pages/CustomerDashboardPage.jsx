@@ -5,6 +5,7 @@ import { aggregateServiceRatings, createReview, getReviewsForProfessional, servi
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import RatingStars from '../components/RatingStars'
+import ExpandableText from '../components/ExpandableText'
 import { notify } from '../utils/notifications'
 import { formatNpr } from '../utils/currency'
 import './CustomerDashboardPage.css'
@@ -379,18 +380,25 @@ export default function CustomerDashboardPage() {
                           </div>
                         )}
                         <div className="customer-offering-info">
-                          <Link
-                            className="customer-offering-name"
-                            to={`/artist/${professional.id}/service/${service.id}`}
-                          >
-                            {service.name}
-                          </Link>
+                          <div className="customer-offering-heading">
+                            <Link
+                              className="customer-offering-name"
+                              to={`/artist/${professional.id}/service/${service.id}`}
+                            >
+                              {service.name}
+                            </Link>
+                            <strong className="customer-offering-price">{formatNpr(service.price)}</strong>
+                          </div>
                           <div className="customer-offering-meta">
                             <span>{service.category}</span>
                             <span>{service.durationMinutes} min</span>
                           </div>
                           {service.description && (
-                            <p className="customer-offering-description">{service.description}</p>
+                            <ExpandableText
+                              className="customer-offering-description"
+                              text={service.description}
+                              lines={2}
+                            />
                           )}
                           <div className="customer-offering-rating" aria-live="polite">
                             {serviceRatingsLoading ? (
@@ -421,7 +429,6 @@ export default function CustomerDashboardPage() {
                             Service details
                           </Link>
                         </div>
-                        <strong className="customer-offering-price">{formatNpr(service.price)}</strong>
                       </div>
                       )
                     })}
