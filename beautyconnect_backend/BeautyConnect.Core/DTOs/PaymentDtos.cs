@@ -13,6 +13,9 @@ public sealed class PaymentInitiateDto
 
     [StringLength(2000)]
     public string? Notes { get; set; }
+
+    [Required]
+    public BookingLocationDto Location { get; set; } = null!;
 }
 
 public sealed record EsewaPaymentFormDto(

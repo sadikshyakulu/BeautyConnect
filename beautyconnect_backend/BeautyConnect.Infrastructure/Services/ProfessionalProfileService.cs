@@ -38,7 +38,7 @@ public class ProfessionalProfileService : IProfessionalProfileService
             .Include(p => p.Services)
             .FirstOrDefaultAsync(p => p.Id == profileId);
 
-        return profile == null ? null : ToDto(profile);
+        return profile == null ? null : ToDto(profile, includePhoneNumber: false);
     }
 
     public async Task<ProfessionalProfileDto> SaveProfileAsync(int userId, ProfessionalProfileUpdateDto dto)
@@ -54,6 +54,7 @@ public class ProfessionalProfileService : IProfessionalProfileService
         }
 
         profile.BusinessName = dto.BusinessName.Trim();
+        profile.PhoneNumber = dto.PhoneNumber.Trim();
         profile.Bio = dto.Bio?.Trim();
         profile.Speciality = dto.Speciality?.Trim();
         profile.City = dto.City?.Trim();
@@ -204,11 +205,12 @@ public class ProfessionalProfileService : IProfessionalProfileService
         return true;
     }
 
-    private static ProfessionalProfileDto ToDto(ProfessionalProfile profile) => new()
+    private static ProfessionalProfileDto ToDto(ProfessionalProfile profile, bool includePhoneNumber = true) => new()
     {
         Id = profile.Id,
         UserId = profile.UserId,
         BusinessName = profile.BusinessName,
+        PhoneNumber = includePhoneNumber ? profile.PhoneNumber : null,
         Bio = profile.Bio,
         Speciality = profile.Speciality,
         City = profile.City,

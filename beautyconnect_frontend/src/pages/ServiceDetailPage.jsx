@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { getOpenSlots } from '../api/availability'
 import { getAssetUrl } from '../api/assets'
 import { getReviewAvatarUrl, getReviewsForProfessional } from '../api/review'
 import { getProfessionalById } from '../api/search'
@@ -8,14 +9,34 @@ import ExpandableText from '../components/ExpandableText'
 import RatingStars from '../components/RatingStars'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
+import { notify } from '../utils/notifications'
+import { formatTime12Hour } from '../utils/time'
 import './ServiceDetailPage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
   : status
 
+function nepalDateString(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kathmandu',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date)
+  const part = (type) => parts.find((item) => item.type === type)?.value
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
+
+function slotDateTime(slot) {
+  const [wholeSeconds, fraction = ''] = slot.startTime.split('.')
+  const milliseconds = fraction ? `.${fraction.slice(0, 3).padEnd(3, '0')}` : ''
+  return new Date(`${slot.date}T${wholeSeconds}${milliseconds}+05:45`)
+}
+
 export default function ServiceDetailPage() {
   const { id, serviceId } = useParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [professional, setProfessional] = useState(null)
   const [reviews, setReviews] = useState([])
@@ -23,6 +44,13 @@ export default function ServiceDetailPage() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [reviewError, setReviewError] = useState('')
+  const [showAvailability, setShowAvailability] = useState(false)
+  const [minimumAppointmentDate] = useState(() => nepalDateString(new Date()))
+  const [selectedDate, setSelectedDate] = useState(minimumAppointmentDate)
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [availabilityError, setAvailabilityError] = useState('')
+  const [availabilityKey, setAvailabilityKey] = useState('')
 
   useEffect(() => {
     let active = true
@@ -64,6 +92,57 @@ export default function ServiceDetailPage() {
   }, [id])
 
   const service = professional?.matchingServices?.find((item) => item.id === Number(serviceId))
+  const activeAvailabilityKey = service
+    ? `${professional?.id}:${selectedDate}:${service.id}`
+    : ''
+
+  useEffect(() => {
+    if (!showAvailability || !professional || !service || service.durationMinutes >= 1440) return undefined
+
+    let active = true
+    const requestKey = `${professional.id}:${selectedDate}:${service.id}`
+
+    getOpenSlots(professional.id, selectedDate, service.durationMinutes)
+      .then((slots) => {
+        if (active) {
+          const now = new Date()
+          setAvailableSlots((slots ?? []).filter((slot) => slotDateTime(slot) > now))
+        }
+      })
+      .catch((error) => {
+        if (!active) return
+        if (error.response?.status === 404) {
+          setAvailableSlots([])
+        } else {
+          setAvailabilityError(error.response?.data?.message ?? 'Could not load appointment times.')
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setAvailabilityKey(requestKey)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [professional, selectedDate, service, showAvailability])
+
+  function continueToBooking() {
+    if (!service || !selectedSlot) return
+
+    const appointmentTime = slotDateTime(selectedSlot)
+    if (appointmentTime <= new Date()) {
+      setSelectedSlot(null)
+      notify.error('That appointment time has passed. Please choose another available time.')
+      return
+    }
+
+    navigate(
+      `/booking?serviceId=${service.id}&professionalProfileId=${professional.id}&scheduledDateTime=${encodeURIComponent(appointmentTime.toISOString())}`,
+    )
+  }
+
   const serviceReviews = useMemo(() => {
     if (!service) return []
     const serviceName = service.name.trim().toLocaleLowerCase()
@@ -136,15 +215,85 @@ export default function ServiceDetailPage() {
               This service cannot be booked online because its duration is 24 hours or longer.
             </p>
           ) : (
-            <Link
+            <button
               className="btn btn-primary mt-3"
-              to={`/artist/${professional.id}?serviceId=${service.id}#appointments`}
+              type="button"
+              aria-expanded={showAvailability}
+              aria-controls="service-detail-availability"
+              onClick={() => {
+                if (!showAvailability) {
+                  setAvailabilityError('')
+                  setSelectedSlot(null)
+                  setAvailabilityKey('')
+                }
+                setShowAvailability((visible) => !visible)
+              }}
             >
-              Check availability
-            </Link>
+              {showAvailability ? 'Hide appointment times' : 'Choose appointment time'}
+            </button>
           )}
         </div>
       </header>
+
+      {showAvailability && service.durationMinutes < 1440 && (
+        <section className="glass-card service-detail-availability" id="service-detail-availability" aria-label="Choose appointment time">
+          <div className="service-detail-availability-heading">
+            <div>
+              <p className="service-detail-eyebrow mb-1">Book this service</p>
+              <h2 className="h5 mb-1">Choose an appointment time</h2>
+              <p className="small text-on-surface-variant mb-0">
+                {service.name} · {service.durationMinutes} minutes
+              </p>
+            </div>
+          </div>
+          <div className="service-detail-availability-controls">
+            <label className="form-label" htmlFor="service-appointment-date">Choose a date</label>
+            <input
+              id="service-appointment-date"
+              className="form-control"
+              type="date"
+              min={minimumAppointmentDate}
+              value={selectedDate}
+              onChange={(event) => {
+                setSelectedDate(event.target.value)
+                setSelectedSlot(null)
+                setAvailabilityKey('')
+                setAvailabilityError('')
+              }}
+            />
+          </div>
+          {availabilityKey !== activeAvailabilityKey ? (
+            <LoadingState variant="inline" label="Finding available times…" />
+          ) : availabilityError ? (
+            <p className="small text-danger mb-0" role="alert">{availabilityError}</p>
+          ) : availableSlots.length === 0 ? (
+            <p className="small text-on-surface-variant mb-0">No available times on this date. Try another date.</p>
+          ) : (
+            <div className="service-detail-time-slots" aria-label="Available appointment times">
+              {availableSlots.map((slot) => {
+                const isSelected = selectedSlot?.availabilityId === slot.availabilityId
+                  && selectedSlot?.startTime === slot.startTime
+                return (
+                  <button
+                    key={`${slot.availabilityId}-${slot.startTime}`}
+                    className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedSlot(slot)}
+                  >
+                    {formatTime12Hour(slot.startTime)}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {selectedSlot && (
+            <button className="btn btn-primary w-100 service-detail-availability-continue" type="button" onClick={continueToBooking}>
+              Continue to location &amp; payment
+            </button>
+          )}
+        </section>
+      )}
 
       <section className="service-detail-content" aria-label="Service information">
         <div className="service-detail-main">

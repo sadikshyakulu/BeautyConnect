@@ -32,7 +32,7 @@ public class BookingService : IBookingService
             .Where(booking => booking.CustomerProfileId == profileId.Value)
             .OrderByDescending(booking => booking.ScheduledDateTime)
             .ToListAsync();
-        return bookings.Select(ToDto).ToList();
+        return bookings.Select(booking => ToDto(booking, includeProfessionalContact: true)).ToList();
     }
 
     public async Task<List<BookingDto>?> GetProfessionalBookingsAsync(int userId)
@@ -50,7 +50,7 @@ public class BookingService : IBookingService
             .Where(booking => booking.ProfessionalProfileId == profileId.Value)
             .OrderBy(booking => booking.ScheduledDateTime)
             .ToListAsync();
-        return bookings.Select(ToDto).ToList();
+        return bookings.Select(booking => ToDto(booking)).ToList();
     }
 
     public Task<(BookingDto? Booking, string? Error)> AcceptBookingAsync(int userId, int bookingId)
@@ -131,7 +131,7 @@ public class BookingService : IBookingService
         }
 
         await _context.SaveChangesAsync();
-        return (ToDto(booking), null);
+        return (ToDto(booking, includeProfessionalContact: true), null);
     }
 
     private async Task<(BookingDto? Booking, string? Error)> ChangeStatusAsync(
@@ -168,7 +168,7 @@ public class BookingService : IBookingService
 
         booking.Status = targetStatus;
         await _context.SaveChangesAsync();
-        return (ToDto(booking), null);
+        return (ToDto(booking, includeProfessionalContact: !professional), null);
     }
 
     private async Task<BookingDto?> GetBookingDtoAsync(int bookingId)
@@ -190,7 +190,7 @@ public class BookingService : IBookingService
                 .Include(booking => booking.Review);
     }
 
-    private static BookingDto ToDto(Booking booking)
+    private static BookingDto ToDto(Booking booking, bool includeProfessionalContact = false)
     {
         var serviceImages = JsonSerializer.Deserialize<List<string>>(booking.Service.ImagesJson) ?? [];
         if (serviceImages.Count == 0)
@@ -220,10 +220,23 @@ public class BookingService : IBookingService
             RefundGatewayReference = booking.RefundGatewayReference,
             Notes = booking.Notes,
             CancellationReason = booking.CancellationReason,
+            Location = booking.LocationAddress is null
+                ? null
+                : new BookingLocationDto
+                {
+                    AddressLine = booking.LocationAddress,
+                    City = booking.LocationCity ?? string.Empty,
+                    Landmark = booking.LocationLandmark,
+                    Latitude = booking.LocationLatitude,
+                    Longitude = booking.LocationLongitude,
+                    ContactPhone = booking.ContactPhone ?? string.Empty
+                },
             CreatedAt = booking.CreatedAt,
             CustomerName = booking.CustomerProfile.FullName,
             CustomerEmail = booking.CustomerProfile.User.Email,
+            CustomerAvatarUrl = booking.CustomerProfile.AvatarUrl,
             ProfessionalBusinessName = booking.ProfessionalProfile.BusinessName,
+            ProfessionalPhoneNumber = includeProfessionalContact ? booking.ProfessionalProfile.PhoneNumber : null,
             HasReview = booking.Review != null,
             Service = new ServiceDto
             {

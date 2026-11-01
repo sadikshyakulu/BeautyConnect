@@ -6,11 +6,11 @@ namespace BeautyConnect.Infrastructure.Services;
 
 public static partial class BookingLocationValidator
 {
-    [GeneratedRegex(@"^\+?[0-9][0-9\s().-]{6,28}$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^[0-9 +-]+$", RegexOptions.CultureInvariant)]
     private static partial Regex PhonePattern();
 
     public static string? ValidateCustomerLocation(
-        PaymentLocationDto? location,
+        BookingLocationDto? location,
         LocationBoundsOptions bounds)
     {
         if (location == null)
@@ -18,24 +18,16 @@ public static partial class BookingLocationValidator
             return "A service location is required.";
         }
 
-        if (string.IsNullOrWhiteSpace(location.AddressLine))
+        var addressLine = location.AddressLine?.Trim();
+        if (string.IsNullOrWhiteSpace(addressLine) || addressLine.Length is < 5 or > 300)
         {
-            return "Enter the address where the service will take place.";
+            return "Enter an address between 5 and 300 characters.";
         }
 
-        if (location.AddressLine.Trim().Length > 300)
+        var city = location.City?.Trim();
+        if (string.IsNullOrWhiteSpace(city) || city.Length is < 2 or > 100)
         {
-            return "The address must be 300 characters or fewer.";
-        }
-
-        if (string.IsNullOrWhiteSpace(location.City))
-        {
-            return "Enter the city where the service will take place.";
-        }
-
-        if (location.City.Trim().Length > 100)
-        {
-            return "The city must be 100 characters or fewer.";
+            return "Enter a city between 2 and 100 characters.";
         }
 
         if (location.Landmark?.Trim().Length > 500)
@@ -43,17 +35,22 @@ public static partial class BookingLocationValidator
             return "Landmark or arrival directions must be 500 characters or fewer.";
         }
 
-        if (string.IsNullOrWhiteSpace(location.ContactPhone))
+        var phone = location.ContactPhone?.Trim();
+        if (string.IsNullOrWhiteSpace(phone))
         {
             return "Enter a contact phone number for the appointment.";
         }
 
-        var phone = location.ContactPhone.Trim();
-        var digitCount = phone.Count(char.IsDigit);
+        var digitCount = phone.Count(character => character is >= '0' and <= '9');
         if (phone.Length > 30 || digitCount is < 7 or > 15 || !PhonePattern().IsMatch(phone))
         {
             return "Enter a valid contact phone number.";
         }
+
+        location.AddressLine = addressLine;
+        location.City = city;
+        location.Landmark = location.Landmark?.Trim();
+        location.ContactPhone = phone;
 
         return ValidateCoordinates(location.Latitude, location.Longitude, bounds);
     }
@@ -78,12 +75,12 @@ public static partial class BookingLocationValidator
         }
 
         if (bounds.Enabled
-            && (latitude.Value < bounds.MinLatitude
-                || latitude.Value > bounds.MaxLatitude
-                || longitude.Value < bounds.MinLongitude
-                || longitude.Value > bounds.MaxLongitude))
+            && (latitude.Value < bounds.MinLat
+                || latitude.Value > bounds.MaxLat
+                || longitude.Value < bounds.MinLng
+                || longitude.Value > bounds.MaxLng))
         {
-            return $"Choose a location within Nepal (latitude {bounds.MinLatitude} to {bounds.MaxLatitude}, longitude {bounds.MinLongitude} to {bounds.MaxLongitude}).";
+            return $"Choose a location within Nepal (latitude {bounds.MinLat} to {bounds.MaxLat}, longitude {bounds.MinLng} to {bounds.MaxLng}).";
         }
 
         return null;

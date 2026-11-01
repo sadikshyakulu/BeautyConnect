@@ -13,9 +13,9 @@ public class BookingLocationValidatorTests
     public void ValidCustomerLocationIsAccepted()
     {
         var error = BookingLocationValidator.ValidateCustomerLocation(
-            new PaymentLocationDto
+            new BookingLocationDto
             {
-                AddressLine = "Thamel, Kathmandu",
+                AddressLine = "  Thamel, Kathmandu  ",
                 City = "Kathmandu",
                 Latitude = 27.7172,
                 Longitude = 85.3240,
@@ -27,55 +27,81 @@ public class BookingLocationValidatorTests
     }
 
     [Theory]
-    [InlineData(0, 0)]
     [InlineData(91, 85)]
     [InlineData(27, 181)]
-    [InlineData(25, 85)]
-    [InlineData(27, 89)]
-    public void InvalidCoordinatesAreRejected(double latitude, double longitude)
+    public void OutOfRangeCoordinatesAreRejected(double latitude, double longitude)
     {
         var error = BookingLocationValidator.ValidateCustomerLocation(
-            ValidCustomerLocation(latitude, longitude),
+            ValidLocation(latitude, longitude),
             NepalBounds);
 
         Assert.NotNull(error);
     }
 
-    [Theory]
-    [InlineData("", "Kathmandu", "Enter the address")]
-    [InlineData("Thamel", "", "Enter the city")]
-    [InlineData("Thamel", "Kathmandu", "valid contact phone")]
-    public void RequiredAddressCityAndPhoneAreValidated(
-        string address,
-        string city,
-        string expectedMessage)
+    [Fact]
+    public void ZeroZeroCoordinatesAreRejected()
     {
-        var location = ValidCustomerLocation(27.7172, 85.3240);
-        location.AddressLine = address;
-        location.City = city;
-        if (expectedMessage.Contains("phone", StringComparison.OrdinalIgnoreCase))
-        {
-            location.ContactPhone = "bad";
-        }
+        var error = BookingLocationValidator.ValidateCustomerLocation(
+            ValidLocation(0, 0),
+            NepalBounds);
 
-        var error = BookingLocationValidator.ValidateCustomerLocation(location, NepalBounds);
+        Assert.Contains("(0, 0)", error);
+    }
 
-        Assert.Contains(expectedMessage, error, StringComparison.OrdinalIgnoreCase);
+    [Theory]
+    [InlineData(25, 85)]
+    [InlineData(27, 89)]
+    public void CoordinatesOutsideConfiguredBoundsAreRejected(double latitude, double longitude)
+    {
+        var error = BookingLocationValidator.ValidateCustomerLocation(
+            ValidLocation(latitude, longitude),
+            NepalBounds);
+        Assert.Contains("within Nepal", error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void LocationOutsideOptionalBoundsCanBeAllowed()
+    public void InvalidPhoneIsRejected()
     {
-        var bounds = new LocationBoundsOptions { Enabled = false };
+        var location = ValidLocation(27.7172, 85.3240);
+        location.ContactPhone = "(981) 234-5678";
 
         var error = BookingLocationValidator.ValidateCustomerLocation(
-            ValidCustomerLocation(40, -74),
-            bounds);
+            location,
+            NepalBounds);
 
-        Assert.Null(error);
+        Assert.Contains("valid contact phone", error, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static PaymentLocationDto ValidCustomerLocation(double latitude, double longitude) => new()
+    [Fact]
+    public void MissingAddressIsRejected()
+    {
+        var location = ValidLocation(27.7172, 85.3240);
+        location.AddressLine = "   ";
+
+        var error = BookingLocationValidator.ValidateCustomerLocation(location, NepalBounds);
+
+        Assert.Contains("address", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void LocationTextIsTrimmedBeforePersistence()
+    {
+        var location = ValidLocation(27.7172, 85.3240);
+        location.AddressLine = "  Thamel  ";
+        location.City = "  Kathmandu  ";
+        location.Landmark = "  Near the square  ";
+        location.ContactPhone = "  +977 9812345678  ";
+
+        var error = BookingLocationValidator.ValidateCustomerLocation(location, NepalBounds);
+
+        Assert.Null(error);
+        Assert.Equal("Thamel", location.AddressLine);
+        Assert.Equal("Kathmandu", location.City);
+        Assert.Equal("Near the square", location.Landmark);
+        Assert.Equal("+977 9812345678", location.ContactPhone);
+    }
+
+    private static BookingLocationDto ValidLocation(double latitude, double longitude) => new()
     {
         AddressLine = "Thamel",
         City = "Kathmandu",

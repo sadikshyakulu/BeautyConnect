@@ -51,6 +51,7 @@ public class ProfessionalProfile
     public int Id { get; set; }
     public int UserId { get; set; }
     public string BusinessName { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
     public string? Speciality { get; set; }
     public string? City { get; set; }
@@ -118,6 +119,12 @@ public class Booking
     public DateTime? RefundRequestedAt { get; set; }
     public DateTime? RefundedAt { get; set; }
     public string? RefundGatewayReference { get; set; }
+    public string? LocationAddress { get; set; }
+    public string? LocationCity { get; set; }
+    public string? LocationLandmark { get; set; }
+    public double? LocationLatitude { get; set; }
+    public double? LocationLongitude { get; set; }
+    public string? ContactPhone { get; set; }
     public string? Notes { get; set; }
     public string? CancellationReason { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -142,6 +149,12 @@ public class PaymentIntent
     public decimal EsewaTotalAmount { get; set; }
     public string EsewaTransactionUuid { get; set; } = string.Empty;
     public string? EsewaTransactionCode { get; set; }
+    public string? LocationAddress { get; set; }
+    public string? LocationCity { get; set; }
+    public string? LocationLandmark { get; set; }
+    public double? LocationLatitude { get; set; }
+    public double? LocationLongitude { get; set; }
+    public string? ContactPhone { get; set; }
     public string? Notes { get; set; }
     public PaymentIntentStatus Status { get; set; } = PaymentIntentStatus.Pending;
     public DateTime ExpiresAt { get; set; }

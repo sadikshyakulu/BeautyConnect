@@ -140,7 +140,7 @@ export default function Navbar() {
                 </div>
               </Link>
               <Link to={roleHome} className="btn-pro-pill">
-                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>dashboard</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 14 }}>dashboard</span>
                 Dashboard
               </Link>
               <button type="button" className="btn-ghost-sm" onClick={handleSignOut}>Sign Out</button>
@@ -149,7 +149,7 @@ export default function Navbar() {
 
           {/* Mobile hamburger */}
           <button className="navbar-hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
-            <span className="material-symbols-outlined">{mobileOpen ? 'close' : 'menu'}</span>
+            <span className="material-symbols-outlined" aria-hidden="true">{mobileOpen ? 'close' : 'menu'}</span>
           </button>
         </div>
       </div>

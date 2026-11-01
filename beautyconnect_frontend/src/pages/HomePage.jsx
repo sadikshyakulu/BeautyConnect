@@ -116,7 +116,7 @@ export default function HomePage() {
                 </div>
                 <div className="hero-search-cta">
                   <button type="submit" className="hero-btn-discover">
-                    <span className="material-symbols-outlined">search</span>
+                    <span className="material-symbols-outlined" aria-hidden="true">search</span>
                     Search
                   </button>
                 </div>

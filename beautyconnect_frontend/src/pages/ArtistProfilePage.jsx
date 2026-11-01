@@ -198,7 +198,7 @@ export default function ArtistProfilePage() {
           </div>
         ) : (
           <div className="artist-profile-cover artist-profile-cover--empty" aria-hidden="true">
-            <span className="material-symbols-outlined">auto_awesome</span>
+            <span className="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
           </div>
         )}
         <div className="glass-card artist-profile-identity">

@@ -53,7 +53,7 @@ public class AuthService : IAuthService
             {
                 UserId = user.Id,
                 FullName = dto.FullName ?? "Beauty Enthusiast",
-                PhoneNumber = dto.PhoneNumber
+                PhoneNumber = dto.PhoneNumber!.Trim()
             };
             _context.CustomerProfiles.Add(customer);
         }
@@ -63,6 +63,7 @@ public class AuthService : IAuthService
             {
                 UserId = user.Id,
                 BusinessName = dto.BusinessName ?? (dto.FullName != null ? $"{dto.FullName} Studio" : "Beauty Studio"),
+                PhoneNumber = dto.PhoneNumber!.Trim(),
                 Speciality = dto.Speciality ?? "Master Stylist & Artist",
                 City = dto.City ?? "New York, NY",
                 VerificationStatus = VerificationStatus.Pending // Submitted for Admin verification
@@ -85,7 +86,7 @@ public class AuthService : IAuthService
         else if (dto.Role == UserRole.Professional)
         {
             var p = await _context.ProfessionalProfiles.FirstOrDefaultAsync(pr => pr.UserId == user.Id);
-            profileData = p != null ? new { p.BusinessName, p.Speciality, p.City, p.VerificationStatus } : null;
+            profileData = p != null ? new { p.BusinessName, p.PhoneNumber, p.Speciality, p.City, p.VerificationStatus } : null;
         }
 
         var response = new AuthResponseDto
@@ -137,6 +138,7 @@ public class AuthService : IAuthService
                 user.ProfessionalProfile.BusinessName,
                 user.ProfessionalProfile.Speciality,
                 user.ProfessionalProfile.City,
+                user.ProfessionalProfile.PhoneNumber,
                 VerificationStatus = user.ProfessionalProfile.VerificationStatus.ToString(),
                 user.ProfessionalProfile.AvatarUrl,
                 user.ProfessionalProfile.RatingAverage
@@ -193,6 +195,7 @@ public class AuthService : IAuthService
                 user.ProfessionalProfile.BusinessName,
                 user.ProfessionalProfile.Speciality,
                 user.ProfessionalProfile.City,
+                user.ProfessionalProfile.PhoneNumber,
                 VerificationStatus = user.ProfessionalProfile.VerificationStatus.ToString(),
                 user.ProfessionalProfile.AvatarUrl
             },
@@ -244,6 +247,7 @@ public class AuthService : IAuthService
                 user.ProfessionalProfile.BusinessName,
                 user.ProfessionalProfile.Speciality,
                 user.ProfessionalProfile.City,
+                user.ProfessionalProfile.PhoneNumber,
                 VerificationStatus = user.ProfessionalProfile.VerificationStatus.ToString(),
                 user.ProfessionalProfile.AvatarUrl
             },
@@ -256,6 +260,34 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role.ToString(),
             Profile = profileData
+        };
+    }
+
+    public async Task<UserDto?> UpdateCustomerProfileAsync(int userId, CustomerProfileUpdateDto dto)
+    {
+        var user = await _context.Users
+            .Include(item => item.CustomerProfile)
+            .FirstOrDefaultAsync(item => item.Id == userId && item.Role == UserRole.Customer);
+        if (user?.CustomerProfile == null)
+        {
+            return null;
+        }
+
+        user.CustomerProfile.FullName = dto.FullName.Trim();
+        user.CustomerProfile.PhoneNumber = dto.PhoneNumber.Trim();
+        await _context.SaveChangesAsync();
+
+        return new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Role = user.Role.ToString(),
+            Profile = new
+            {
+                user.CustomerProfile.FullName,
+                user.CustomerProfile.PhoneNumber,
+                user.CustomerProfile.AvatarUrl
+            }
         };
     }
 }

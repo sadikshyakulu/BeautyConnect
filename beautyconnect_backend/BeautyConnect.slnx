@@ -2,4 +2,5 @@
   <Project Path="BeautyConnect.Api/BeautyConnect.Api.csproj" />
   <Project Path="BeautyConnect.Core/BeautyConnect.Core.csproj" />
   <Project Path="BeautyConnect.Infrastructure/BeautyConnect.Infrastructure.csproj" />
+  <Project Path="BeautyConnect.Tests/BeautyConnect.Tests.csproj" />
 </Solution>

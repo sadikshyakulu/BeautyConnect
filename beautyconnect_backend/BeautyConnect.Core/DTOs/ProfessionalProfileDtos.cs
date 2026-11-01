@@ -8,6 +8,10 @@ public class ProfessionalProfileUpdateDto
     [Required, StringLength(150)]
     public string BusinessName { get; set; } = string.Empty;
 
+    [Required, StringLength(30, MinimumLength = 7)]
+    [RegularExpression(@"^(?=(?:\D*\d){7,15}\D*$)[0-9+\s-]+$", ErrorMessage = "Enter a phone number using digits, spaces, + or - with 7 to 15 digits.")]
+    public string PhoneNumber { get; set; } = string.Empty;
+
     [StringLength(2000)]
     public string? Bio { get; set; }
 
@@ -26,7 +30,7 @@ public class ProfessionalProfileUpdateDto
     [Range(-180, 180)]
     public double Longitude { get; set; }
 
-    [Url, StringLength(500)]
+    [StringLength(500)]
     public string? AvatarUrl { get; set; }
 
     [Required, MaxLength(20)]
@@ -38,6 +42,7 @@ public class ProfessionalProfileDto
     public int Id { get; set; }
     public int UserId { get; set; }
     public string BusinessName { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
     public string? Bio { get; set; }
     public string? Speciality { get; set; }
     public string? City { get; set; }

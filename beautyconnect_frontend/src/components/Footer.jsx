@@ -19,9 +19,9 @@ export default function Footer() {
             <div className="footer-sub-bar">
               <span className="footer-kicker">Editorial Portfolio Lookbook</span>
               <div className="footer-icons">
-                <span className="material-symbols-outlined footer-icon">photo_camera</span>
-                <span className="material-symbols-outlined footer-icon">auto_stories</span>
-                <span className="material-symbols-outlined footer-icon">spa</span>
+                <span className="material-symbols-outlined footer-icon" aria-hidden="true">photo_camera</span>
+                <span className="material-symbols-outlined footer-icon" aria-hidden="true">auto_stories</span>
+                <span className="material-symbols-outlined footer-icon" aria-hidden="true">spa</span>
               </div>
             </div>
           </div>

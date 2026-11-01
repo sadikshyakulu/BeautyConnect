@@ -140,7 +140,7 @@ export default function AdminPanelPage() {
           <p>Keep the marketplace trusted, healthy, and running smoothly.</p>
         </div>
         <div className="admin-hero-mark" aria-hidden="true">
-          <span className="material-symbols-outlined">admin_panel_settings</span>
+          <span className="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
         </div>
       </header>
 

@@ -507,8 +507,37 @@
   border-radius: 0.5rem;
 }
 
-.dashboard-studio-page textarea.form-control {
-  min-height: 56px;
+.dashboard-studio-page textarea.form-control.studio-bio-field {
+  min-height: 12rem;
+  line-height: 1.55;
+  resize: vertical;
+  overflow-y: auto;
+}
+
+.dashboard-studio-page .form-control.studio-field-invalid {
+  border-color: #b42318 !important;
+}
+
+.dashboard-studio-page .form-control.studio-field-invalid:focus {
+  border-color: #b42318 !important;
+  box-shadow: 0 0 0 0.2rem rgba(180, 35, 24, 0.14) !important;
+}
+
+.dashboard-studio-page .studio-field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  color: #b42318;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.dashboard-studio-page .studio-field-error .material-symbols-outlined {
+  flex: 0 0 auto;
+  color: #b42318;
+  font-size: 0.95rem;
 }
 
 .dashboard-studio-page .form-text {

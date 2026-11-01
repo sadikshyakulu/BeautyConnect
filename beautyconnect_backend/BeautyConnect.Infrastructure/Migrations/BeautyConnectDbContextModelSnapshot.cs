@@ -73,6 +73,10 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -93,6 +97,24 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.Property<string>("EsewaTransactionUuid")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("LocationAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("LocationCity")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("LocationLandmark")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<double?>("LocationLatitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("LocationLongitude")
+                        .HasColumnType("double");
 
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
@@ -231,6 +253,10 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -255,6 +281,24 @@ namespace BeautyConnect.Infrastructure.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LocationAddress")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("LocationCity")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("LocationLandmark")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<double?>("LocationLatitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("LocationLongitude")
+                        .HasColumnType("double");
 
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
@@ -323,6 +367,10 @@ namespace BeautyConnect.Infrastructure.Migrations
 
                     b.Property<double>("Longitude")
                         .HasColumnType("double");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("PortfolioImagesJson")
                         .IsRequired()

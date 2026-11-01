@@ -25,6 +25,7 @@ public sealed class PaymentService : IPaymentService
     private readonly BeautyConnectDbContext _context;
     private readonly HttpClient _httpClient;
     private readonly EsewaOptions _options;
+    private readonly LocationBoundsOptions _locationBounds;
     private readonly ILogger<PaymentService> _logger;
     private string ProductCode => _options.ProductCode.Trim();
     private static readonly TimeSpan PaymentIntentLifetime = TimeSpan.FromMinutes(20);
@@ -33,11 +34,13 @@ public sealed class PaymentService : IPaymentService
         BeautyConnectDbContext context,
         HttpClient httpClient,
         IOptions<EsewaOptions> options,
+        IOptions<LocationBoundsOptions> locationBounds,
         ILogger<PaymentService> logger)
     {
         _context = context;
         _httpClient = httpClient;
         _options = options.Value;
+        _locationBounds = locationBounds.Value;
         _logger = logger;
     }
 
@@ -46,6 +49,16 @@ public sealed class PaymentService : IPaymentService
         PaymentInitiateDto request,
         CancellationToken cancellationToken)
     {
+        var locationError = BookingLocationValidator.ValidateCustomerLocation(
+            request.Location,
+            _locationBounds);
+        if (locationError != null)
+        {
+            return PaymentOperationResult<EsewaPaymentFormDto>.Failure(
+                locationError,
+                PaymentErrorCode.InvalidRequest);
+        }
+
         EnsureConfigured();
         var customerProfileId = await _context.CustomerProfiles
             .Where(profile => profile.UserId == userId)
@@ -107,6 +120,14 @@ public sealed class PaymentService : IPaymentService
             CommissionAmount = commission,
             EsewaTotalAmount = totalAmount,
             EsewaTransactionUuid = CreateTransactionUuid(service.Id),
+            LocationAddress = request.Location.AddressLine,
+            LocationCity = request.Location.City,
+            LocationLandmark = string.IsNullOrWhiteSpace(request.Location.Landmark)
+                ? null
+                : request.Location.Landmark,
+            LocationLatitude = request.Location.Latitude,
+            LocationLongitude = request.Location.Longitude,
+            ContactPhone = request.Location.ContactPhone,
             Notes = request.Notes?.Trim(),
             Status = PaymentIntentStatus.Pending,
             ExpiresAt = now.Add(PaymentIntentLifetime),
@@ -646,6 +667,12 @@ public sealed class PaymentService : IPaymentService
                     EsewaTransactionUuid = paymentIntent.EsewaTransactionUuid,
                     EsewaTransactionCode = confirmedTransactionCode,
                     EsewaTotalAmount = paymentIntent.EsewaTotalAmount,
+                    LocationAddress = paymentIntent.LocationAddress,
+                    LocationCity = paymentIntent.LocationCity,
+                    LocationLandmark = paymentIntent.LocationLandmark,
+                    LocationLatitude = paymentIntent.LocationLatitude,
+                    LocationLongitude = paymentIntent.LocationLongitude,
+                    ContactPhone = paymentIntent.ContactPhone,
                     Notes = paymentIntent.Notes
                 };
                 _context.Bookings.Add(booking);

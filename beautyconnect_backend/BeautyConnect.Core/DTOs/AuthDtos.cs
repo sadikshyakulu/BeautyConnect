@@ -16,6 +16,8 @@ public class RegisterRequestDto : IValidatableObject
 
     public string? FullName { get; set; }
     public string? BusinessName { get; set; }
+    [Required, StringLength(30, MinimumLength = 7)]
+    [RegularExpression(@"^(?=(?:\D*\d){7,15}\D*$)[0-9+\s-]+$", ErrorMessage = "Enter a phone number using digits, spaces, + or - with 7 to 15 digits.")]
     public string? PhoneNumber { get; set; }
     public string? Speciality { get; set; }
     public string? City { get; set; }
@@ -29,6 +31,16 @@ public class RegisterRequestDto : IValidatableObject
                 new[] { nameof(Role) });
         }
     }
+}
+
+public class CustomerProfileUpdateDto
+{
+    [Required, StringLength(100, MinimumLength = 2)]
+    public string FullName { get; set; } = string.Empty;
+
+    [Required, StringLength(30, MinimumLength = 7)]
+    [RegularExpression(@"^(?=(?:\D*\d){7,15}\D*$)[0-9+\s-]+$", ErrorMessage = "Enter a phone number using digits, spaces, + or - with 7 to 15 digits.")]
+    public string PhoneNumber { get; set; } = string.Empty;
 }
 
 public class LoginRequestDto

@@ -2,8 +2,9 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { cancelBooking, getCustomerBookings } from '../api/booking'
 import { aggregateServiceRatings, createReview, getReviewsForProfessional, serviceRatingKey } from '../api/review'
-import { getProfessionals } from '../api/search'
+import { getProfessionalById, getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import BookingLocationDetails from '../components/BookingLocationDetails'
 import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
 import LoadingState from '../components/LoadingState'
@@ -25,6 +26,7 @@ export default function CustomerDashboardPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [bookings, setBookings] = useState([])
+  const [professionalAvatars, setProfessionalAvatars] = useState({})
   const [professionals, setProfessionals] = useState([])
   const [serviceRatings, setServiceRatings] = useState(new Map())
   const [serviceRatingFailures, setServiceRatingFailures] = useState(new Set())
@@ -45,6 +47,30 @@ export default function CustomerDashboardPage() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const reviewServiceId = Number(searchParams.get('reviewServiceId'))
+
+  useEffect(() => {
+    if (bookings.length === 0) return undefined
+
+    let active = true
+    const profileIds = [...new Set(bookings
+      .filter((booking) => booking.professionalProfileId)
+      .map((booking) => booking.professionalProfileId))]
+
+    Promise.allSettled(profileIds.map(async (profileId) => {
+      const profile = await getProfessionalById(profileId)
+      return [profileId, profile?.avatarUrl]
+    })).then((results) => {
+      if (!active) return
+
+      setProfessionalAvatars(Object.fromEntries(results
+        .filter((result) => result.status === 'fulfilled' && result.value[1])
+        .map((result) => result.value)))
+    })
+
+    return () => {
+      active = false
+    }
+  }, [bookings])
 
   async function loadBookings() {
     try {
@@ -356,7 +382,7 @@ export default function CustomerDashboardPage() {
                       />
                     ) : (
                       <span className="rounded-circle bg-surface-container d-flex align-items-center justify-content-center" style={{ width: 56, height: 56 }} aria-hidden="true">
-                        <span className="material-symbols-outlined">face_3</span>
+                        <span className="material-symbols-outlined" aria-hidden="true">face_3</span>
                       </span>
                     )}
                     <div className="min-w-0">
@@ -462,35 +488,46 @@ export default function CustomerDashboardPage() {
           {tab === 'upcoming' && <Link className="btn btn-primary" to="/search">Browse professionals</Link>}
         </div>
       ) : (
-        <div className="d-flex flex-column gap-3">
+        <div className="customer-booking-list">
           {visibleBookings.map((booking) => {
             const status = statusName(booking.status)
+            const professionalName = booking.professionalBusinessName || 'Beauty professional'
+            const professionalAvatarUrl = professionalAvatars[booking.professionalProfileId]
+              || professionals.find((professional) => professional.id === booking.professionalProfileId)?.avatarUrl
+            const professionalInitial = professionalName.trim().charAt(0).toLocaleUpperCase() || '?'
+            const appointmentDate = new Date(booking.scheduledDateTime)
             return (
-              <article className="glass-card rounded-2xl p-4" key={booking.id}>
-                <div className="d-flex flex-column flex-md-row justify-content-between gap-3">
-                  <div>
-                    <h2 className="h5">{booking.service?.name ?? 'Service appointment'}</h2>
-                    <p className="mb-1">{booking.professionalBusinessName}</p>
-                    <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                    <p className="small mb-0">Status: <strong>{status}</strong> · Total: <MoneyAmount value={booking.totalPrice} /></p>
-                    {refundStatusName(booking.refundStatus) !== 'Not requested' && (
-                      <p className="small mb-0 mt-1">
-                        Refund: <strong>{refundStatusName(booking.refundStatus)}</strong>
-                        {booking.refundAmount != null && <> · <MoneyAmount value={booking.refundAmount} /></>}
-                      </p>
-                    )}
-                    {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}
-                    {status === 'Cancelled' && booking.cancellationReason && (
-                      <p className="small mt-2 mb-0">
-                        <strong>Your cancellation reason:</strong> {booking.cancellationReason}
-                      </p>
-                    )}
+              <article className={`customer-booking-card customer-booking-card--${status.toLocaleLowerCase()}`} key={booking.id}>
+                <header className="customer-booking-card-header">
+                  <div className="customer-booking-service">
+                    <div className="customer-booking-service-image">
+                      <span className="material-symbols-outlined" aria-hidden="true">spa</span>
+                      {booking.service?.images?.[0] && (
+                        <img
+                          src={getAssetUrl(booking.service.images[0])}
+                          alt={`${booking.service.name ?? 'Booked'} service`}
+                          onError={(event) => { event.currentTarget.hidden = true }}
+                        />
+                      )}
+                    </div>
+                    <div className="customer-booking-service-copy">
+                      <p className="customer-booking-kicker">Service appointment</p>
+                      <h3>{booking.service?.name ?? 'Service appointment'}</h3>
+                      <span>
+                        {[booking.service?.category, booking.service?.durationMinutes ? `${booking.service.durationMinutes} min` : null]
+                          .filter(Boolean).join(' · ') || 'Beauty service'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="d-flex flex-wrap gap-2 align-items-start">
+                  <div className="customer-booking-header-tools">
+                    <span className={`customer-booking-status customer-booking-status--${status.toLocaleLowerCase()}`}>
+                      <span aria-hidden="true" />
+                      {status}
+                    </span>
                     {['Pending', 'Confirmed'].includes(status) && (
                       <button
                         type="button"
-                        className="btn btn-outline-danger"
+                        className="btn btn-outline-danger customer-booking-cancel"
                         onClick={() => {
                           setCancelling(booking)
                           setCancellationReason('')
@@ -500,10 +537,74 @@ export default function CustomerDashboardPage() {
                         Cancel booking
                       </button>
                     )}
+                    {status === 'Completed' && (booking.hasReview || reviewedBookingIds.includes(booking.id)) && (
+                      <span className="customer-booking-reviewed">Review submitted</span>
+                    )}
+                  </div>
+                </header>
+
+                <div className="customer-booking-card-body">
+                  <div className="customer-booking-summary">
+                    <section className="customer-booking-professional" aria-label="Professional details">
+                      <div className="customer-booking-avatar">
+                        <span aria-hidden="true">{professionalInitial}</span>
+                        {professionalAvatarUrl && (
+                          <img
+                            src={getAssetUrl(professionalAvatarUrl)}
+                            alt=""
+                            onError={(event) => { event.currentTarget.hidden = true }}
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="customer-booking-kicker">Professional</p>
+                        <h4>{professionalName}</h4>
+                      </div>
+                    </section>
+
+                    <div className="customer-booking-info-card">
+                      <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                      <div>
+                        <small>Appointment</small>
+                        <strong>{appointmentDate.toLocaleDateString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}</strong>
+                        <span>{appointmentDate.toLocaleTimeString(undefined, {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}</span>
+                      </div>
+                    </div>
+
+                    <div className="customer-booking-info-card customer-booking-total">
+                      <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                      <div>
+                        <small>Booking total</small>
+                        <strong><MoneyAmount value={booking.totalPrice} /></strong>
+                      </div>
+                    </div>
+
+                    {(refundStatusName(booking.refundStatus) !== 'Not requested' || booking.notes || (status === 'Cancelled' && booking.cancellationReason)) && (
+                      <div className="customer-booking-extra">
+                        {refundStatusName(booking.refundStatus) !== 'Not requested' && (
+                          <p>
+                            Refund: <strong>{refundStatusName(booking.refundStatus)}</strong>
+                            {booking.refundAmount != null && <> · <MoneyAmount value={booking.refundAmount} /></>}
+                          </p>
+                        )}
+                        {booking.notes && <p><strong>Your notes:</strong> {booking.notes}</p>}
+                        {status === 'Cancelled' && booking.cancellationReason && (
+                          <p><strong>Cancellation reason:</strong> {booking.cancellationReason}</p>
+                        )}
+                      </div>
+                    )}
                     {status === 'Completed' && !booking.hasReview && !reviewedBookingIds.includes(booking.id) && (
                       <button
                         type="button"
-                        className="btn btn-outline-primary"
+                        className="btn btn-outline-primary customer-booking-review"
                         onClick={() => {
                           setRating(5)
                           setReviewing(booking)
@@ -513,10 +614,17 @@ export default function CustomerDashboardPage() {
                         Write review
                       </button>
                     )}
-                    {status === 'Completed' && (booking.hasReview || reviewedBookingIds.includes(booking.id)) && (
-                      <span className="badge text-bg-success">Review submitted</span>
-                    )}
                   </div>
+
+                  <section className="customer-booking-location" aria-label="Service location">
+                    <p className="customer-booking-kicker">Service location</p>
+                    <BookingLocationDetails
+                      location={booking.location}
+                      contactPhone={booking.professionalPhoneNumber ?? ''}
+                      contactLabel="Professional"
+                      addressLabel="Service address"
+                    />
+                  </section>
                 </div>
                 {reviewing?.id === booking.id && (
                   <div className="customer-feedback-form mt-4" ref={reviewFormRef} tabIndex="-1">

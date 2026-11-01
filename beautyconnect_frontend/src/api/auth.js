@@ -28,6 +28,11 @@ export async function getCurrentUser() {
   return data
 }
 
+export async function updateCustomerProfile(profile) {
+  const { data } = await client.put('/auth/profile', profile)
+  return data
+}
+
 export async function refreshSession() {
   if (!sessionRefreshPromise) {
     sessionRefreshPromise = client

@@ -92,9 +92,10 @@
 
 .service-detail-price {
   display: flex;
-  flex: 0 0 min(220px, 34%);
+  flex: 0 0 min(270px, 36%);
   flex-direction: column;
   align-items: flex-start;
+  min-width: 0;
   padding: 1.15rem;
   border: 1px solid rgba(149, 71, 65, 0.12);
   border-radius: 1rem;
@@ -114,6 +115,67 @@
 
 .service-detail-price .btn {
   width: 100%;
+}
+
+.service-detail-availability {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid rgba(149, 71, 65, 0.12);
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.97), rgba(252, 241, 242, 0.82));
+  box-shadow: 0 10px 28px rgba(71, 43, 42, 0.055);
+}
+
+.service-detail-availability-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.service-detail-availability .form-label {
+  margin: 0 0 0.35rem;
+  color: #302221;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.service-detail-availability-controls {
+  width: min(100%, 300px);
+}
+
+.service-detail-time-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.service-detail-time-slots .btn {
+  min-width: 5.25rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.65rem;
+  font-weight: 650;
+}
+
+.service-detail-availability-continue {
+  justify-self: end;
+  width: auto;
+  min-width: min(100%, 260px);
+}
+
+@media (max-width: 575.98px) {
+  .service-detail-availability-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .service-detail-availability-controls {
+    width: 100%;
+  }
+
+  .service-detail-availability-continue {
+    width: 100%;
+  }
 }
 
 .service-detail-content {

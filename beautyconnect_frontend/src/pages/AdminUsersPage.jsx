@@ -155,7 +155,7 @@ export default function AdminUsersPage() {
           <p>Review registered users and marketplace professionals in a structured list.</p>
         </div>
         <div className="admin-hero-mark" aria-hidden="true">
-          <span className="material-symbols-outlined">groups</span>
+          <span className="material-symbols-outlined" aria-hidden="true">groups</span>
         </div>
       </header>
 

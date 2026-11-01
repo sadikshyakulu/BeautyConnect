@@ -63,6 +63,7 @@ public class BeautyConnectDbContext : DbContext
                 .HasForeignKey<ProfessionalProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.Property(e => e.PhoneNumber).HasMaxLength(30);
             entity.Property(e => e.VerificationStatus).HasConversion<string>().HasMaxLength(30);
             
             // Search indexes for sub-2s query requirement
@@ -115,6 +116,10 @@ public class BeautyConnectDbContext : DbContext
             entity.Property(e => e.RefundAmount).HasPrecision(10, 2);
             entity.Property(e => e.RefundGatewayReference).HasMaxLength(200);
             entity.Property(e => e.CancellationReason).HasMaxLength(1000);
+            entity.Property(e => e.LocationAddress).HasMaxLength(300);
+            entity.Property(e => e.LocationCity).HasMaxLength(100);
+            entity.Property(e => e.LocationLandmark).HasMaxLength(500);
+            entity.Property(e => e.ContactPhone).HasMaxLength(30);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
 
             entity.HasOne(e => e.CustomerProfile)
@@ -144,6 +149,10 @@ public class BeautyConnectDbContext : DbContext
             entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
             entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100).IsRequired();
             entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
+            entity.Property(e => e.LocationAddress).HasMaxLength(300);
+            entity.Property(e => e.LocationCity).HasMaxLength(100);
+            entity.Property(e => e.LocationLandmark).HasMaxLength(500);
+            entity.Property(e => e.ContactPhone).HasMaxLength(30);
             entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
             entity.HasIndex(e => e.EsewaTransactionUuid).IsUnique();
             entity.HasIndex(e => new { e.ProfessionalProfileId, e.ScheduledDateTime, e.Status, e.ExpiresAt });

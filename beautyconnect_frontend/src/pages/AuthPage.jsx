@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import LoadingState from '../components/LoadingState'
 import { notify } from '../utils/notifications'
+import { NEPAL_PHONE_PREFIX, withNepalPhonePrefix } from '../utils/phone'
 import './AuthPage.css'
 
 export default function AuthPage() {
@@ -13,6 +14,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState('login') // 'register' | 'login'
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState(NEPAL_PHONE_PREFIX)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [specialty, setSpecialty] = useState('')
@@ -29,6 +31,14 @@ export default function AuthPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (mode === 'register') {
+      const trimmedPhoneNumber = phoneNumber.trim()
+      const phoneDigits = trimmedPhoneNumber.replace(/\D/g, '').length
+      if (trimmedPhoneNumber.length > 30 || phoneDigits < 7 || phoneDigits > 15 || !/^[\d+\s-]+$/.test(trimmedPhoneNumber)) {
+        notify.error('Enter a phone number using digits, spaces, + or - with 7 to 15 digits.')
+        return
+      }
+    }
     setSubmitting(true)
     try {
       const authenticatedUser = mode === 'login'
@@ -38,6 +48,7 @@ export default function AuthPage() {
             password,
             role: role === 'pro' ? 1 : 0,
             fullName: name,
+            phoneNumber: phoneNumber.trim(),
             businessName: role === 'pro' ? businessName : null,
             speciality: role === 'pro' ? specialty : null,
             city: role === 'pro' ? city : null,
@@ -145,7 +156,7 @@ export default function AuthPage() {
                     className={`auth-persona-btn ${role === 'client' ? 'active' : ''}`}
                     aria-pressed={role === 'client'}
                   >
-                    <span className="material-symbols-outlined text-[18px]">person</span>
+                    <span className="material-symbols-outlined text-[18px]" aria-hidden="true">person</span>
                     <span>Client / Guest</span>
                   </button>
                   <button
@@ -154,7 +165,7 @@ export default function AuthPage() {
                     className={`auth-persona-btn ${role === 'pro' ? 'active' : ''}`}
                     aria-pressed={role === 'pro'}
                   >
-                    <span className="material-symbols-outlined text-[18px]">brush</span>
+                    <span className="material-symbols-outlined text-[18px]" aria-hidden="true">brush</span>
                     <span>Beauty Professional</span>
                   </button>
                 </div>
@@ -164,7 +175,7 @@ export default function AuthPage() {
             {/* Pro Badge Callout */}
             {role === 'pro' && (
               <div className="mb-4 p-3 rounded-xl bg-secondary-fixed-30 d-flex align-items-start gap-2.5 border border-secondary-fixed">
-                <span className="material-symbols-outlined text-secondary text-lg mt-0.5">verified_user</span>
+                <span className="material-symbols-outlined text-secondary text-lg mt-0.5" aria-hidden="true">verified_user</span>
                 <div>
                   <h4 className="text-xs font-semibold text-on-surface m-0">Artist Verification Charter</h4>
                   <p className="text-[11px] text-on-surface-variant m-0 mt-0.5 leading-snug">
@@ -180,7 +191,7 @@ export default function AuthPage() {
                 <div className="auth-input-group">
                   <label className="text-xs text-on-surface font-medium" htmlFor="name">Full Legal Name</label>
                   <div className="auth-input-wrapper">
-                    <span className="material-symbols-outlined auth-input-icon">badge</span>
+                    <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">badge</span>
                     <input
                       id="name"
                       type="text"
@@ -194,12 +205,35 @@ export default function AuthPage() {
                 </div>
               )}
 
+              {mode === 'register' && (
+                <div className="auth-input-group">
+                  <label className="text-xs text-on-surface font-medium" htmlFor="phoneNumber">Phone number</label>
+                  <div className="auth-input-wrapper">
+                    <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">call</span>
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(event) => setPhoneNumber(withNepalPhonePrefix(event.target.value))}
+                      placeholder="+977 98XXXXXXXX"
+                      className="auth-input-control"
+                      required
+                      maxLength={30}
+                      pattern="[0-9+ -]+"
+                      autoComplete="tel"
+                      aria-describedby="registration-phone-help"
+                    />
+                  </div>
+                  <small id="registration-phone-help" className="form-text">Use digits, spaces, + or - and include 7 to 15 digits.</small>
+                </div>
+              )}
+
               {role === 'pro' && mode === 'register' && (
                 <>
                   <div className="auth-input-group">
                     <label className="text-xs text-on-surface font-medium" htmlFor="businessName">Business / Studio Name</label>
                     <div className="auth-input-wrapper">
-                      <span className="material-symbols-outlined auth-input-icon">storefront</span>
+                      <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">storefront</span>
                       <input
                         id="businessName"
                         type="text"
@@ -214,7 +248,7 @@ export default function AuthPage() {
                   <div className="auth-input-group">
                     <label className="text-xs text-on-surface font-medium" htmlFor="city">City</label>
                     <div className="auth-input-wrapper">
-                      <span className="material-symbols-outlined auth-input-icon">location_on</span>
+                      <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">location_on</span>
                       <input
                         id="city"
                         type="text"
@@ -231,7 +265,7 @@ export default function AuthPage() {
                       <span className="text-[10px] text-primary">Required for Atelier Tier</span>
                     </label>
                     <div className="auth-input-wrapper">
-                      <span className="material-symbols-outlined auth-input-icon">auto_awesome</span>
+                      <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">auto_awesome</span>
                       <select
                         id="specialty"
                         value={specialty}
@@ -256,7 +290,7 @@ export default function AuthPage() {
               <div className="auth-input-group">
                 <label className="text-xs text-on-surface font-medium" htmlFor="email">Email Address</label>
                 <div className="auth-input-wrapper">
-                  <span className="material-symbols-outlined auth-input-icon">mail</span>
+                  <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">mail</span>
                   <input
                     id="email"
                     type="email"
@@ -277,7 +311,7 @@ export default function AuthPage() {
                   )}
                 </div>
                 <div className="auth-input-wrapper">
-                  <span className="material-symbols-outlined auth-input-icon">lock</span>
+                  <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">lock</span>
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -292,9 +326,7 @@ export default function AuthPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="auth-toggle-pwd"
                   >
-                    <span className="material-symbols-outlined text-lg">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
+                    <span className="material-symbols-outlined text-lg" aria-hidden="true">{showPassword ? 'visibility_off' : 'visibility'}</span>
                   </button>
                 </div>
               </div>
@@ -310,7 +342,7 @@ export default function AuthPage() {
 
               <button type="submit" className="auth-submit-btn" disabled={submitting}>
                 <span>{submitting ? 'Please wait…' : mode === 'register' ? 'Create Account' : 'Sign In to BeautyConnect'}</span>
-                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                <span className="material-symbols-outlined text-sm" aria-hidden="true">arrow_forward</span>
               </button>
             </form>
 

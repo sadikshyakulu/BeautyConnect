@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getCustomerBookings, getIncomingBookings } from '../api/booking'
 import { getAssetUrl } from '../api/assets'
+import { getProfessionalById } from '../api/search'
 import { useAuth } from '../auth/useAuth'
+import BookingLocationDetails from '../components/BookingLocationDetails'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
 import './BookingHistoryPage.css'
@@ -15,6 +17,7 @@ const statusFilters = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled']
 export default function BookingHistoryPage() {
   const { user } = useAuth()
   const [bookings, setBookings] = useState([])
+  const [professionalAvatars, setProfessionalAvatars] = useState({})
   const [filter, setFilter] = useState('All')
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -42,6 +45,31 @@ export default function BookingHistoryPage() {
     }
   }, [isProfessional])
 
+  useEffect(() => {
+    if (isProfessional || bookings.length === 0) return undefined
+
+    let active = true
+    const profileIds = [...new Set(bookings
+      .filter((booking) => booking.professionalProfileId)
+      .map((booking) => booking.professionalProfileId))]
+
+    Promise.allSettled(profileIds.map(async (profileId) => {
+      const profile = await getProfessionalById(profileId)
+      return [profileId, profile?.avatarUrl]
+    })).then((results) => {
+      if (!active) return
+
+      const avatars = Object.fromEntries(results
+        .filter((result) => result.status === 'fulfilled' && result.value[1])
+        .map((result) => result.value))
+      setProfessionalAvatars(avatars)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [bookings, isProfessional])
+
   const visibleBookings = useMemo(() => {
     const filteredBookings = filter === 'All'
       ? bookings
@@ -65,9 +93,7 @@ export default function BookingHistoryPage() {
               : 'Review your appointments, payment totals, and booking status.'}
           </p>
         </div>
-        <span className="material-symbols-outlined booking-history-hero-icon" aria-hidden="true">
-          history
-        </span>
+        <span className="material-symbols-outlined booking-history-hero-icon" aria-hidden="true">history</span>
       </header>
 
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
@@ -114,58 +140,123 @@ export default function BookingHistoryPage() {
             {visibleBookings.map((booking) => {
               const status = bookingStatus(booking.status)
               const statusClass = status.toLocaleLowerCase()
+              const bookingDate = new Date(booking.scheduledDateTime)
+              const personName = isProfessional
+                ? booking.customerName || 'BeautyConnect customer'
+                : booking.professionalBusinessName || 'Beauty professional'
+              const personAvatarUrl = isProfessional
+                ? booking.customerAvatarUrl
+                  || booking.CustomerAvatarUrl
+                  || booking.customerProfile?.avatarUrl
+                  || booking.customer?.avatarUrl
+                  || booking.customer?.profile?.avatarUrl
+                : booking.professionalAvatarUrl
+                  || booking.professional?.avatarUrl
+                  || booking.professional?.profile?.avatarUrl
+                  || booking.professionalProfile?.avatarUrl
+                    || professionalAvatars[booking.professionalProfileId]
+              const personInitials = personName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toLocaleUpperCase() || '?'
 
               return (
                 <article className="booking-history-card glass-card" key={booking.id}>
-                  <div className="booking-history-card-heading">
-                    {booking.service?.images?.[0] ? (
-                      <img
-                        className="booking-history-service-image"
-                        src={getAssetUrl(booking.service.images[0])}
-                        alt={`${booking.service.name} service`}
-                      />
-                    ) : (
-                      <div className="booking-history-service-icon material-symbols-outlined" aria-hidden="true">
-                        spa
+                  <header className="booking-history-card-heading">
+                    <div className="booking-history-service">
+                      <div className="booking-history-service-image">
+                        <span className="material-symbols-outlined" aria-hidden="true">spa</span>
+                        {booking.service?.images?.[0] && (
+                          <img
+                            src={getAssetUrl(booking.service.images[0])}
+                            alt={`${booking.service.name ?? 'Booked'} service`}
+                            onError={(event) => { event.currentTarget.hidden = true }}
+                          />
+                        )}
                       </div>
-                    )}
-                    <div className="booking-history-card-title">
-                      <h3>{booking.service?.name ?? 'Service appointment'}</h3>
-                      <p>{isProfessional ? booking.customerName : booking.professionalBusinessName}</p>
+                      <div className="booking-history-card-title">
+                        <p className="booking-history-kicker">Service appointment</p>
+                        <h3>{booking.service?.name ?? 'Service appointment'}</h3>
+                        <p className="booking-history-service-meta">
+                          {[
+                            booking.service?.category,
+                            booking.service?.durationMinutes ? `${booking.service.durationMinutes} min` : null,
+                          ].filter(Boolean).join(' · ') || (isProfessional ? 'Customer booking' : 'Professional service')}
+                        </p>
+                      </div>
                     </div>
                     <span className={`booking-history-status booking-history-status--${statusClass}`}>
                       {status}
                     </span>
-                  </div>
+                  </header>
 
-                  <div className="booking-history-details">
-                    <span>
-                      <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
-                      {new Date(booking.scheduledDateTime).toLocaleString()}
-                    </span>
-                    {isProfessional && booking.customerEmail && (
-                      <span>
-                        <span className="material-symbols-outlined" aria-hidden="true">mail</span>
-                        {booking.customerEmail}
-                      </span>
-                    )}
-                    <span>
-                      <span className="material-symbols-outlined" aria-hidden="true">payments</span>
-                      <MoneyAmount value={booking.totalPrice} />
-                    </span>
-                  </div>
+                  <div className="booking-history-card-body">
+                    <div className="booking-history-summary">
+                      <section className="booking-history-person" aria-label={isProfessional ? 'Customer details' : 'Professional details'}>
+                        <div className="booking-history-person-avatar">
+                          <span aria-hidden="true">{personInitials}</span>
+                          {personAvatarUrl && (
+                            <img
+                              src={getAssetUrl(personAvatarUrl)}
+                              alt=""
+                              onError={(event) => { event.currentTarget.hidden = true }}
+                            />
+                          )}
+                        </div>
+                        <div className="booking-history-person-copy">
+                          <p className="booking-history-kicker">{isProfessional ? 'Customer' : 'Professional'}</p>
+                          <h4>{personName}</h4>
+                          {isProfessional && booking.customerEmail && (
+                            <a href={`mailto:${booking.customerEmail}`}>{booking.customerEmail}</a>
+                          )}
+                        </div>
+                      </section>
 
-                  {(booking.refundAmount != null || booking.cancellationReason) && (
-                    <div className="booking-history-extra">
-                      {booking.refundAmount != null && (
-                        <p>
-                          Refund: <strong>{booking.refundStatus === 2 || booking.refundStatus === 'Refunded' ? 'Refunded' : 'Requested'}</strong>
-                          {' · '}<MoneyAmount value={booking.refundAmount} />
-                        </p>
+                      <div className="booking-history-info-grid">
+                        <div className="booking-history-info-card">
+                          <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                          <div>
+                            <small>Appointment</small>
+                            <strong>{bookingDate.toLocaleDateString(undefined, {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}</strong>
+                            <span>{bookingDate.toLocaleTimeString(undefined, {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}</span>
+                          </div>
+                        </div>
+                        <div className="booking-history-info-card booking-history-info-card--total">
+                          <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                          <div>
+                            <small>Booking total</small>
+                            <strong><MoneyAmount value={booking.totalPrice} /></strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(booking.refundAmount != null || booking.cancellationReason) && (
+                        <div className="booking-history-extra">
+                          {booking.refundAmount != null && (
+                            <p>
+                              Refund: <strong>{booking.refundStatus === 2 || booking.refundStatus === 'Refunded' ? 'Refunded' : 'Requested'}</strong>
+                              {' · '}<MoneyAmount value={booking.refundAmount} />
+                            </p>
+                          )}
+                          {booking.cancellationReason && <p>Cancellation reason: {booking.cancellationReason}</p>}
+                        </div>
                       )}
-                      {booking.cancellationReason && <p>Cancellation reason: {booking.cancellationReason}</p>}
                     </div>
-                  )}
+                    <section className="booking-history-location" aria-label="Service location">
+                      <p className="booking-history-kicker">Service location</p>
+                      <BookingLocationDetails
+                        location={booking.location}
+                        contactPhone={isProfessional ? undefined : booking.professionalPhoneNumber ?? ''}
+                        contactLabel={isProfessional ? 'Customer' : 'Professional'}
+                        addressLabel={isProfessional ? 'Customer address' : 'Service address'}
+                      />
+                    </section>
+                  </div>
                 </article>
               )
             })}

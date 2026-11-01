@@ -126,7 +126,7 @@ export default function SearchPage() {
           </div>
           <div className="col-12 col-md-1">
             <button className="btn btn-primary w-100" type="submit" aria-label="Apply filters">
-              <span className="material-symbols-outlined">search</span>
+              <span className="material-symbols-outlined" aria-hidden="true">search</span>
             </button>
           </div>
         </div>

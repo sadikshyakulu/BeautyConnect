@@ -109,6 +109,19 @@ public class AuthController : ControllerBase
         return Ok(user);
     }
 
+    [Authorize(Roles = "Customer")]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateCustomerProfile([FromBody] CustomerProfileUpdateDto dto)
+    {
+        if (!int.TryParse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var user = await _authService.UpdateCustomerProfileAsync(userId, dto);
+        return user == null ? NotFound(new { message = "Customer profile not found." }) : Ok(user);
+    }
+
     private void SetRefreshTokenCookie(string token)
     {
         Response.Cookies.Append("refreshToken", token, GetRefreshTokenCookieOptions());

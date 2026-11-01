@@ -19,6 +19,7 @@ import {
 import { getAssetUrl } from '../api/assets'
 import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
+import BookingLocationDetails from '../components/BookingLocationDetails'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
 import VerifiedBadge from '../components/VerifiedBadge'
@@ -505,34 +506,134 @@ export default function ProfessionalDashboardPage() {
       <div className="row g-4 align-items-start">
         <section className="col-12">
           <div className="glass-card rounded-2xl p-4">
-            <h2 className="h4 mb-3">Incoming bookings</h2>
+            <header className="professional-incoming-heading">
+              <div>
+                <p className="professional-incoming-eyebrow mb-1">Client appointments</p>
+                <h2 className="h4 mb-1">Incoming bookings</h2>
+                <p className="small text-on-surface-variant mb-0">Review appointment details and prepare to travel to the customer.</p>
+              </div>
+              <span className="professional-incoming-count">{incoming.length} active</span>
+            </header>
             {incoming.length === 0 ? (
-              <p className="text-on-surface-variant mb-0">No active bookings.</p>
+              <div className="professional-incoming-empty">
+                <span className="material-symbols-outlined" aria-hidden="true">event_available</span>
+                <p className="text-on-surface-variant mb-0">No active bookings. New customer appointments will appear here.</p>
+              </div>
             ) : (
-              <div className="d-flex flex-column gap-3">
+              <div className="professional-incoming-list">
                 {incoming.map((booking) => {
                   const status = bookingStatus(booking.status)
+                  const customerAvatarUrl = booking.customerAvatarUrl
+                    || booking.CustomerAvatarUrl
+                    || booking.customerProfile?.avatarUrl
+                    || booking.customer?.avatarUrl
+                    || booking.customer?.profile?.avatarUrl
                   return (
-                    <article className="border rounded-3 p-3" key={booking.id}>
-                      <div className="d-flex flex-column flex-md-row justify-content-between gap-2">
-                        <div>
-                          <h3 className="h6 mb-1">{booking.service?.name ?? 'Service booking'}</h3>
-                          <p className="small mb-1">{booking.customerName} · {booking.customerEmail}</p>
-                          <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                          <span className="small">{status} · <MoneyAmount value={booking.totalPrice} /></span>
-                          {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}
+                    <article className={`professional-booking-card professional-booking-card--${status.toLowerCase()}`} key={booking.id}>
+                      <header className="professional-booking-card-header">
+                        <div className="professional-booking-service">
+                          <div className="professional-booking-service-image">
+                            <span className="material-symbols-outlined" aria-hidden="true">spa</span>
+                            {booking.service?.images?.[0] && (
+                              <img
+                                src={getAssetUrl(booking.service.images[0])}
+                                alt={`${booking.service.name || 'Booked service'} preview`}
+                                onError={(event) => { event.currentTarget.hidden = true }}
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <p className="professional-booking-kicker mb-1">Service appointment</p>
+                            <h3>{booking.service?.name ?? 'Service booking'}</h3>
+                            <span className="professional-booking-service-meta">
+                              {booking.service?.category}
+                              {booking.service?.durationMinutes
+                                ? `${booking.service.category ? ' · ' : ''}${booking.service.durationMinutes} min`
+                                : ''}
+                            </span>
+                          </div>
                         </div>
-                        <div className="d-flex flex-wrap align-items-start gap-2">
-                          {status === 'Pending' && (
-                            <>
-                              <button className="btn btn-sm btn-primary" type="button" onClick={() => updateBooking(booking.id, acceptBooking)}>Accept</button>
-                              <button className="btn btn-sm btn-outline-danger" type="button" onClick={() => updateBooking(booking.id, rejectBooking)}>Reject</button>
-                            </>
-                          )}
-                          {status === 'Confirmed' && (
-                            <button className="btn btn-sm btn-outline-primary" type="button" onClick={() => updateBooking(booking.id, completeBooking)}>Mark complete</button>
-                          )}
+                        <div className="professional-booking-header-tools">
+                          <span className={`professional-booking-status professional-booking-status--${status.toLowerCase()}`}>
+                            <span className="professional-booking-status-dot" aria-hidden="true" />
+                            {status}
+                          </span>
+                          <div className="professional-booking-actions">
+                            {status === 'Pending' && (
+                              <>
+                                <button className="btn btn-primary" type="button" onClick={() => updateBooking(booking.id, acceptBooking)}>
+                                  <span className="material-symbols-outlined" aria-hidden="true">check</span>
+                                  Accept
+                                </button>
+                                <button className="btn btn-outline-danger" type="button" onClick={() => updateBooking(booking.id, rejectBooking)}>
+                                  Decline
+                                </button>
+                              </>
+                            )}
+                            {status === 'Confirmed' && (
+                              <button className="btn btn-outline-primary" type="button" onClick={() => updateBooking(booking.id, completeBooking)}>
+                                <span className="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                                Mark complete
+                              </button>
+                            )}
+                          </div>
                         </div>
+                      </header>
+                      <div className="professional-booking-card-body">
+                        <div className="professional-booking-summary">
+                          <section className="professional-booking-client" aria-label="Customer details">
+                            <div className="professional-booking-client-avatar">
+                              <span aria-hidden="true">
+                                {booking.customerName?.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'CU'}
+                              </span>
+                              {customerAvatarUrl && (
+                                <img
+                                  src={getAssetUrl(customerAvatarUrl)}
+                                  alt={`${booking.customerName || 'Customer'} profile`}
+                                  onError={(event) => { event.currentTarget.hidden = true }}
+                                />
+                              )}
+                            </div>
+                            <div className="professional-booking-client-copy">
+                              <p className="professional-booking-kicker mb-1">Customer</p>
+                              <h4>{booking.customerName || 'BeautyConnect customer'}</h4>
+                              {booking.customerEmail && <a href={`mailto:${booking.customerEmail}`}>{booking.customerEmail}</a>}
+                            </div>
+                          </section>
+                          <div className="professional-booking-appointment">
+                            <div className="professional-booking-appointment-row">
+                              <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                              <span>
+                                <small>Appointment</small>
+                                <strong>{new Date(booking.scheduledDateTime).toLocaleDateString(undefined, {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}</strong>
+                                <span>{new Date(booking.scheduledDateTime).toLocaleTimeString(undefined, {
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                })}</span>
+                              </span>
+                            </div>
+                            {booking.notes && (
+                              <p className="professional-booking-notes">
+                                <strong>Customer note:</strong> {booking.notes}
+                              </p>
+                            )}
+                          </div>
+                          <div className="professional-booking-total">
+                            <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                            <span>
+                              <small>Booking total</small>
+                              <strong><MoneyAmount value={booking.totalPrice} /></strong>
+                            </span>
+                          </div>
+                        </div>
+                        <section className="professional-booking-location" aria-label="Customer service location">
+                          <BookingLocationDetails location={booking.location} />
+                        </section>
                       </div>
                     </article>
                   )

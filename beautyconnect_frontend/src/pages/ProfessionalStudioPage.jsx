@@ -16,6 +16,7 @@ import {
 import { useAuth } from '../auth/useAuth'
 import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
+import { withNepalPhonePrefix } from '../utils/phone'
 import './DashboardPages.css'
 
 const emptyService = {
@@ -50,6 +51,7 @@ export default function ProfessionalStudioPage() {
     setProfile(result)
     setProfileDraft({
       businessName: result.businessName ?? '',
+      phoneNumber: withNepalPhonePrefix(result.phoneNumber),
       bio: result.bio ?? '',
       speciality: result.speciality ?? '',
       city: result.city ?? '',
@@ -69,6 +71,7 @@ export default function ProfessionalStudioPage() {
         setProfile(result)
         setProfileDraft({
           businessName: result.businessName ?? '',
+          phoneNumber: withNepalPhonePrefix(result.phoneNumber),
           bio: result.bio ?? '',
           speciality: result.speciality ?? '',
           city: result.city ?? '',
@@ -92,17 +95,26 @@ export default function ProfessionalStudioPage() {
 
   function updateProfileField(event) {
     const { name, value } = event.target
-    setProfileDraft((current) => ({ ...current, [name]: value }))
+    setProfileDraft((current) => ({
+      ...current,
+      [name]: name === 'phoneNumber' ? withNepalPhonePrefix(value) : value,
+    }))
   }
 
   async function handleProfileSave(event) {
     event.preventDefault()
     if (!profileDraft) return
+    if (!isPhoneValid) {
+      notify.error('Enter a phone number using digits, spaces, + or - with 7 to 15 digits.')
+      return
+    }
+
     setErrorMessage('')
     setSavingProfile(true)
     try {
       const updated = await updateMyProfile({
         ...profileDraft,
+        phoneNumber: profileDraft.phoneNumber.trim(),
         latitude: Number(profileDraft.latitude),
         longitude: Number(profileDraft.longitude),
         avatarUrl: profileDraft.avatarUrl.trim() || null,
@@ -112,8 +124,10 @@ export default function ProfessionalStudioPage() {
           .filter(Boolean),
       })
       setProfile(updated)
+      updateProfile({ phoneNumber: updated.phoneNumber })
       setProfileDraft({
         businessName: updated.businessName ?? '',
+        phoneNumber: withNepalPhonePrefix(updated.phoneNumber),
         bio: updated.bio ?? '',
         speciality: updated.speciality ?? '',
         city: updated.city ?? '',
@@ -125,7 +139,10 @@ export default function ProfessionalStudioPage() {
       })
       notify.success('Your studio profile has been saved.')
     } catch (error) {
-      notify.error(error.response?.data?.message ?? 'Could not save your studio profile.')
+      const validationMessage = Object.values(error.response?.data?.errors ?? {})
+        .flat()
+        .find((message) => typeof message === 'string')
+      notify.error(error.response?.data?.message ?? validationMessage ?? 'Could not save your studio profile.')
     } finally {
       setSavingProfile(false)
     }
@@ -307,6 +324,13 @@ export default function ProfessionalStudioPage() {
 
   const services = profile?.services ?? []
   const portfolioImages = profile?.portfolioImages ?? []
+  const phoneNumber = profileDraft?.phoneNumber.trim() ?? ''
+  const phoneDigits = phoneNumber.replace(/\D/g, '').length
+  const isPhoneValid = phoneNumber.length <= 30
+    && /^[\d+\s-]+$/.test(phoneNumber)
+    && phoneDigits >= 7
+    && phoneDigits <= 15
+  const showPhoneError = phoneNumber !== '+977' && !isPhoneValid
 
   return (
     <div className="dashboard-page dashboard-studio-page">
@@ -349,12 +373,37 @@ export default function ProfessionalStudioPage() {
                   <input className="form-control" id="studio-business-name" name="businessName" maxLength="150" required value={profileDraft.businessName} onChange={updateProfileField} />
                 </div>
                 <div className="col-12 col-md-6">
+                  <label className="form-label" htmlFor="studio-phone-number">Professional phone number</label>
+                  <input
+                    className={`form-control${showPhoneError ? ' studio-field-invalid' : ''}`}
+                    id="studio-phone-number"
+                    name="phoneNumber"
+                    type="tel"
+                    maxLength="30"
+                    pattern="[0-9+ -]+"
+                    autoComplete="tel"
+                    required
+                    value={profileDraft.phoneNumber}
+                    aria-invalid={showPhoneError}
+                    aria-describedby={showPhoneError ? 'studio-phone-error' : 'studio-phone-help'}
+                    onChange={updateProfileField}
+                  />
+                  {showPhoneError ? (
+                    <p id="studio-phone-error" className="studio-field-error" role="alert">
+                      <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                      Enter a phone number using digits, spaces, + or - with 7 to 15 digits.
+                    </p>
+                  ) : (
+                    <small id="studio-phone-help" className="form-text">Use digits, spaces, + or - and include 7 to 15 digits.</small>
+                  )}
+                </div>
+                <div className="col-12 col-md-6">
                   <label className="form-label" htmlFor="studio-speciality">Speciality</label>
                   <input className="form-control" id="studio-speciality" name="speciality" maxLength="150" value={profileDraft.speciality} onChange={updateProfileField} placeholder="e.g. Bridal makeup artist" />
                 </div>
                 <div className="col-12">
                   <label className="form-label" htmlFor="studio-bio">About your studio</label>
-                  <textarea className="form-control" id="studio-bio" name="bio" rows="2" maxLength="2000" value={profileDraft.bio} onChange={updateProfileField} placeholder="Share your experience, approach and what clients can expect." />
+                  <textarea className="form-control studio-bio-field" id="studio-bio" name="bio" rows="8" maxLength="2000" value={profileDraft.bio} onChange={updateProfileField} placeholder="Share your experience, approach and what clients can expect." />
                   <div className="form-text text-end">{profileDraft.bio.length}/2000</div>
                 </div>
                 <div className="col-12 col-md-6">

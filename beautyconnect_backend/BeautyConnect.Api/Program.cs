@@ -67,6 +67,12 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.Configure<EsewaOptions>(builder.Configuration.GetSection(EsewaOptions.SectionName));
+builder.Services.Configure<LocationBoundsOptions>(options =>
+{
+    var boundsSection = builder.Configuration.GetSection("Location:Bounds");
+    options.Enabled = boundsSection.Exists();
+    boundsSection.Bind(options);
+});
 builder.Services.AddHttpClient<IPaymentService, PaymentService>();
 
 // JWT Authentication

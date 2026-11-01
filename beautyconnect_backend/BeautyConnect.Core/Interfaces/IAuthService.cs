@@ -10,6 +10,7 @@ public interface IAuthService
     Task<(AuthResponseDto? Response, string? RefreshToken, string? Error)> RefreshTokenAsync(string token, string ipAddress);
     Task<bool> RevokeTokenAsync(string token);
     Task<UserDto?> GetCurrentUserAsync(int userId);
+    Task<UserDto?> UpdateCustomerProfileAsync(int userId, CustomerProfileUpdateDto dto);
 }
 
 public interface IPasswordHasher
