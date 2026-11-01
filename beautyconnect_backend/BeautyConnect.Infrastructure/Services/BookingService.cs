@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BeautyConnect.Core.DTOs;
 using BeautyConnect.Core.Entities;
 using BeautyConnect.Core.Enums;
@@ -189,38 +190,52 @@ public class BookingService : IBookingService
                 .Include(booking => booking.Review);
     }
 
-    private static BookingDto ToDto(Booking booking) => new()
+    private static BookingDto ToDto(Booking booking)
     {
-        Id = booking.Id,
-        CustomerProfileId = booking.CustomerProfileId,
-        ProfessionalProfileId = booking.ProfessionalProfileId,
-        ServiceId = booking.ServiceId,
-        ScheduledDateTime = BookingScheduleValidator.ToNepalDateTimeOffset(booking.ScheduledDateTime),
-        EndDateTime = BookingScheduleValidator.ToNepalDateTimeOffset(booking.EndDateTime),
-        Status = booking.Status,
-        TotalPrice = booking.TotalPrice,
-        CommissionAmount = booking.CommissionAmount,
-        RefundAmount = booking.RefundAmount,
-        RefundStatus = booking.RefundStatus,
-        RefundRequestedAt = booking.RefundRequestedAt,
-        RefundedAt = booking.RefundedAt,
-        RefundGatewayReference = booking.RefundGatewayReference,
-        Notes = booking.Notes,
-        CancellationReason = booking.CancellationReason,
-        CreatedAt = booking.CreatedAt,
-        CustomerName = booking.CustomerProfile.FullName,
-        CustomerEmail = booking.CustomerProfile.User.Email,
-        ProfessionalBusinessName = booking.ProfessionalProfile.BusinessName,
-        HasReview = booking.Review != null,
-        Service = new ServiceDto
+        var serviceImages = JsonSerializer.Deserialize<List<string>>(booking.Service.ImagesJson) ?? [];
+        if (serviceImages.Count == 0)
         {
-            Id = booking.Service.Id,
-            ProfessionalProfileId = booking.Service.ProfessionalProfileId,
-            Name = booking.Service.Name,
-            Description = booking.Service.Description,
-            Category = booking.Service.Category,
-            Price = booking.Service.Price,
-            DurationMinutes = booking.Service.DurationMinutes
+            serviceImages = JsonSerializer.Deserialize<List<string>>(booking.ProfessionalProfile.PortfolioImagesJson) ?? [];
+            if (serviceImages.Count == 0 && !string.IsNullOrWhiteSpace(booking.ProfessionalProfile.AvatarUrl))
+            {
+                serviceImages.Add(booking.ProfessionalProfile.AvatarUrl);
+            }
         }
-    };
+
+        return new BookingDto
+        {
+            Id = booking.Id,
+            CustomerProfileId = booking.CustomerProfileId,
+            ProfessionalProfileId = booking.ProfessionalProfileId,
+            ServiceId = booking.ServiceId,
+            ScheduledDateTime = BookingScheduleValidator.ToNepalDateTimeOffset(booking.ScheduledDateTime),
+            EndDateTime = BookingScheduleValidator.ToNepalDateTimeOffset(booking.EndDateTime),
+            Status = booking.Status,
+            TotalPrice = booking.TotalPrice,
+            CommissionAmount = booking.CommissionAmount,
+            RefundAmount = booking.RefundAmount,
+            RefundStatus = booking.RefundStatus,
+            RefundRequestedAt = booking.RefundRequestedAt,
+            RefundedAt = booking.RefundedAt,
+            RefundGatewayReference = booking.RefundGatewayReference,
+            Notes = booking.Notes,
+            CancellationReason = booking.CancellationReason,
+            CreatedAt = booking.CreatedAt,
+            CustomerName = booking.CustomerProfile.FullName,
+            CustomerEmail = booking.CustomerProfile.User.Email,
+            ProfessionalBusinessName = booking.ProfessionalProfile.BusinessName,
+            HasReview = booking.Review != null,
+            Service = new ServiceDto
+            {
+                Id = booking.Service.Id,
+                ProfessionalProfileId = booking.Service.ProfessionalProfileId,
+                Name = booking.Service.Name,
+                Description = booking.Service.Description,
+                Category = booking.Service.Category,
+                Price = booking.Service.Price,
+                DurationMinutes = booking.Service.DurationMinutes,
+                Images = serviceImages
+            }
+        };
+    }
 }

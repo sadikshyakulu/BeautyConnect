@@ -3,9 +3,8 @@ import { toast } from 'react-toastify'
 const showToast = (type, message) => {
   if (!message) return
 
-  toast[type](message, {
-    toastId: `${type}:${message}`,
-  })
+  const options = typeof message === 'string' ? { toastId: `${type}:${message}` } : {}
+  toast[type](message, options)
 }
 
 export const notify = {

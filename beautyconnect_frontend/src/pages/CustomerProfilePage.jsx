@@ -4,6 +4,7 @@ import { getCustomerBookings } from '../api/booking'
 import { getAssetUrl } from '../api/assets'
 import { uploadAvatar } from '../api/profileImage'
 import { useAuth } from '../auth/useAuth'
+import LoadingState from '../components/LoadingState'
 import { notify } from '../utils/notifications'
 import './DashboardPages.css'
 
@@ -129,7 +130,7 @@ export default function CustomerProfilePage() {
               </div>
             </div>
             {loading ? (
-              <p className="text-on-surface-variant mb-0" role="status">Loading your appointments…</p>
+              <LoadingState className="justify-content-start" variant="inline" label="Loading your appointments…" />
             ) : (
               <div className="profile-stat-grid">
                 <div><strong>{upcomingCount}</strong><span>Upcoming</span></div>

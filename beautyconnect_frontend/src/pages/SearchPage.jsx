@@ -4,8 +4,9 @@ import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
-import { formatNpr } from '../utils/currency'
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -137,7 +138,7 @@ export default function SearchPage() {
       </div>
 
       {loading ? (
-        <p role="status">Loading professionals…</p>
+        <LoadingState label="Loading professionals…" />
       ) : !errorMessage && results.length === 0 ? (
         <div className="glass-card rounded-2xl p-5 text-center">
           <h3 className="h5">No verified professionals match yet</h3>
@@ -174,7 +175,7 @@ export default function SearchPage() {
                   <div className="d-flex flex-wrap gap-2 mb-3">
                     {(professional.matchingServices ?? []).map((service) => (
                       <span key={service.id} className="badge rounded-pill text-bg-light">
-                        {service.name} · {formatNpr(service.price)}
+                        {service.name} · <MoneyAmount value={service.price} />
                       </span>
                     ))}
                   </div>

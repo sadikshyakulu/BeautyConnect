@@ -208,6 +208,7 @@ public class AdminService : IAdminService
             UserId = profile.UserId,
             Name = string.IsNullOrWhiteSpace(profile.FullName) ? "Customer" : profile.FullName.Trim(),
             Email = profile.User?.Email ?? string.Empty,
+            AvatarUrl = profile.AvatarUrl,
             Location = "Not provided",
             Status = "Active"
         }).ToList();

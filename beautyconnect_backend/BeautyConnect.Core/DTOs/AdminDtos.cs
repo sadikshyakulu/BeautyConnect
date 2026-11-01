@@ -52,6 +52,7 @@ public class AdminCustomerDto
     public int UserId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? AvatarUrl { get; set; }
     public string Location { get; set; } = "Not provided";
     public string Status { get; set; } = "Active";
 }

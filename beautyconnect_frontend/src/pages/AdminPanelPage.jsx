@@ -10,8 +10,9 @@ import {
 } from '../api/admin'
 import { getAssetUrl } from '../api/assets'
 import { getProfessionals } from '../api/search'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
-import { formatNpr } from '../utils/currency'
 import './AdminPanelPage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
@@ -128,7 +129,7 @@ export default function AdminPanelPage() {
     }
   }
 
-  if (loading) return <div className="container py-5" role="status">Loading administration data…</div>
+  if (loading) return <div className="container py-5"><LoadingState label="Loading administration data…" /></div>
 
   return (
     <div className="admin-dashboard">
@@ -155,7 +156,7 @@ export default function AdminPanelPage() {
           <article className={`admin-metric-card admin-metric-card--${tone}`} key={label}>
             <span className="admin-metric-icon material-symbols-outlined" aria-hidden="true">{icon}</span>
             <span className="admin-metric-label">{label}</span>
-            <strong>{label === 'Platform commission' ? formatNpr(value) : value ?? '—'}</strong>
+            <strong>{label === 'Platform commission' ? <MoneyAmount value={value} /> : value ?? '—'}</strong>
           </article>
         ))}
       </section>
@@ -279,7 +280,7 @@ export default function AdminPanelPage() {
                   <div className="admin-dispute-meta">
                     <span><span className="material-symbols-outlined" aria-hidden="true">mail</span>{dispute.raisedByEmail}</span>
                     <span><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{new Date(dispute.createdAt).toLocaleDateString()}</span>
-                    <strong>Booking total {formatNpr(dispute.bookingTotalPrice)}</strong>
+                    <strong>Booking total <MoneyAmount value={dispute.bookingTotalPrice} /></strong>
                   </div>
                   <form onSubmit={(event) => handleResolve(event, dispute.id)} className="admin-resolution-form">
                     <label className="form-label" htmlFor={`resolution-${dispute.id}`}>Resolution notes</label>

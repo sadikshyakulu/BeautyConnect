@@ -329,6 +329,14 @@
   object-fit: cover;
 }
 
+.dashboard-sidebar-avatar--admin {
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 0.65rem;
+  object-fit: cover;
+  box-shadow: 0 3px 10px rgba(64, 47, 59, 0.14);
+}
+
 .dashboard-sidebar-user {
   display: flex;
   flex: 1;

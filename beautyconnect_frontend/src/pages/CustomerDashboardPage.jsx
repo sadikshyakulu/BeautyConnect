@@ -6,8 +6,9 @@ import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
-import { formatNpr } from '../utils/currency'
 import './CustomerDashboardPage.css'
 import { useAuth } from '../auth/useAuth'
 
@@ -335,7 +336,7 @@ export default function CustomerDashboardPage() {
 
         {catalogError && <div className="alert alert-warning" role="alert">{catalogError}</div>}
         {catalogLoading ? (
-          <p className="text-on-surface-variant" role="status">Loading services…</p>
+          <LoadingState label="Loading services…" />
         ) : displayedProfessionals.length === 0 ? (
           <div className="glass-card rounded-2xl p-4 p-md-5 text-center">
             <h3 className="h5">No verified services match yet</h3>
@@ -387,7 +388,7 @@ export default function CustomerDashboardPage() {
                             >
                               {service.name}
                             </Link>
-                            <strong className="customer-offering-price">{formatNpr(service.price)}</strong>
+                            <strong className="customer-offering-price"><MoneyAmount value={service.price} /></strong>
                           </div>
                           <div className="customer-offering-meta">
                             <span>{service.category}</span>
@@ -402,7 +403,7 @@ export default function CustomerDashboardPage() {
                           )}
                           <div className="customer-offering-rating" aria-live="polite">
                             {serviceRatingsLoading ? (
-                              <span className="small text-on-surface-variant">Loading rating…</span>
+                              <LoadingState className="small" variant="inline" label="Loading rating…" />
                             ) : serviceRatingFailures.has(professional.id) ? (
                               <span className="small text-on-surface-variant">Rating unavailable</span>
                             ) : serviceRating ? (
@@ -453,7 +454,7 @@ export default function CustomerDashboardPage() {
           </button>
         </div>
       {loading ? (
-        <p role="status">Loading your bookings…</p>
+        <LoadingState label="Loading your bookings…" />
       ) : visibleBookings.length === 0 ? (
         <div className="glass-card rounded-2xl p-5 text-center">
           <h2 className="h5">No {tab === 'upcoming' ? 'upcoming bookings' : 'booking history'}</h2>
@@ -471,11 +472,11 @@ export default function CustomerDashboardPage() {
                     <h2 className="h5">{booking.service?.name ?? 'Service appointment'}</h2>
                     <p className="mb-1">{booking.professionalBusinessName}</p>
                     <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                    <p className="small mb-0">Status: <strong>{status}</strong> · Total: {formatNpr(booking.totalPrice)}</p>
+                    <p className="small mb-0">Status: <strong>{status}</strong> · Total: <MoneyAmount value={booking.totalPrice} /></p>
                     {refundStatusName(booking.refundStatus) !== 'Not requested' && (
                       <p className="small mb-0 mt-1">
                         Refund: <strong>{refundStatusName(booking.refundStatus)}</strong>
-                        {booking.refundAmount != null && ` · ${formatNpr(booking.refundAmount)}`}
+                        {booking.refundAmount != null && <> · <MoneyAmount value={booking.refundAmount} /></>}
                       </p>
                     )}
                     {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}

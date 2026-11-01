@@ -116,26 +116,13 @@
 }
 
 .artist-profile-name-row h1 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
   font-size: clamp(2rem, 4.4vw, 3.4rem);
   line-height: 1.08;
   overflow-wrap: anywhere;
-}
-
-.artist-profile-verified {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 999px;
-  background: var(--secondary-fixed);
-  color: var(--on-secondary-fixed);
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.artist-profile-verified .material-symbols-outlined {
-  font-size: 1rem;
 }
 
 .artist-profile-location {
@@ -399,11 +386,6 @@
 
   .artist-profile-name-row h1 {
     font-size: clamp(1.75rem, 7vw, 2.25rem);
-  }
-
-  .artist-profile-verified {
-    padding: 0.3rem 0.55rem;
-    font-size: 0.68rem;
   }
 
   .artist-rating-summary {

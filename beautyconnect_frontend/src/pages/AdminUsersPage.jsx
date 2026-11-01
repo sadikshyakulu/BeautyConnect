@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { getAnalytics, getCustomers, getPendingVerifications } from '../api/admin'
 import { getAssetUrl } from '../api/assets'
 import { getProfessionals } from '../api/search'
+import LoadingState from '../components/LoadingState'
 import './AdminPanelPage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
@@ -64,6 +65,7 @@ export default function AdminUsersPage() {
       email: customer.email || 'No email available',
       location: customer.location || 'Not provided',
       status: customer.status || 'Active',
+      avatarUrl: getNestedValue(customer, 'avatarUrl', 'profile.avatarUrl', 'user.avatarUrl', 'user.profile.avatarUrl'),
     }))
   }, [customers])
 
@@ -142,7 +144,7 @@ export default function AdminUsersPage() {
     }
   }), [professionals, professionalEmailLookup])
 
-  if (loading) return <div className="container py-5" role="status">Loading users…</div>
+  if (loading) return <div className="container py-5"><LoadingState label="Loading users…" /></div>
 
   return (
     <div className="admin-dashboard">
@@ -197,7 +199,7 @@ export default function AdminUsersPage() {
           <table className="admin-data-table">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Customer</th>
                 <th>Email</th>
                 <th>Location</th>
                 <th>Status</th>
@@ -211,7 +213,16 @@ export default function AdminUsersPage() {
               ) : (
                 customerRows.map((user) => (
                   <tr key={`${user.email}-${user.name}`}>
-                    <td>{user.name}</td>
+                    <td>
+                      <div className="admin-table-profile-cell">
+                        {user.avatarUrl ? (
+                          <img src={getAssetUrl(user.avatarUrl)} alt="" />
+                        ) : (
+                          <span className="admin-application-avatar material-symbols-outlined" aria-hidden="true">person</span>
+                        )}
+                        <strong>{user.name}</strong>
+                      </div>
+                    </td>
                     <td>{user.email}</td>
                     <td>{user.location}</td>
                     <td><span className="admin-status-badge admin-status-badge--approved">{user.status}</span></td>

@@ -569,28 +569,6 @@
   position: relative;
 }
 
-.artist-verified-label {
-  position: absolute;
-  top: 0.65rem;
-  left: 0.65rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.32rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 999px;
-  background: rgba(255, 250, 248, 0.92);
-  color: var(--primary);
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 1;
-  backdrop-filter: blur(8px);
-}
-
-.artist-verified-label .material-symbols-outlined {
-  font-size: 0.85rem;
-}
-
 .artist-main-img-wrap,
 .artist-sub-img-wrap {
   min-width: 0;
@@ -664,9 +642,17 @@
 }
 
 .artist-name {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--on-surface);
+}
+
+.artist-name-text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

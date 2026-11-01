@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
+import VerifiedBadge from '../components/VerifiedBadge'
 import HeroPortrait from '../components/HeroPortrait'
 import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
-import { formatNpr } from '../utils/currency'
 import './HomePage.css'
 
 export default function HomePage() {
@@ -178,7 +180,7 @@ export default function HomePage() {
             </Link>
           </div>
           {loading ? (
-            <p className="landing-empty-state" role="status">Loading professionals…</p>
+            <LoadingState className="landing-empty-state" label="Loading professionals…" />
           ) : errorMessage ? (
             <div className="landing-empty-state" role="status">
               <span className="material-symbols-outlined" aria-hidden="true">cloud_off</span>
@@ -210,12 +212,6 @@ export default function HomePage() {
                       <div className={`artist-collage artist-collage--${cardPhotos.length}`}>
                         <div className="artist-main-img-wrap">
                           <img src={getAssetUrl(cardPhotos[0])} alt={`${professional.businessName} service work`} className="artist-main-img" />
-                          {(professional.verificationStatus === 1 || professional.verificationStatus === 'Approved') && (
-                            <span className="artist-verified-label">
-                              <span className="material-symbols-outlined" aria-hidden="true">verified</span>
-                              Verified professional
-                            </span>
-                          )}
                         </div>
                         {cardPhotos.length > 1 && (
                           <div className="artist-sub-imgs-col">
@@ -231,7 +227,10 @@ export default function HomePage() {
                     <div className="artist-body">
                       <div className="artist-meta-top">
                         <div className="artist-names">
-                          <h3 className="artist-name">{professional.businessName}</h3>
+                          <h3 className="artist-name">
+                            <span className="artist-name-text">{professional.businessName}</span>
+                            {(professional.verificationStatus === 1 || professional.verificationStatus === 'Approved') && <VerifiedBadge />}
+                          </h3>
                           <p className="artist-craft">{[professional.speciality, professional.city].filter(Boolean).join(' · ')}</p>
                         </div>
                         <div className="artist-rating-pill">
@@ -251,7 +250,7 @@ export default function HomePage() {
                         <div>
                           <span className="artist-price-label">Starting at</span>
                           <p className="artist-price">
-                            {formatNpr(lowestPrice)}
+                            <MoneyAmount value={lowestPrice} />
                           </p>
                         </div>
                         <Link to={`/artist/${professional.id}`} className="btn-lookbook">View profile</Link>

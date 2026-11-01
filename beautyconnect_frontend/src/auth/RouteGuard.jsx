@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import LoadingState from '../components/LoadingState'
 import { useAuth } from './useAuth'
 
 export default function RouteGuard({ allowedRoles }) {
@@ -6,7 +7,7 @@ export default function RouteGuard({ allowedRoles }) {
   const location = useLocation()
 
   if (loading) {
-    return <div className="container py-5 text-center" role="status">Checking your session…</div>
+    return <div className="container py-5"><LoadingState label="Checking your session…" /></div>
   }
 
   if (!user) {

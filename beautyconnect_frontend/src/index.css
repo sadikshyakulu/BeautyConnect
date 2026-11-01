@@ -56,6 +56,7 @@
   --on-error: #ffffff;
   --error-container: #ffdad6;
   --on-error-container: #93000a;
+  --money-amount: #237a43;
 
   /* ─── Typography Tokens ─────────────────────────────────────── */
   --font-headline: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
@@ -88,6 +89,134 @@
   --space-lg:  1.5rem;    /* 24px */
   --space-xl:  2.5rem;    /* 40px */
   --space-2xl: 4rem;      /* 64px */
+}
+
+.money-amount {
+  color: var(--money-amount);
+}
+
+.loading-state {
+  display: grid;
+  min-height: min(45vh, 360px);
+  align-content: center;
+  gap: 1.25rem;
+  padding: 1.25rem 0.5rem;
+  color: var(--on-surface-variant);
+  text-align: center;
+}
+
+.loading-state-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.loading-state-card {
+  display: flex;
+  min-height: 150px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid rgba(149, 71, 65, 0.18);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fff, #f8e9e9);
+  box-shadow: 0 0.75rem 1.5rem rgba(64, 47, 59, 0.12);
+  animation: loading-card-bounce 0.9s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+  will-change: transform;
+}
+
+.loading-state-card:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.loading-state-card:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.loading-state-card:nth-child(4) {
+  animation-delay: 0.36s;
+}
+
+.loading-state-placeholder {
+  display: block;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--surface-container-high), #fff, var(--surface-container-high));
+  background-size: 200% 100%;
+  animation: loading-placeholder-shimmer 1.4s ease-in-out infinite;
+}
+
+.loading-state-placeholder--heading {
+  width: 58%;
+  height: 0.9rem;
+}
+
+.loading-state-placeholder--line {
+  width: 92%;
+}
+
+.loading-state-placeholder--short {
+  width: 68%;
+}
+
+.loading-state-label {
+  justify-self: center;
+}
+
+.loading-state--inline {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  gap: 0.45rem;
+  padding: 0;
+  text-align: start;
+}
+
+.loading-state-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.loading-state-dots > span {
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: loading-dot-bounce 0.6s ease-in-out infinite alternate;
+}
+
+.loading-state-dots > span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.loading-state-dots > span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+@keyframes loading-card-bounce {
+  0%, 100% { transform: translateX(0) scale(1); }
+  35% { transform: translateX(-18px) scale(1.025); }
+  55% { transform: translateX(12px) scale(0.99); }
+  70% { transform: translateX(-4px) scale(1.01); }
+}
+
+@keyframes loading-placeholder-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@keyframes loading-dot-bounce {
+  to { transform: translateX(5px); }
+}
+
+@media (max-width: 575.98px) {
+  .loading-state-card {
+    min-height: 116px;
+    padding: 0.85rem;
+  }
 }
 
 /* ============================================================

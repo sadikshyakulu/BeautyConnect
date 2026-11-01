@@ -6,7 +6,8 @@ import { getProfessionalById } from '../api/search'
 import { useAuth } from '../auth/useAuth'
 import ExpandableText from '../components/ExpandableText'
 import RatingStars from '../components/RatingStars'
-import { formatNpr } from '../utils/currency'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import './ServiceDetailPage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
@@ -73,7 +74,7 @@ export default function ServiceDetailPage() {
     : 0
 
   if (loading || loadedProfileId !== id) {
-    return <div className="container py-5" role="status">Loading service details…</div>
+    return <div className="container py-5"><LoadingState label="Loading service details…" /></div>
   }
   if (errorMessage) {
     return (
@@ -128,7 +129,7 @@ export default function ServiceDetailPage() {
         </div>
         <div className="service-detail-price">
           <span>Service price</span>
-          <strong>{formatNpr(service.price)}</strong>
+          <strong><MoneyAmount value={service.price} /></strong>
           <span>{service.durationMinutes} minutes</span>
           {service.durationMinutes >= 1440 ? (
             <p className="small text-danger mt-3 mb-0">

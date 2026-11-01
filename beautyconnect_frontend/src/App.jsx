@@ -15,6 +15,7 @@ import AdminUsersPage from './pages/AdminUsersPage'
 import CustomerDashboardPage from './pages/CustomerDashboardPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import ProfessionalStudioPage from './pages/ProfessionalStudioPage'
+import BookingHistoryPage from './pages/BookingHistoryPage'
 import { AuthProvider } from './auth/AuthContext'
 import { useAuth } from './auth/useAuth'
 import RouteGuard from './auth/RouteGuard'
@@ -71,10 +72,12 @@ function AppLayout() {
               <Route element={<RouteGuard allowedRoles={['Customer']} />}>
                 <Route path="/booking" element={<BookingPage />} />
                 <Route path="/dashboard/customer" element={<CustomerDashboardPage />} />
+                <Route path="/dashboard/customer/history" element={<BookingHistoryPage />} />
                 <Route path="/dashboard/customer/profile" element={<CustomerProfilePage />} />
               </Route>
               <Route element={<RouteGuard allowedRoles={['Professional']} />}>
                 <Route path="/dashboard/professional" element={<ProfessionalDashboardPage />} />
+                <Route path="/dashboard/professional/history" element={<BookingHistoryPage />} />
                 <Route path="/dashboard/professional/studio" element={<ProfessionalStudioPage />} />
               </Route>
               <Route element={<RouteGuard allowedRoles={['Admin']} />}>

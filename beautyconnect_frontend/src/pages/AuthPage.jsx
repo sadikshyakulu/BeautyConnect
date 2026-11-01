@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import LoadingState from '../components/LoadingState'
 import { notify } from '../utils/notifications'
 import './AuthPage.css'
 
@@ -60,7 +61,7 @@ export default function AuthPage() {
   }
 
   if (loading) {
-    return <div className="container py-5 text-center" role="status">Checking your session…</div>
+    return <div className="container py-5"><LoadingState label="Checking your session…" /></div>
   }
 
   return (
@@ -80,21 +81,21 @@ export default function AuthPage() {
         <div className="auth-content-layer d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center gap-2">
             <span className="auth-brand-tag">
-              Atelier Edition № 04
+              BeautyConnect · Nepal
             </span>
             <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
           </div>
-          <span className="text-white text-opacity-75 tracking-wider text-xs font-semibold">PARIS • NEW YORK • LONDON</span>
+          <span className="text-white text-opacity-75 tracking-wider text-xs font-semibold">BEAUTY, CLOSER TO HOME</span>
         </div>
 
         {/* Center Quote */}
         <div className="auth-content-layer auth-center-quote">
           <div className="auth-accent-line"></div>
           <blockquote className="auth-quote-text">
-            “The premier atelier network for visionary freelance artists and discerning clients.”
+            “Find your people. Book your kind of beauty.”
           </blockquote>
           <p className="auth-quote-sub">
-            Where tactile intimacy meets seamless appointments. Curated master portfolios, protected escrow payouts, and bespoke styling experiences crafted without compromise.
+            Discover independent beauty professionals across Nepal, explore their real work and services, and book appointments with confidence.
           </p>
 
         </div>
@@ -104,15 +105,15 @@ export default function AuthPage() {
           <div className="auth-metrics-bar">
             <div className="d-flex flex-column">
               <span className="text-primary-container fs-5 fw-bold">Explore</span>
-              <span className="text-white text-opacity-75 text-xs">Independent professionals</span>
+              <span className="text-white text-opacity-75 text-xs">Find local beauty talent</span>
             </div>
             <div className="d-flex flex-column">
               <span className="text-primary-container fs-5 fw-bold">Book</span>
-              <span className="text-white text-opacity-75 text-xs">Request appointments</span>
+              <span className="text-white text-opacity-75 text-xs">Choose a time that fits</span>
             </div>
             <div className="d-flex flex-column">
-              <span className="text-primary-container fs-5 fw-bold">Manage</span>
-              <span className="text-white text-opacity-75 text-xs">Track bookings online</span>
+              <span className="text-primary-container fs-5 fw-bold">Connect</span>
+              <span className="text-white text-opacity-75 text-xs">Keep bookings in one place</span>
             </div>
           </div>
         </div>

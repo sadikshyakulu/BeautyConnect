@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAssetUrl } from '../api/assets'
 import { uploadAvatar } from '../api/profileImage'
+import LoadingState from '../components/LoadingState'
+import VerifiedBadge from '../components/VerifiedBadge'
 import {
   addService,
   getMyProfile,
@@ -12,8 +14,8 @@ import {
   uploadServiceImage,
 } from '../api/professionalProfile'
 import { useAuth } from '../auth/useAuth'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
-import { formatNpr } from '../utils/currency'
 import './DashboardPages.css'
 
 const emptyService = {
@@ -301,7 +303,7 @@ export default function ProfessionalStudioPage() {
     }
   }
 
-  if (loading) return <div className="dashboard-page" role="status">Loading your studio…</div>
+  if (loading) return <div className="dashboard-page"><LoadingState label="Loading your studio…" /></div>
 
   const services = profile?.services ?? []
   const portfolioImages = profile?.portfolioImages ?? []
@@ -315,9 +317,9 @@ export default function ProfessionalStudioPage() {
           <p>Tell clients what makes your work special. Add your services, pricing and portfolio photos.</p>
           <div className="studio-hero-actions">
             {profile && <Link className="btn btn-light" to={`/artist/${profile.id}`}>Preview public profile</Link>}
-            <span className="studio-status-pill">
-              {profile ? verificationStatus(profile.verificationStatus) : 'Profile unavailable'}
-            </span>
+            {profile && verificationStatus(profile.verificationStatus) === 'Approved'
+              ? <VerifiedBadge className="verified-badge--large" />
+              : <span className="studio-status-pill">{profile ? verificationStatus(profile.verificationStatus) : 'Profile unavailable'}</span>}
           </div>
         </div>
         <div className="dashboard-hero-decoration dashboard-hero-decoration--studio" aria-hidden="true">✳</div>
@@ -432,7 +434,7 @@ export default function ProfessionalStudioPage() {
                         <span className="studio-category-tag">{service.category}</span>
                       </div>
                       <p>{service.description || 'Add a description to help clients understand what this service includes.'}</p>
-                      <strong>{formatNpr(service.price)} <span>· {service.durationMinutes} minutes</span></strong>
+                      <strong><MoneyAmount value={service.price} /> <span>· {service.durationMinutes} minutes</span></strong>
                       {service.images?.length > 0 && (
                         <div className="studio-service-gallery">
                           {service.images.map((image, index) => (

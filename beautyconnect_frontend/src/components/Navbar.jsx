@@ -34,6 +34,7 @@ export default function Navbar() {
     const dashboardLinks = user.role === 'Professional'
       ? [
           { label: 'Studio overview', to: '/dashboard/professional', icon: 'space_dashboard' },
+          { label: 'Booking history', to: '/dashboard/professional/history', icon: 'history' },
           { label: 'Profile & services', to: '/dashboard/professional/studio', icon: 'auto_awesome' },
         ]
       : user.role === 'Admin'
@@ -43,6 +44,7 @@ export default function Navbar() {
           ]
         : [
             { label: 'My dashboard', to: '/dashboard/customer', icon: 'space_dashboard' },
+            { label: 'Booking history', to: '/dashboard/customer/history', icon: 'history' },
             { label: 'Discover services', to: '/search', icon: 'travel_explore' },
             { label: 'My profile', to: '/dashboard/customer/profile', icon: 'person' },
           ]
@@ -83,7 +85,9 @@ export default function Navbar() {
           })}
         </nav>
         <div className="dashboard-sidebar-account">
-          {user.profile?.avatarUrl ? (
+          {user.role === 'Admin' ? (
+            <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--admin" src="/beautyconnectlogo.png" alt="" />
+          ) : user.profile?.avatarUrl ? (
             <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--image" src={getAssetUrl(user.profile.avatarUrl)} alt="" />
           ) : (
             <div className="dashboard-sidebar-avatar" aria-hidden="true">

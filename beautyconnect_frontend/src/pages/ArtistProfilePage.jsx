@@ -6,9 +6,11 @@ import { getAssetUrl } from '../api/assets'
 import { aggregateServiceRatings, getReviewsForProfessional, serviceRatingKey } from '../api/review'
 import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
 import { formatTime12Hour } from '../utils/time'
-import { formatNpr } from '../utils/currency'
+import VerifiedBadge from '../components/VerifiedBadge'
 import './ArtistProfilePage.css'
 
 const verificationStatus = (status) => typeof status === 'number'
@@ -160,7 +162,7 @@ export default function ArtistProfilePage() {
     )
   }
 
-  if (loading || loadedProfileId !== id) return <div className="container py-5" role="status">Loading professional profile…</div>
+  if (loading || loadedProfileId !== id) return <div className="container py-5"><LoadingState label="Loading professional profile…" /></div>
   if (errorMessage) return <div className="container py-5"><div className="alert alert-warning" role="alert">{errorMessage}</div></div>
   if (!professional) return null
 
@@ -211,14 +213,11 @@ export default function ArtistProfilePage() {
             <div className="artist-profile-name-row">
               <div>
                 <p className="artist-profile-eyebrow mb-1">{professional.speciality || 'Beauty professional'}</p>
-                <h1 className="font-headline mb-1" id="artist-profile-name">{professional.businessName}</h1>
+                <h1 className="font-headline mb-1" id="artist-profile-name">
+                  <span>{professional.businessName}</span>
+                  {verificationStatus(professional.verificationStatus) === 'Approved' && <VerifiedBadge className="verified-badge--large" />}
+                </h1>
               </div>
-              {verificationStatus(professional.verificationStatus) === 'Approved' && (
-                <span className="artist-profile-verified">
-                  <span className="material-symbols-outlined" aria-hidden="true">verified</span>
-                  Verified
-                </span>
-              )}
             </div>
             {professional.city && (
               <p className="artist-profile-location">
@@ -301,7 +300,7 @@ export default function ArtistProfilePage() {
                       </div>
                     </div>
                     <div className="artist-service-card-actions">
-                      <strong className="artist-service-price">{formatNpr(service.price)}</strong>
+                      <strong className="artist-service-price"><MoneyAmount value={service.price} /></strong>
                       <Link className="btn btn-outline-primary" to={`/artist/${professional.id}/service/${service.id}`}>
                         Service details
                       </Link>
@@ -355,7 +354,7 @@ export default function ArtistProfilePage() {
                 setSlotError('')
               }}
             />
-            {selectedService && (slotLoading || availabilityKey !== activeAvailabilityKey) && <p role="status">Finding bookable times…</p>}
+            {selectedService && (slotLoading || availabilityKey !== activeAvailabilityKey) && <LoadingState variant="inline" label="Finding bookable times…" />}
             {slotError && <div className="alert alert-danger" role="alert">{slotError}</div>}
             {selectedService && !slotLoading && availabilityKey === activeAvailabilityKey && !slotError && visibleSlots.length === 0 && (
               <p className="text-on-surface-variant">No bookable times for this service on this date. Try another date.</p>

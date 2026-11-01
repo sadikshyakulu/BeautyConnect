@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   acceptBooking,
@@ -15,11 +16,14 @@ import {
   getMyProfile,
   submitForVerification,
 } from '../api/professionalProfile'
+import { getAssetUrl } from '../api/assets'
 import { verifyBookingRefund } from '../api/payment'
 import { useAuth } from '../auth/useAuth'
+import LoadingState from '../components/LoadingState'
+import MoneyAmount from '../components/MoneyAmount'
+import VerifiedBadge from '../components/VerifiedBadge'
 import { notify } from '../utils/notifications'
 import { formatTime12Hour } from '../utils/time'
-import { formatNpr } from '../utils/currency'
 import './ProfessionalDashboardPage.css'
 
 const bookingStatus = (status) => typeof status === 'number'
@@ -32,6 +36,166 @@ const refundStatus = (status) => typeof status === 'number'
   ? ['Not requested', 'Requested', 'Refunded'][status] ?? 'Unknown'
   : status
 const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function ClockTimePicker({ label, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [selection, setSelection] = useState('hour')
+  const [draftTime, setDraftTime] = useState(value)
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setIsOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen])
+
+  const [hour, minute] = draftTime.split(':').map(Number)
+  const hour12 = hour % 12 || 12
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const selectedValue = selection === 'hour' ? hour12 : minute
+  const dialValues = selection === 'hour'
+    ? Array.from({ length: 12 }, (_, index) => index + 1)
+    : Array.from({ length: 12 }, (_, index) => index * 5)
+  const selectedDialIndex = selection === 'hour'
+    ? hour12 % 12
+    : Math.round(minute / 5) % 12
+
+  function updateTime(nextHour, nextMinute, nextPeriod = period) {
+    const hour24 = nextHour % 12 + (nextPeriod === 'PM' ? 12 : 0)
+    setDraftTime(`${String(hour24).padStart(2, '0')}:${String(nextMinute).padStart(2, '0')}`)
+  }
+
+  return (
+    <div className="professional-time-picker">
+      <span className="professional-time-picker-label">{label}</span>
+      <button
+        className="professional-time-picker-trigger professional-clock-control professional-modal-control"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        onClick={() => {
+          setSelection('hour')
+          setDraftTime(value)
+          setIsOpen(true)
+        }}
+      >
+        <span className="material-symbols-outlined" aria-hidden="true">schedule</span>
+        <span>{formatTime12Hour(value)}</span>
+        <span className="material-symbols-outlined professional-time-picker-trigger-arrow" aria-hidden="true">expand_more</span>
+      </button>
+      {isOpen && createPortal(
+        <div
+          className="professional-clock-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsOpen(false)
+          }}
+        >
+          <section className="professional-clock-modal" role="dialog" aria-modal="true" aria-label={`Choose ${label.toLowerCase()} time`}>
+            <div className="professional-clock-picker-heading">
+              <div>
+                <span className="professional-clock-modal-eyebrow">Working hours</span>
+                <h2>Choose {label.toLowerCase()}</h2>
+              </div>
+              <button className="professional-clock-control professional-modal-control" type="button" aria-label="Close time picker" onClick={() => setIsOpen(false)}>
+                <span className="material-symbols-outlined" aria-hidden="true">close</span>
+              </button>
+            </div>
+            <div className="professional-clock-display">
+              <button
+                className={`professional-clock-control professional-modal-control${selection === 'hour' ? ' is-selected' : ''}`}
+                type="button"
+                aria-label="Choose hour"
+                onClick={() => setSelection('hour')}
+              >
+                {String(hour12).padStart(2, '0')}
+              </button>
+              <span>:</span>
+              <button
+                className={`professional-clock-control professional-modal-control${selection === 'minute' ? ' is-selected' : ''}`}
+                type="button"
+                aria-label="Choose minute"
+                onClick={() => setSelection('minute')}
+              >
+                {String(minute).padStart(2, '0')}
+              </button>
+              <div className="professional-clock-period" aria-label="Choose AM or PM">
+                {['AM', 'PM'].map((option) => (
+                  <button
+                    className={`professional-clock-control professional-modal-control${period === option ? ' is-selected' : ''}`}
+                    type="button"
+                    key={option}
+                    aria-pressed={period === option}
+                    onClick={() => updateTime(hour12, minute, option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div
+              className="professional-clock-face"
+              style={{ '--clock-hand-angle': `${selectedDialIndex * 30}deg` }}
+              aria-label={selection === 'hour' ? 'Select an hour' : 'Select minutes'}
+            >
+              <span className="professional-clock-hand" aria-hidden="true" />
+              {dialValues.map((dialValue, index) => {
+                const angle = (index * 30 - 90) * Math.PI / 180
+                const isSelected = selectedValue === dialValue
+                  || (selection === 'minute' && selectedDialIndex === index)
+                return (
+                  <button
+                    className={`professional-clock-control professional-modal-control${isSelected ? ' is-selected' : ''}`}
+                    type="button"
+                    key={dialValue}
+                    style={{
+                      left: `${50 + Math.cos(angle) * 39}%`,
+                      top: `${50 + Math.sin(angle) * 39}%`,
+                    }}
+                    aria-label={selection === 'hour' ? `${dialValue} o'clock` : `${dialValue} minutes`}
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      if (selection === 'hour') {
+                        updateTime(dialValue, minute)
+                        setSelection('minute')
+                      } else {
+                        updateTime(hour12, dialValue)
+                      }
+                    }}
+                  >
+                    {selection === 'hour' ? dialValue : String(dialValue).padStart(2, '0')}
+                  </button>
+                )
+              })}
+              <span className="professional-clock-center" aria-hidden="true" />
+            </div>
+            <p className="professional-clock-hint">
+              {selection === 'hour' ? 'Select an hour' : 'Select minutes'}
+            </p>
+            <div className="professional-clock-modal-actions">
+              <button className="btn btn-sm btn-outline-secondary professional-clock-control professional-modal-control" type="button" onClick={() => setIsOpen(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-sm btn-primary professional-clock-control professional-modal-control"
+                type="button"
+                onClick={() => {
+                  onChange(draftTime)
+                  setIsOpen(false)
+                }}
+              >
+                Set time
+              </button>
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
+    </div>
+  )
+}
 
 export default function ProfessionalDashboardPage() {
   const { user } = useAuth()
@@ -47,6 +211,20 @@ export default function ProfessionalDashboardPage() {
   const [expandedScheduleDay, setExpandedScheduleDay] = useState(null)
   const [editingAvailabilityId, setEditingAvailabilityId] = useState(null)
   const [verifyingRefundId, setVerifyingRefundId] = useState(null)
+
+  useEffect(() => {
+    if (availabilityEditorDay === null) return undefined
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && !document.querySelector('.professional-clock-backdrop')) {
+        setAvailabilityEditorDay(null)
+        setEditingAvailabilityId(null)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [availabilityEditorDay])
 
   const loadDashboard = useCallback(async () => {
     const results = await Promise.allSettled([
@@ -106,7 +284,7 @@ export default function ProfessionalDashboardPage() {
     try {
       const result = await verifyBookingRefund(bookingId)
       await loadDashboard()
-      notify.success(`eSewa confirmed the full refund of ${formatNpr(result.refundAmount)}.`)
+      notify.success(<>eSewa confirmed the full refund of <MoneyAmount value={result.refundAmount} />.</>)
     } catch (error) {
       const message = error.response?.status === 409
         ? 'eSewa has not confirmed this refund yet. If you already processed it through your merchant account, wait for the status to update and check again.'
@@ -218,7 +396,7 @@ export default function ProfessionalDashboardPage() {
     }
   }
 
-  if (loading) return <div className="container py-5" role="status">Loading professional dashboard…</div>
+  if (loading) return <div className="container py-5"><LoadingState label="Loading professional dashboard…" /></div>
 
   const incoming = bookings.filter((booking) => ['Pending', 'Confirmed'].includes(bookingStatus(booking.status)))
   const cancellationFeedback = bookings.filter((booking) =>
@@ -235,16 +413,52 @@ export default function ProfessionalDashboardPage() {
 
   return (
     <div className="container-fluid px-3 px-lg-5 py-5">
-      <header className="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-        <div>
-          <p className="text-uppercase text-secondary fw-semibold small mb-2">Professional studio</p>
-          <h1 className="font-headline">{profile?.businessName ?? user?.email}</h1>
-          <p className="text-on-surface-variant mb-0">
-            {[profile?.speciality, profile?.city].filter(Boolean).join(' · ')}
-            {profile?.verificationStatus !== undefined && ` · Verification: ${profileStatus(profile.verificationStatus)}`}
-          </p>
+      <header className="professional-dashboard-header mb-4">
+        <div className="professional-dashboard-identity">
+          <div className="professional-dashboard-avatar">
+            {profile?.avatarUrl ? (
+              <img src={getAssetUrl(profile.avatarUrl)} alt="" />
+            ) : (
+              <span className="material-symbols-outlined" aria-hidden="true">storefront</span>
+            )}
+          </div>
+          <div className="professional-dashboard-heading">
+            <p className="professional-dashboard-eyebrow">
+              <span className="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+              Professional studio
+            </p>
+            <h1 className="font-headline">
+              <span>{profile?.businessName ?? user?.email}</span>
+              {profileStatus(profile?.verificationStatus) === 'Approved' && <VerifiedBadge className="verified-badge--large" />}
+            </h1>
+            <div className="professional-dashboard-meta">
+              {profile?.speciality && (
+                <span>
+                  <span className="material-symbols-outlined" aria-hidden="true">palette</span>
+                  {profile.speciality}
+                </span>
+              )}
+              {profile?.city && (
+                <span>
+                  <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+                  {profile.city}
+                </span>
+              )}
+              {profile?.verificationStatus !== undefined && profileStatus(profile.verificationStatus) !== 'Approved' && (
+                <span className={`professional-dashboard-verification professional-dashboard-verification--${profileStatus(profile.verificationStatus).toLowerCase()}`}>
+                  {profileStatus(profile.verificationStatus)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        {profile && <Link className="btn btn-outline-primary align-self-start" to={`/artist/${profile.id}`}>View public profile</Link>}
+        {profile && (
+          <Link className="professional-dashboard-profile-link" to={`/artist/${profile.id}`}>
+            <span className="material-symbols-outlined" aria-hidden="true">visibility</span>
+            <span>View public profile</span>
+            <span className="material-symbols-outlined professional-dashboard-profile-arrow" aria-hidden="true">arrow_outward</span>
+          </Link>
+        )}
       </header>
 
       {errorMessage && <div className="alert alert-danger" role="alert">{errorMessage}</div>}
@@ -258,10 +472,34 @@ export default function ProfessionalDashboardPage() {
       )}
 
       <div className="row g-3 mb-4">
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Active bookings</span><strong className="d-block fs-3">{incoming.length}</strong></div></div>
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Pending requests</span><strong className="d-block fs-3">{pendingCount}</strong></div></div>
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Revenue</span><strong className="d-block fs-3">{formatNpr(revenue)}</strong></div></div>
-        <div className="col-6 col-lg-3"><div className="glass-card rounded-2xl p-4"><span className="text-on-surface-variant">Services</span><strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong></div></div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">event_available</span>
+            <span className="text-on-surface-variant">Active bookings</span>
+            <strong className="d-block fs-3">{incoming.length}</strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">pending_actions</span>
+            <span className="text-on-surface-variant">Pending requests</span>
+            <strong className="d-block fs-3">{pendingCount}</strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">payments</span>
+            <span className="text-on-surface-variant">Revenue</span>
+            <strong className="d-block fs-3"><MoneyAmount value={revenue} /></strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">spa</span>
+            <span className="text-on-surface-variant">Services</span>
+            <strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong>
+          </div>
+        </div>
       </div>
 
       <div className="row g-4 align-items-start">
@@ -281,7 +519,7 @@ export default function ProfessionalDashboardPage() {
                           <h3 className="h6 mb-1">{booking.service?.name ?? 'Service booking'}</h3>
                           <p className="small mb-1">{booking.customerName} · {booking.customerEmail}</p>
                           <p className="small text-on-surface-variant mb-1">{new Date(booking.scheduledDateTime).toLocaleString()}</p>
-                          <span className="small">{status} · {formatNpr(booking.totalPrice)}</span>
+                          <span className="small">{status} · <MoneyAmount value={booking.totalPrice} /></span>
                           {booking.notes && <p className="small mt-2 mb-0">{booking.notes}</p>}
                         </div>
                         <div className="d-flex flex-wrap align-items-start gap-2">
@@ -342,7 +580,7 @@ export default function ProfessionalDashboardPage() {
                       <article className="glass-card rounded-2xl p-3 h-100">
                         <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
                         <span className="small text-on-surface-variant d-block mt-1">
-                          Booking #{booking.id} · Full refund: {formatNpr(booking.refundAmount)} · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
+                          Booking #{booking.id} · Full refund: <MoneyAmount value={booking.refundAmount} /> · Requested {new Date(booking.refundRequestedAt).toLocaleString()}
                         </span>
                         <button
                           className="btn btn-sm btn-primary mt-3"
@@ -370,7 +608,7 @@ export default function ProfessionalDashboardPage() {
                       <article className="glass-card rounded-2xl p-3 h-100">
                         <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
                         <span className="small text-on-surface-variant">
-                          Booking #{booking.id} · Refunded {formatNpr(booking.refundAmount)} · eSewa reference {booking.refundGatewayReference}
+                          Booking #{booking.id} · Refunded <MoneyAmount value={booking.refundAmount} /> · eSewa reference {booking.refundGatewayReference}
                         </span>
                       </article>
                     </div>
@@ -465,32 +703,62 @@ export default function ProfessionalDashboardPage() {
                         )}
                       </div>
                     )}
-                    {isEditingThisDay && (
-                      <form className="professional-hours-editor" onSubmit={handleAvailability}>
-                        <span className="small fw-semibold">{editingAvailabilityId !== null ? 'Update this shift' : `Add a shift on ${day}`}</span>
-                        <div className="row g-2">
-                          <div className="col-6">
-                            <label className="form-label small mb-1" htmlFor={`availability-start-${dayIndex}`}>Starts</label>
-                            <input id={`availability-start-${dayIndex}`} className="form-control form-control-sm" type="time" required value={startTime} onChange={(event) => setStartTime(event.target.value)} />
-                          </div>
-                          <div className="col-6">
-                            <label className="form-label small mb-1" htmlFor={`availability-end-${dayIndex}`}>Ends</label>
-                            <input id={`availability-end-${dayIndex}`} className="form-control form-control-sm" type="time" required value={endTime} onChange={(event) => setEndTime(event.target.value)} />
-                          </div>
-                        </div>
-                        <div className="d-flex gap-2 mt-2">
-                          <button className="btn btn-sm btn-primary" type="submit">{editingAvailabilityId !== null ? 'Save shift' : 'Add shift'}</button>
-                          <button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => {
-                            setAvailabilityEditorDay(null)
-                            setEditingAvailabilityId(null)
-                          }}>Cancel</button>
-                        </div>
-                      </form>
-                    )}
                   </article>
                 )
               })}
             </div>
+            {availabilityEditorDay !== null && createPortal(
+              <div
+                className="professional-hours-modal-backdrop"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setAvailabilityEditorDay(null)
+                    setEditingAvailabilityId(null)
+                  }
+                }}
+              >
+                <form
+                  className="professional-hours-editor"
+                  onSubmit={handleAvailability}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="professional-hours-modal-title"
+                >
+                  <div className="professional-hours-modal-heading">
+                    <div>
+                      <span className="professional-clock-modal-eyebrow">Weekly hours</span>
+                      <h2 id="professional-hours-modal-title">
+                        {editingAvailabilityId !== null ? 'Update shift' : 'Add a shift'}
+                      </h2>
+                      <p>{weekDays[Number(availabilityEditorDay)]}</p>
+                    </div>
+                    <button
+                      className="professional-hours-modal-close professional-modal-control"
+                      type="button"
+                      aria-label="Close shift editor"
+                      onClick={() => {
+                        setAvailabilityEditorDay(null)
+                        setEditingAvailabilityId(null)
+                      }}
+                    >
+                      <span className="material-symbols-outlined" aria-hidden="true">close</span>
+                    </button>
+                  </div>
+                  <div className="professional-time-picker-grid">
+                    <ClockTimePicker label="Starts" value={startTime} onChange={setStartTime} />
+                    <ClockTimePicker label="Ends" value={endTime} onChange={setEndTime} />
+                  </div>
+                  <div className="professional-hours-modal-actions">
+                    <button className="btn btn-sm btn-outline-secondary professional-modal-control" type="button" onClick={() => {
+                      setAvailabilityEditorDay(null)
+                      setEditingAvailabilityId(null)
+                    }}>Cancel</button>
+                    <button className="btn btn-sm btn-primary professional-modal-control" type="submit">{editingAvailabilityId !== null ? 'Save shift' : 'Add shift'}</button>
+                  </div>
+                </form>
+              </div>,
+              document.body,
+            )}
             {dateOverrides.length > 0 && (
               <div className="professional-date-overrides mt-3">
                 <h3 className="small fw-bold mb-2">Date-specific hours</h3>
@@ -520,15 +788,24 @@ export default function ProfessionalDashboardPage() {
               <div className="professional-service-list mb-3">
                 {profile.services.map((service) => (
                   <article className="professional-service-card" key={service.id}>
+                  {service.images?.[0] ? (
+                    <img
+                      className="professional-service-icon professional-service-image"
+                      src={getAssetUrl(service.images[0])}
+                      alt={`${service.name} service`}
+                      loading="lazy"
+                    />
+                  ) : (
                     <span className="professional-service-icon material-symbols-outlined" aria-hidden="true">auto_awesome</span>
-                    <div className="professional-service-content">
+                  )}
+                  <div className="professional-service-content">
                       <div className="professional-service-heading">
                         <strong>{service.name}</strong>
                         <span className="professional-service-category">{service.category}</span>
                       </div>
                       {service.description && <p>{service.description}</p>}
                       <div className="professional-service-meta">
-                        <strong>{formatNpr(service.price)}</strong>
+                        <strong><MoneyAmount value={service.price} /></strong>
                         <span><span className="material-symbols-outlined" aria-hidden="true">schedule</span>{service.durationMinutes} min</span>
                       </div>
                     </div>

@@ -581,10 +581,13 @@
 .admin-table-profile-cell img,
 .admin-table-profile-cell .admin-application-avatar {
   display: grid;
+  flex: 0 0 38px;
   width: 38px;
   height: 38px;
+  aspect-ratio: 1;
   place-items: center;
-  border-radius: 50%;
+  overflow: hidden;
+  border-radius: 50% !important;
   object-fit: cover;
   background: #f1e2df;
   color: var(--primary);
