@@ -5,5 +5,5 @@ public sealed class PayoutOptions
     public const string SectionName = "Payout";
 
     public decimal MinimumAmount { get; set; } = 500m;
-    public int HoldHours { get; set; } = 24;
+    public int HoldHours { get; set; }
 }

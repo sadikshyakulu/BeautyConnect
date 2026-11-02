@@ -98,6 +98,12 @@ public class AdminController : ControllerBase
         return Ok(await _payoutService.ListHistoryAsync());
     }
 
+    [HttpGet("payouts/balances")]
+    public async Task<IActionResult> GetProfessionalPayoutBalances()
+    {
+        return Ok(await _payoutService.ListProfessionalBalancesAsync());
+    }
+
     [HttpPost("payouts/{id:int}/mark-paid")]
     public async Task<IActionResult> MarkPayoutPaid(int id, [FromBody] MarkPayoutPaidDto request)
     {

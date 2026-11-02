@@ -54,6 +54,57 @@ public class PayoutServiceTests
     }
 
     [Fact]
+    public async Task CompletedBookingAppearsAsPendingDuringHoldAndAdminBalanceShowsPerProfessionalTotals()
+    {
+        await using var fixture = await TestFixture.CreateAsync();
+        fixture.ProfessionalProfile.AvatarUrl = "/uploads/avatars/professional.jpg";
+        var onHold = fixture.AddBooking(1500m, BookingStatus.Completed, fixture.Now.AddHours(-2));
+        onHold.CommissionAmount = 75m;
+        onHold.ProfessionalPayoutAmount = 1425m;
+        onHold.EsewaTotalAmount = 1500m;
+        onHold.EsewaTransactionCode = "verified-on-hold";
+        var available = fixture.AddBooking(800m, BookingStatus.Completed, fixture.Now.AddHours(-25));
+        available.CommissionAmount = 40m;
+        available.ProfessionalPayoutAmount = 760m;
+        available.EsewaTotalAmount = 800m;
+        available.EsewaTransactionCode = "verified-available";
+        await fixture.Context.SaveChangesAsync();
+
+        var service = fixture.CreateService(fixture.Context);
+        var summary = await service.GetEarningsSummaryAsync(fixture.ProfessionalUser.Id);
+        var balances = await service.ListProfessionalBalancesAsync();
+
+        Assert.NotNull(summary.Value);
+        Assert.Equal(1425m, summary.Value.Pending);
+        Assert.Equal(760m, summary.Value.Available);
+        var professionalBalance = Assert.Single(balances);
+        Assert.Equal("Test Studio", professionalBalance.ProfessionalName);
+        Assert.Equal("/uploads/avatars/professional.jpg", professionalBalance.ProfessionalAvatarUrl);
+        Assert.Equal(2300m, professionalBalance.CustomerPaymentsReceived);
+        Assert.Equal(115m, professionalBalance.PlatformCommission);
+        Assert.Equal(1425m, professionalBalance.Pending);
+        Assert.Equal(760m, professionalBalance.Available);
+    }
+
+    [Fact]
+    public async Task CompletedBookingIsImmediatelyAvailableAndRequestableWhenHoldIsDisabled()
+    {
+        await using var fixture = await TestFixture.CreateAsync();
+        fixture.AddBooking(1500m, BookingStatus.Completed, fixture.Now);
+        await fixture.Context.SaveChangesAsync();
+        var service = fixture.CreateService(fixture.Context, holdHours: 0);
+
+        var summary = await service.GetEarningsSummaryAsync(fixture.ProfessionalUser.Id);
+        var request = await service.RequestPayoutAsync(fixture.ProfessionalUser.Id);
+
+        Assert.NotNull(summary.Value);
+        Assert.Equal(0m, summary.Value.Pending);
+        Assert.Equal(1500m, summary.Value.Available);
+        Assert.NotNull(request.Value);
+        Assert.Equal(1500m, request.Value.Amount);
+    }
+
+    [Fact]
     public async Task PayoutDetailsAreStoredProtectedAndReturnedMasked()
     {
         await using var fixture = await TestFixture.CreateAsync();
@@ -136,6 +187,28 @@ public class PayoutServiceTests
     }
 
     [Fact]
+    public async Task AdminPayoutQueueIncludesProfessionalAvatar()
+    {
+        await using var fixture = await TestFixture.CreateAsync();
+        fixture.ProfessionalProfile.AvatarUrl = "/uploads/avatars/professional.jpg";
+        fixture.AddBooking(750m, BookingStatus.Completed, fixture.Now.AddHours(-25));
+        await fixture.Context.SaveChangesAsync();
+        var service = fixture.CreateService(fixture.Context);
+        var payoutRequest = await service.RequestPayoutAsync(fixture.ProfessionalUser.Id);
+        Assert.NotNull(payoutRequest.Value);
+
+        var queuedRequest = Assert.Single(await service.ListQueueAsync());
+        await service.MarkPaidAsync(
+            payoutRequest.Value.Id,
+            fixture.AdminUser.Id,
+            new MarkPayoutPaidDto { Reference = "transfer-123" });
+        var historyRequest = Assert.Single(await service.ListHistoryAsync());
+
+        Assert.Equal("/uploads/avatars/professional.jpg", queuedRequest.ProfessionalAvatarUrl);
+        Assert.Equal("/uploads/avatars/professional.jpg", historyRequest.ProfessionalAvatarUrl);
+    }
+
+    [Fact]
     public async Task ConcurrentPayoutRequestsCreateAtMostOneOpenRequest()
     {
         await using var fixture = await TestFixture.CreateAsync();
@@ -166,11 +239,14 @@ public class PayoutServiceTests
         var service = fixture.CreateService(fixture.Context);
         var created = await service.RequestPayoutAsync(fixture.ProfessionalUser.Id);
         Assert.NotNull(created.Value);
+        var requestedBalance = Assert.Single(await service.ListProfessionalBalancesAsync());
+        Assert.Equal(800m, requestedBalance.Requested);
+        Assert.Equal(0m, requestedBalance.Available);
 
         var paid = await service.MarkPaidAsync(
             created.Value.Id,
             fixture.AdminUser.Id,
-            new() { Reference = "transfer-123" });
+            new() { Reference = "transfer-123", Notes = "  confirmed by bank  " });
         var paidAgain = await service.MarkPaidAsync(
             created.Value.Id,
             fixture.AdminUser.Id,
@@ -178,7 +254,11 @@ public class PayoutServiceTests
 
         Assert.Equal(PayoutRequestStatus.Paid.ToString(), paid.Value!.Status);
         Assert.Equal("transfer-123", paid.Value.Reference);
+        Assert.Equal("confirmed by bank", paid.Value.Notes);
         Assert.Equal(PayoutErrorCode.Conflict, paidAgain.ErrorCode);
+        var paidBalance = Assert.Single(await service.ListProfessionalBalancesAsync());
+        Assert.Equal(0m, paidBalance.Requested);
+        Assert.Equal(800m, paidBalance.PaidOut);
         var duplicatePayout = await service.RequestPayoutAsync(fixture.ProfessionalUser.Id);
         Assert.Equal(PayoutErrorCode.Conflict, duplicatePayout.ErrorCode);
         Assert.Equal(
@@ -242,11 +322,12 @@ public class PayoutServiceTests
 
         public PayoutService CreateService(
             BeautyConnectDbContext context,
-            decimal minimumAmount = 500m) =>
+            decimal minimumAmount = 500m,
+            int holdHours = 24) =>
             new(
                 context,
                 new TestPayoutDetailsProtector(),
-                Options.Create(new PayoutOptions { MinimumAmount = minimumAmount, HoldHours = 24 }),
+                Options.Create(new PayoutOptions { MinimumAmount = minimumAmount, HoldHours = holdHours }),
                 new FixedTimeProvider(new DateTimeOffset(Now)));
 
         public Booking AddBooking(

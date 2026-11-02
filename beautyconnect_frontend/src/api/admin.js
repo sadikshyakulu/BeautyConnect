@@ -46,3 +46,31 @@ export async function getAdminProfessionals() {
   const { data } = await client.get('/Admin/professionals')
   return data
 }
+
+export async function getPayoutQueue() {
+  const { data } = await client.get('/Admin/payouts/queue')
+  return data
+}
+
+export async function getPayoutHistory() {
+  const { data } = await client.get('/Admin/payouts/history')
+  return data
+}
+
+export async function getPayoutBalances() {
+  const { data } = await client.get('/Admin/payouts/balances')
+  return data
+}
+
+export async function markPayoutPaid(requestId, reference, notes) {
+  const { data } = await client.post(`/Admin/payouts/${requestId}/mark-paid`, {
+    reference,
+    notes: notes || null,
+  })
+  return data
+}
+
+export async function rejectPayout(requestId, reason) {
+  const { data } = await client.post(`/Admin/payouts/${requestId}/reject`, { reason })
+  return data
+}

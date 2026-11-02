@@ -189,7 +189,8 @@ public class AdminService : IAdminService
                 {
                     Type = "booking",
                     Title = $"Booking #{booking.Id} confirmed",
-                    Detail = $"{customerName} booked {serviceName} with {professionalName} • {booking.TotalPrice:N0} NPR",
+                    Detail = $"{customerName} booked {serviceName} with {professionalName}",
+                    Amount = booking.TotalPrice,
                     TimeLabel = FormatRelativeTime(booking.CreatedAt),
                     CreatedAt = booking.CreatedAt
                 });

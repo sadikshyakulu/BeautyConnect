@@ -10,8 +10,12 @@ import ServiceDetailPage from './pages/ServiceDetailPage'
 import BookingPage from './pages/BookingPage'
 import AuthPage from './pages/AuthPage'
 import ProfessionalDashboardPage from './pages/ProfessionalDashboardPage'
+import ProfessionalPayoutsPage from './pages/ProfessionalPayoutsPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import AdminUsersPage from './pages/AdminUsersPage'
+import AdminPayoutsPage from './pages/AdminPayoutsPage'
+import AdminPayoutRequestsPage from './pages/AdminPayoutRequestsPage'
+import AdminPayoutHistoryPage from './pages/AdminPayoutHistoryPage'
 import CustomerDashboardPage from './pages/CustomerDashboardPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import ProfessionalStudioPage from './pages/ProfessionalStudioPage'
@@ -77,12 +81,16 @@ function AppLayout() {
               </Route>
               <Route element={<RouteGuard allowedRoles={['Professional']} />}>
                 <Route path="/dashboard/professional" element={<ProfessionalDashboardPage />} />
+                <Route path="/dashboard/professional/payouts" element={<ProfessionalPayoutsPage />} />
                 <Route path="/dashboard/professional/history" element={<BookingHistoryPage />} />
                 <Route path="/dashboard/professional/studio" element={<ProfessionalStudioPage />} />
               </Route>
               <Route element={<RouteGuard allowedRoles={['Admin']} />}>
                 <Route path="/admin" element={<AdminPanelPage />} />
                 <Route path="/admin/users" element={<AdminUsersPage />} />
+                <Route path="/admin/payouts" element={<AdminPayoutsPage />} />
+                <Route path="/admin/payouts/requests" element={<AdminPayoutRequestsPage />} />
+                <Route path="/admin/payouts/history" element={<AdminPayoutHistoryPage />} />
               </Route>
               <Route path="*" element={<HomePage />} />
             </Routes>

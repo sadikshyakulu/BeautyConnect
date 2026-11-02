@@ -16,8 +16,13 @@ import {
   getMyProfile,
   submitForVerification,
 } from '../api/professionalProfile'
+import {
+  getMyPayoutRequests,
+  getPayoutSummary,
+} from '../api/payout'
 import { getAssetUrl } from '../api/assets'
 import { verifyBookingRefund } from '../api/payment'
+import EsewaLogo from '../components/EsewaLogo'
 import { useAuth } from '../auth/useAuth'
 import BookingLocationDetails from '../components/BookingLocationDetails'
 import LoadingState from '../components/LoadingState'
@@ -37,7 +42,6 @@ const refundStatus = (status) => typeof status === 'number'
   ? ['Not requested', 'Requested', 'Refunded'][status] ?? 'Unknown'
   : status
 const weekDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
 function ClockTimePicker({ label, value, onChange }) {
   const [isOpen, setIsOpen] = useState(false)
   const [selection, setSelection] = useState('hour')
@@ -203,6 +207,8 @@ export default function ProfessionalDashboardPage() {
   const [profile, setProfile] = useState(null)
   const [bookings, setBookings] = useState([])
   const [availability, setAvailability] = useState([])
+  const [payoutSummary, setPayoutSummary] = useState(null)
+  const [payoutRequests, setPayoutRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [startTime, setStartTime] = useState('09:00')
@@ -232,14 +238,18 @@ export default function ProfessionalDashboardPage() {
       getMyProfile(),
       getIncomingBookings(),
       getMyAvailability(),
+      getPayoutSummary(),
+      getMyPayoutRequests(),
     ])
     if (results[0].status === 'fulfilled') setProfile(results[0].value)
     if (results[1].status === 'fulfilled') setBookings(results[1].value ?? [])
     if (results[2].status === 'fulfilled') setAvailability(results[2].value ?? [])
+    if (results[3].status === 'fulfilled') setPayoutSummary(results[3].value)
+    if (results[4].status === 'fulfilled') setPayoutRequests(results[4].value ?? [])
 
     const errors = results
       .filter((result) => result.status === 'rejected')
-      .map((result) => result.reason.response?.data?.message ?? 'Some professional data could not be loaded.')
+      .map((result) => result.reason.response?.data?.message ?? 'Some professional or payout data could not be loaded.')
     if (errors.length) setErrorMessage([...new Set(errors)].join(' '))
     setLoading(false)
   }, [])
@@ -250,15 +260,19 @@ export default function ProfessionalDashboardPage() {
       getMyProfile(),
       getIncomingBookings(),
       getMyAvailability(),
+      getPayoutSummary(),
+      getMyPayoutRequests(),
     ])
       .then((results) => {
         if (!active) return
         if (results[0].status === 'fulfilled') setProfile(results[0].value)
         if (results[1].status === 'fulfilled') setBookings(results[1].value ?? [])
         if (results[2].status === 'fulfilled') setAvailability(results[2].value ?? [])
+        if (results[3].status === 'fulfilled') setPayoutSummary(results[3].value)
+        if (results[4].status === 'fulfilled') setPayoutRequests(results[4].value ?? [])
         const errors = results
           .filter((result) => result.status === 'rejected')
-          .map((result) => result.reason.response?.data?.message ?? 'Some professional data could not be loaded.')
+          .map((result) => result.reason.response?.data?.message ?? 'Some professional or payout data could not be loaded.')
         if (errors.length) setErrorMessage([...new Set(errors)].join(' '))
       })
       .finally(() => {
@@ -404,11 +418,9 @@ export default function ProfessionalDashboardPage() {
     bookingStatus(booking.status) === 'Cancelled' && booking.cancellationReason,
   )
   const pendingCount = bookings.filter((booking) => bookingStatus(booking.status) === 'Pending').length
-  const revenue = bookings.reduce((total, booking) => (
-    bookingStatus(booking.status) === 'Completed'
-      ? total + Number(booking.totalPrice ?? 0)
-      : total
-  ), 0)
+  const openPayoutRequest = payoutRequests.find(
+    (request) => String(request.status).toLowerCase() === 'requested',
+  )
   const weeklyAvailability = availability.filter((slot) => slot.specificDate == null)
   const dateOverrides = availability.filter((slot) => slot.specificDate != null)
 
@@ -441,7 +453,7 @@ export default function ProfessionalDashboardPage() {
               )}
               {profile?.city && (
                 <span>
-                  <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+                  <span className="material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
                   {profile.city}
                 </span>
               )}
@@ -475,33 +487,131 @@ export default function ProfessionalDashboardPage() {
       <div className="row g-3 mb-4">
         <div className="col-6 col-lg-3">
           <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
-            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">event_available</span>
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--success" aria-hidden="true">event_available</span>
             <span className="text-on-surface-variant">Active bookings</span>
             <strong className="d-block fs-3">{incoming.length}</strong>
           </div>
         </div>
         <div className="col-6 col-lg-3">
           <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
-            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">pending_actions</span>
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--warning" aria-hidden="true">pending_actions</span>
             <span className="text-on-surface-variant">Pending requests</span>
             <strong className="d-block fs-3">{pendingCount}</strong>
           </div>
         </div>
         <div className="col-6 col-lg-3">
           <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
-            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">payments</span>
-            <span className="text-on-surface-variant">Revenue</span>
-            <strong className="d-block fs-3"><MoneyAmount value={revenue} /></strong>
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--warning" aria-hidden="true">hourglass_top</span>
+            <span className="text-on-surface-variant">Pending earnings</span>
+            <strong className="d-block fs-3"><MoneyAmount value={payoutSummary?.pending} /></strong>
           </div>
         </div>
         <div className="col-6 col-lg-3">
           <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
-            <span className="material-symbols-outlined professional-stat-icon" aria-hidden="true">spa</span>
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--cash" aria-hidden="true">account_balance_wallet</span>
+            <span className="text-on-surface-variant">Available</span>
+            <strong className="d-block fs-3"><MoneyAmount value={payoutSummary?.available} /></strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--warning" aria-hidden="true">pending_actions</span>
+            <span className="text-on-surface-variant">Requested</span>
+            <strong className="d-block fs-3"><MoneyAmount value={payoutSummary?.requested} /></strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--coin" aria-hidden="true">paid</span>
+            <span className="text-on-surface-variant">Paid out</span>
+            <strong className="d-block fs-3"><MoneyAmount value={payoutSummary?.paidOut} /></strong>
+          </div>
+        </div>
+        <div className="col-6 col-lg-3">
+          <div className="glass-card rounded-2xl p-4 professional-dashboard-stat">
+            <span className="material-symbols-outlined professional-stat-icon icon-tone--beauty" aria-hidden="true">spa</span>
             <span className="text-on-surface-variant">Services</span>
             <strong className="d-block fs-3">{profile?.services?.length ?? 0}</strong>
           </div>
         </div>
       </div>
+
+      <section className="glass-card rounded-2xl p-4 mb-4" aria-labelledby="professional-payouts-heading">
+        <header className="professional-incoming-heading">
+          <div>
+            <p className="professional-incoming-eyebrow mb-1">Earnings</p>
+            <h2 className="h4 mb-1" id="professional-payouts-heading">Payouts</h2>
+            <p className="small text-on-surface-variant mb-0">
+              Completed, undisputed bookings become available immediately. Review your balance, payout details, and transfer history.
+            </p>
+          </div>
+          <Link className="btn btn-primary" to="/dashboard/professional/payouts">
+            View payout details
+            <span className="material-symbols-outlined ms-1" aria-hidden="true">arrow_forward</span>
+          </Link>
+        </header>
+        <div className="professional-payout-preview-metrics">
+          <div>
+            <span>Available to request</span>
+            <strong><MoneyAmount value={payoutSummary?.available} /></strong>
+          </div>
+          <div>
+            <span>Pending earnings</span>
+            <strong><MoneyAmount value={payoutSummary?.pending} /></strong>
+          </div>
+          <div>
+            <span>Paid out</span>
+            <strong><MoneyAmount value={payoutSummary?.paidOut} /></strong>
+          </div>
+        </div>
+        {openPayoutRequest && (
+          <p className="professional-payout-preview-notice" role="status">
+            <span className="material-symbols-outlined" aria-hidden="true">pending_actions</span>
+            Your payout request is awaiting admin review.
+          </p>
+        )}
+        {payoutRequests.length === 0 ? (
+          <p className="small text-on-surface-variant mt-3 mb-0">Your payout requests and payment history will appear here.</p>
+        ) : (
+          <div className="table-responsive mt-3 professional-payout-preview-table">
+            <table className="table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Requested</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Payment method</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Reference / result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payoutRequests.slice(0, 3).map((request) => (
+                  <tr key={request.id}>
+                    <td>{new Date(request.requestedAt).toLocaleDateString()}</td>
+                    <td className="professional-payout-amount"><MoneyAmount value={request.amount} /></td>
+                    <td>
+                      {request.payoutMethod?.toLowerCase() === 'esewa'
+                        ? <EsewaLogo compact />
+                        : request.payoutMethod || '—'}
+                    </td>
+                    <td>{request.status}</td>
+                    <td>
+                      {request.reference && <div>Reference: {request.reference}</div>}
+                      {request.rejectionReason && <div>Reason: {request.rejectionReason}</div>}
+                      {!request.reference && !request.rejectionReason && '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {payoutRequests.length > 3 && (
+          <p className="small text-on-surface-variant mt-2 mb-0">
+            Showing the latest 3 of {payoutRequests.length} payout records.
+          </p>
+        )}
+      </section>
 
       <div className="row g-4 align-items-start">
         <section className="col-12">
@@ -572,7 +682,7 @@ export default function ProfessionalDashboardPage() {
                             )}
                             {status === 'Confirmed' && (
                               <button className="btn btn-outline-primary" type="button" onClick={() => updateBooking(booking.id, completeBooking)}>
-                                <span className="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                                <span className="material-symbols-outlined icon-tone--success" aria-hidden="true">task_alt</span>
                                 Mark complete
                               </button>
                             )}
@@ -602,7 +712,7 @@ export default function ProfessionalDashboardPage() {
                           </section>
                           <div className="professional-booking-appointment">
                             <div className="professional-booking-appointment-row">
-                              <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                              <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">calendar_month</span>
                               <span>
                                 <small>Appointment</small>
                                 <strong>{new Date(booking.scheduledDateTime).toLocaleDateString(undefined, {
@@ -624,10 +734,12 @@ export default function ProfessionalDashboardPage() {
                             )}
                           </div>
                           <div className="professional-booking-total">
-                            <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                            <span className="material-symbols-outlined icon-tone--coin" aria-hidden="true">payments</span>
                             <span>
-                              <small>Booking total</small>
-                              <strong><MoneyAmount value={booking.totalPrice} /></strong>
+                              <small>You earn</small>
+                              <strong>
+                                <MoneyAmount value={Number(booking.totalPrice ?? 0) - Number(booking.commissionAmount ?? 0)} />
+                              </strong>
                             </span>
                           </div>
                         </div>
@@ -706,7 +818,7 @@ export default function ProfessionalDashboardPage() {
                             </span>
                           </div>
                           <p className="professional-cancellation-date">
-                            <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                            <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">calendar_month</span>
                             <time>{new Date(booking.scheduledDateTime).toLocaleString()}</time>
                           </p>
                         </div>
@@ -786,7 +898,7 @@ export default function ProfessionalDashboardPage() {
                 <h2 className="h5 mb-1">Weekly working hours</h2>
                 <p className="small text-on-surface-variant mb-0">Set your regular shifts. Customers see bookable start times that fit each service.</p>
               </div>
-              <span className="material-symbols-outlined text-secondary" aria-hidden="true">calendar_month</span>
+              <span className="material-symbols-outlined text-secondary icon-tone--info" aria-hidden="true">calendar_month</span>
             </div>
             <div className="professional-weekly-schedule mt-3">
               {weekDays.map((day, dayIndex) => {

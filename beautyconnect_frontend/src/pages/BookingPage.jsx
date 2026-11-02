@@ -7,17 +7,9 @@ import './BookingPage.css'
 import LoadingState from '../components/LoadingState'
 import LocationPicker from '../components/LocationPicker'
 import MoneyAmount from '../components/MoneyAmount'
+import EsewaLogo from '../components/EsewaLogo'
 import { notify } from '../utils/notifications'
 import { NEPAL_PHONE_PREFIX, withNepalPhonePrefix } from '../utils/phone'
-
-function EsewaLogo({ compact = false }) {
-  return (
-    <span className={`booking-esewa-logo${compact ? ' booking-esewa-logo--compact' : ''}`} aria-label="eSewa">
-      <img src="/esewa.png" alt="" />
-      <span>Sewa</span>
-    </span>
-  )
-}
 
 export default function BookingPage() {
   const [searchParams] = useSearchParams()
@@ -258,15 +250,15 @@ export default function BookingPage() {
           </header>
           <ol className="booking-checkout-stepper" aria-label="Booking progress">
             <li className="booking-checkout-step booking-checkout-step--complete">
-              <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
+              <span className="material-symbols-outlined icon-tone--success" aria-hidden="true">check_circle</span>
               <span><strong>Service &amp; time</strong><small>Selected</small></span>
             </li>
             <li className="booking-checkout-step booking-checkout-step--active" aria-current="step">
-              <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+              <span className="material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
               <span><strong>Details &amp; location</strong><small>Current step</small></span>
             </li>
             <li className="booking-checkout-step">
-              <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+              <span className="material-symbols-outlined icon-tone--coin" aria-hidden="true">payments</span>
               <span><strong>Payment</strong><small><EsewaLogo compact /></small></span>
             </li>
           </ol>
@@ -298,7 +290,7 @@ export default function BookingPage() {
                 <form onSubmit={handleBooking}>
                   <section className="booking-location-section mb-4" aria-labelledby="service-location-heading">
                     <header className="booking-location-heading">
-                      <span className="booking-location-heading-icon material-symbols-outlined" aria-hidden="true">location_on</span>
+                      <span className="booking-location-heading-icon material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
                       <div>
                         <p className="booking-checkout-eyebrow mb-1">Where should we meet?</p>
                         <h3 id="service-location-heading" className="h5 mb-1">Service location</h3>
@@ -325,7 +317,7 @@ export default function BookingPage() {
                         />
                         {!isAddressValid && (
                           <p id="booking-address-error" className="booking-field-error" role="alert">
-                            <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                            <span className="material-symbols-outlined icon-tone--danger" aria-hidden="true">error</span>
                             Address must be between 5 and 300 characters.
                           </p>
                         )}
@@ -347,7 +339,7 @@ export default function BookingPage() {
                         />
                         {!isCityValid && (
                           <p id="booking-city-error" className="booking-field-error" role="alert">
-                            <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                            <span className="material-symbols-outlined icon-tone--danger" aria-hidden="true">error</span>
                             City must be between 2 and 100 characters.
                           </p>
                         )}
@@ -369,7 +361,7 @@ export default function BookingPage() {
                         />
                         {!isPhoneValid && (
                           <p id="booking-phone-error" className="booking-field-error" role="alert">
-                            <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                            <span className="material-symbols-outlined icon-tone--danger" aria-hidden="true">error</span>
                             Enter a contact phone with 7 to 15 digits.
                           </p>
                         )}
@@ -388,7 +380,7 @@ export default function BookingPage() {
                     </div>
                     {!hasValidCoordinates && (
                       <p className="booking-field-error booking-coordinate-error" role="alert">
-                        <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                        <span className="material-symbols-outlined icon-tone--danger" aria-hidden="true">error</span>
                         {getCoordinateValidationMessage()}
                       </p>
                     )}
@@ -440,7 +432,7 @@ export default function BookingPage() {
                   </div>
                 </div>
                 <div className="booking-summary-appointment">
-                  <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                  <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">calendar_month</span>
                   <div>
                     <small>Appointment time</small>
                     <strong>{hasValidScheduledTime ? new Date(scheduledDateTime).toLocaleString() : 'No appointment time selected'}</strong>
@@ -470,13 +462,13 @@ export default function BookingPage() {
         ) : (
           <div className="booking-payment-card glass-card" aria-labelledby="booking-payment-title">
             <header className="booking-payment-header">
-              <span className="booking-payment-icon material-symbols-outlined" aria-hidden="true">payments</span>
+              <span className="booking-payment-icon material-symbols-outlined icon-tone--coin" aria-hidden="true">payments</span>
               <p className="booking-checkout-eyebrow">Secure checkout</p>
               <h1 id="booking-payment-title">Complete your payment</h1>
               <p>One final step to confirm your appointment.</p>
             </header>
             <div className="booking-payment-notice" role="status">
-              <span className="material-symbols-outlined" aria-hidden="true">info</span>
+              <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">info</span>
               <p>
                 <strong>Your booking is not confirmed yet.</strong>
                 It will be created after <EsewaLogo compact /> verifies your successful payment.

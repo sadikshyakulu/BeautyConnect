@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getAssetUrl } from '../api/assets'
 import { uploadAvatar } from '../api/profileImage'
+import EsewaLogo from '../components/EsewaLogo'
+import { getMyPayoutDetails, updateMyPayoutDetails } from '../api/payout'
 import LoadingState from '../components/LoadingState'
 import VerifiedBadge from '../components/VerifiedBadge'
 import {
@@ -27,6 +29,13 @@ const emptyService = {
   price: '',
   durationMinutes: '60',
 }
+const emptyPayoutDetails = {
+  payoutMethod: 'eSewa',
+  accountName: '',
+  accountNumber: '',
+  bankName: '',
+}
+const platformCommissionRate = 0.05
 
 const verificationStatus = (status) => typeof status === 'number'
   ? ['Pending', 'Approved', 'Rejected'][status] ?? 'Unknown'
@@ -36,6 +45,10 @@ export default function ProfessionalStudioPage() {
   const { user, updateProfile } = useAuth()
   const [profile, setProfile] = useState(null)
   const [profileDraft, setProfileDraft] = useState(null)
+  const [payoutDetails, setPayoutDetails] = useState(null)
+  const [payoutDraft, setPayoutDraft] = useState(emptyPayoutDetails)
+  const [editingPayoutDetails, setEditingPayoutDetails] = useState(false)
+  const [savingPayoutDetails, setSavingPayoutDetails] = useState(false)
   const [serviceDraft, setServiceDraft] = useState(emptyService)
   const [editingServiceId, setEditingServiceId] = useState(null)
   const [showServiceForm, setShowServiceForm] = useState(false)
@@ -95,12 +108,101 @@ export default function ProfessionalStudioPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let active = true
+    getMyPayoutDetails()
+      .then((details) => {
+        if (!active) return
+        setPayoutDetails(details)
+        setPayoutDraft({
+          payoutMethod: details?.payoutMethod ?? 'eSewa',
+          accountName: details?.accountName ?? '',
+          accountNumber: '',
+          bankName: details?.bankName ?? '',
+        })
+        setEditingPayoutDetails(!details?.maskedAccountNumber)
+      })
+      .catch((error) => {
+        if (active) setErrorMessage(error.response?.data?.message ?? 'Could not load your payout details.')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
   function updateProfileField(event) {
     const { name, value } = event.target
     setProfileDraft((current) => ({
       ...current,
       [name]: name === 'phoneNumber' ? withNepalPhonePrefix(value) : value,
     }))
+  }
+
+  function updatePayoutField(event) {
+    const { name, value } = event.target
+    setPayoutDraft((current) => ({ ...current, [name]: value }))
+  }
+
+  function cancelPayoutEdit() {
+    setPayoutDraft({
+      payoutMethod: payoutDetails?.payoutMethod ?? 'eSewa',
+      accountName: payoutDetails?.accountName ?? '',
+      accountNumber: '',
+      bankName: payoutDetails?.bankName ?? '',
+    })
+    setEditingPayoutDetails(false)
+  }
+
+  async function handlePayoutDetailsSave(event) {
+    event.preventDefault()
+    const accountName = payoutDraft.accountName.trim()
+    const accountNumber = payoutDraft.accountNumber.trim()
+    const bankName = payoutDraft.bankName.trim()
+    const isEsewa = payoutDraft.payoutMethod === 'eSewa'
+    const isAccountNumberValid = isEsewa
+      ? /^9[678]\d{8}$/.test(accountNumber)
+      : /^\d{6,30}$/.test(accountNumber)
+
+    if (accountName.length < 2 || accountName.length > 100) {
+      notify.error('Account name must contain 2 to 100 characters.')
+      return
+    }
+    if (!isAccountNumberValid) {
+      notify.error(isEsewa
+        ? 'Enter a valid 10-digit Nepali mobile number for eSewa.'
+        : 'Bank account number must contain 6 to 30 digits.')
+      return
+    }
+    if (!isEsewa && !bankName) {
+      notify.error('Enter your bank name.')
+      return
+    }
+
+    setSavingPayoutDetails(true)
+    try {
+      const saved = await updateMyPayoutDetails({
+        payoutMethod: payoutDraft.payoutMethod,
+        accountName,
+        accountNumber,
+        bankName: isEsewa ? null : bankName,
+      })
+      setPayoutDetails(saved)
+      setPayoutDraft({
+        payoutMethod: saved.payoutMethod ?? payoutDraft.payoutMethod,
+        accountName: saved.accountName ?? accountName,
+        accountNumber: '',
+        bankName: saved.bankName ?? '',
+      })
+      setEditingPayoutDetails(false)
+      notify.success('Payout details saved securely.')
+    } catch (error) {
+      const validationMessage = Object.values(error.response?.data?.errors ?? {})
+        .flat()
+        .find((message) => typeof message === 'string')
+      notify.error(error.response?.data?.message ?? validationMessage ?? 'Could not save your payout details.')
+    } finally {
+      setSavingPayoutDetails(false)
+    }
   }
 
   async function handleProfileSave(event) {
@@ -347,6 +449,10 @@ export default function ProfessionalStudioPage() {
     && phoneDigits >= 7
     && phoneDigits <= 15
   const showPhoneError = phoneNumber !== '+977' && !isPhoneValid
+  const servicePrice = Number(serviceDraft.price)
+  const estimatedPayout = Number.isFinite(servicePrice) && servicePrice > 0
+    ? Math.round((servicePrice * (1 - platformCommissionRate) + Number.EPSILON) * 100) / 100
+    : null
 
   return (
     <div className="dashboard-page dashboard-studio-page">
@@ -406,7 +512,7 @@ export default function ProfessionalStudioPage() {
                   />
                   {showPhoneError ? (
                     <p id="studio-phone-error" className="studio-field-error" role="alert">
-                      <span className="material-symbols-outlined" aria-hidden="true">error</span>
+                      <span className="material-symbols-outlined icon-tone--danger" aria-hidden="true">error</span>
                       Enter a phone number using digits, spaces, + or - with 7 to 15 digits.
                     </p>
                   ) : (
@@ -459,6 +565,84 @@ export default function ProfessionalStudioPage() {
                 {savingProfile ? 'Saving profile…' : 'Save studio profile'}
               </button>
             </form>
+          </section>
+
+          <section className="dashboard-panel mb-2" aria-labelledby="studio-payout-heading">
+            <div className="dashboard-section-title">
+              <div>
+                <span className="dashboard-eyebrow">GET PAID</span>
+                <h2 id="studio-payout-heading">Payout details</h2>
+                <p>Your account number is encrypted and only shown in masked form after saving.</p>
+              </div>
+              <span className="material-symbols-outlined dashboard-section-icon icon-tone--cash" aria-hidden="true">account_balance</span>
+            </div>
+            {payoutDetails?.maskedAccountNumber && !editingPayoutDetails ? (
+              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                  <strong>
+                    {payoutDetails.payoutMethod === 'eSewa' ? <><EsewaLogo compact /> · </> : `${payoutDetails.payoutMethod} · `}
+                    {payoutDetails.accountName}
+                  </strong>
+                  <div className="text-on-surface-variant">
+                    {payoutDetails.bankName ? `${payoutDetails.bankName} · ` : ''}
+                    {payoutDetails.maskedAccountNumber}
+                  </div>
+                </div>
+                <button className="btn btn-outline-primary btn-sm" type="button" onClick={() => setEditingPayoutDetails(true)}>
+                  Edit payout details
+                </button>
+              </div>
+            ) : (
+              <form className="row g-3" onSubmit={handlePayoutDetailsSave}>
+                <div className="col-12 col-md-4">
+                  <label className="form-label" htmlFor="payout-method">Payout method</label>
+                  <select className="form-select" id="payout-method" name="payoutMethod" value={payoutDraft.payoutMethod} onChange={(event) => {
+                    setPayoutDraft((current) => ({ ...current, payoutMethod: event.target.value, accountNumber: '' }))
+                  }}>
+                    <option value="eSewa">eSewa</option>
+                    <option value="Bank">Bank</option>
+                  </select>
+                </div>
+                <div className="col-12 col-md-4">
+                  <label className="form-label" htmlFor="payout-account-name">Account name</label>
+                  <input className="form-control" id="payout-account-name" name="accountName" minLength="2" maxLength="100" required autoComplete="name" value={payoutDraft.accountName} onChange={updatePayoutField} />
+                </div>
+                <div className="col-12 col-md-4">
+                  <label className="form-label" htmlFor="payout-account-number">
+                    {payoutDraft.payoutMethod === 'eSewa' ? 'eSewa mobile number' : 'Bank account number'}
+                  </label>
+                  <input
+                    className="form-control"
+                    id="payout-account-number"
+                    name="accountNumber"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={payoutDraft.payoutMethod === 'eSewa' ? 10 : 30}
+                    minLength={payoutDraft.payoutMethod === 'eSewa' ? 10 : 6}
+                    pattern={payoutDraft.payoutMethod === 'eSewa' ? '9[678][0-9]{8}' : '[0-9]{6,30}'}
+                    placeholder={payoutDetails?.maskedAccountNumber ? 'Enter the full number to replace it' : ''}
+                    required
+                    value={payoutDraft.accountNumber}
+                    onChange={updatePayoutField}
+                  />
+                </div>
+                {payoutDraft.payoutMethod === 'Bank' && (
+                  <div className="col-12 col-md-6">
+                    <label className="form-label" htmlFor="payout-bank-name">Bank name</label>
+                    <input className="form-control" id="payout-bank-name" name="bankName" maxLength="100" required value={payoutDraft.bankName} onChange={updatePayoutField} />
+                  </div>
+                )}
+                <div className="col-12 d-flex flex-wrap justify-content-end gap-2">
+                  {payoutDetails?.maskedAccountNumber && (
+                    <button className="btn btn-outline-secondary" type="button" disabled={savingPayoutDetails} onClick={cancelPayoutEdit}>Cancel</button>
+                  )}
+                  <button className="btn btn-primary" type="submit" disabled={savingPayoutDetails}>
+                    {savingPayoutDetails ? 'Saving…' : 'Save payout details'}
+                  </button>
+                </div>
+              </form>
+            )}
           </section>
 
           <section className="dashboard-panel mb-2" aria-labelledby="studio-services-heading">
@@ -573,6 +757,13 @@ export default function ProfessionalStudioPage() {
                     <label className="form-label" htmlFor="service-description">Service details <span className="text-on-surface-variant fw-normal">(optional)</span></label>
                     <textarea className="form-control" id="service-description" rows="2" maxLength="2000" value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} placeholder="Describe what clients can expect." />
                   </div>
+                  {estimatedPayout !== null && (
+                    <div className="col-12">
+                      <p className="small text-on-surface-variant mb-0">
+                        You receive <strong><MoneyAmount value={estimatedPayout} /></strong> after the {platformCommissionRate * 100}% platform fee.
+                      </p>
+                    </div>
+                  )}
                   <div className="col-12 d-flex gap-2 justify-content-end studio-service-form-submit pt-1">
                     <button className="btn btn-outline-secondary btn-sm px-3" type="button" onClick={resetServiceForm}>Cancel</button>
                     <button className="btn btn-primary btn-sm px-3" type="submit" disabled={savingService}>

@@ -8,7 +8,7 @@ export default function VerifiedBadge({ className = '' }) {
       aria-label="Verified professional"
       title="Verified professional"
     >
-      <span className="material-symbols-outlined" aria-hidden="true">verified</span>
+      <span className="material-symbols-outlined icon-tone--verified" aria-hidden="true">verified</span>
     </span>
   )
 }

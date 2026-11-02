@@ -258,7 +258,7 @@ export default function LocationPicker({ location, onChange }) {
       )}
       {hasCoordinates && (
         <p className="location-picker-coordinates small text-on-surface-variant mt-2 mb-0">
-          <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+          <span className="material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
           Pin: {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
         </p>
       )}

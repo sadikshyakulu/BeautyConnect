@@ -1,0 +1,280 @@
+.professional-payouts-page {
+  width: min(100%, 1440px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2.5vw, 2rem);
+}
+
+.professional-payouts-hero,
+.professional-payouts-panel {
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow: 0 14px 36px rgba(64, 47, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: saturate(175%) blur(22px);
+  backdrop-filter: saturate(175%) blur(22px);
+}
+
+.professional-payouts-hero {
+  display: flex;
+  min-height: 140px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: clamp(1.1rem, 2.5vw, 2rem);
+}
+
+.professional-payouts-eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--primary);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.professional-payouts-hero h1 {
+  margin: 0;
+  color: #302221;
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+}
+
+.professional-payouts-hero p {
+  margin: 0.45rem 0 0;
+  color: var(--on-surface-variant);
+}
+
+.professional-payouts-hero > .btn,
+.professional-payouts-panel-header > .btn {
+  flex: 0 0 auto;
+}
+
+.professional-payouts-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.professional-payouts-metric {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid rgba(149, 71, 65, 0.12);
+  border-radius: 0.95rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(252, 245, 244, 0.8));
+  box-shadow: 0 7px 22px rgba(71, 43, 42, 0.05);
+}
+
+.professional-payouts-metric > .material-symbols-outlined {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  margin-bottom: 0.2rem;
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.professional-payouts-metric small {
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.professional-payouts-metric .money-amount {
+  color: #21834a;
+  font-family: var(--font-headline);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.professional-payouts-panel {
+  margin-bottom: 1rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.professional-payouts-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.professional-payouts-panel-header h2 {
+  margin: 0;
+  color: #302221;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.professional-payouts-panel-header p {
+  max-width: 850px;
+  margin: 0.45rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.84rem;
+}
+
+.professional-payouts-status-note {
+  margin: 0.85rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.82rem;
+}
+
+.professional-payouts-open-request {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.85rem 0 0;
+  color: #9c5a17;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.professional-payouts-account {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+}
+
+.professional-payouts-account > div {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid rgba(149, 71, 65, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.professional-payouts-account dt {
+  margin-bottom: 0.2rem;
+  color: var(--on-surface-variant);
+  font-size: 0.7rem;
+}
+
+.professional-payouts-account dd {
+  margin: 0;
+  color: #302221;
+  font-size: 0.84rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.professional-payouts-count {
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(149, 71, 65, 0.1);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.professional-payouts-table {
+  margin-top: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(149, 71, 65, 0.12);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.professional-payouts-table .table {
+  min-width: 680px;
+  font-size: 0.82rem;
+}
+
+.professional-payouts-table th,
+.professional-payouts-table td {
+  padding: 0.75rem;
+}
+
+.professional-payout-amount .money-amount {
+  color: #21834a !important;
+  font-weight: 700;
+}
+
+.professional-payouts-status {
+  display: inline-flex;
+  padding: 0.32rem 0.6rem;
+  border-radius: 999px;
+  background: #f0edf0;
+  color: #5a4f57;
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+
+.professional-payouts-status--paid {
+  background: #e6f2e8;
+  color: #28643a;
+}
+
+.professional-payouts-status--requested {
+  background: #fbf0dc;
+  color: #805a1b;
+}
+
+.professional-payouts-status--rejected {
+  background: #f7e8e7;
+  color: #9c3d37;
+}
+
+.professional-payouts-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1rem 1rem;
+  text-align: center;
+}
+
+.professional-payouts-empty > .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 1.8rem;
+}
+
+.professional-payouts-empty strong {
+  color: #302221;
+}
+
+.professional-payouts-empty p {
+  margin: 0;
+  color: var(--on-surface-variant);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 900px) {
+  .professional-payouts-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .professional-payouts-account {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .professional-payouts-page {
+    padding: 0.75rem;
+  }
+
+  .professional-payouts-hero,
+  .professional-payouts-panel-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .professional-payouts-hero {
+    min-height: 0;
+    padding: 1rem;
+  }
+
+  .professional-payouts-hero > .btn,
+  .professional-payouts-panel-header > .btn {
+    align-self: stretch;
+  }
+
+  .professional-payouts-metrics,
+  .professional-payouts-account {
+    grid-template-columns: 1fr;
+  }
+}

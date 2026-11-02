@@ -15,7 +15,7 @@ export default function BookingLocationDetails({
   const contactActions = [
     phone && (
       <a key="phone" className="booking-location-action booking-location-phone" href={`tel:${phone}`}>
-        <span className="material-symbols-outlined" aria-hidden="true">call</span>
+        <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">call</span>
         <span>Call</span>
         <strong>{phone}</strong>
       </a>
@@ -62,7 +62,7 @@ export default function BookingLocationDetails({
         <div>
           <p className="professional-booking-kicker mb-1">{addressLabel}</p>
           <h4 className="h6 mb-0">
-            <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+            <span className="material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
             {[location.addressLine, location.city].filter(Boolean).join(', ') || 'Service location'}
           </h4>
         </div>

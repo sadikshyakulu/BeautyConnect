@@ -221,7 +221,7 @@ export default function ArtistProfilePage() {
             </div>
             {professional.city && (
               <p className="artist-profile-location">
-                <span className="material-symbols-outlined" aria-hidden="true">location_on</span>
+                <span className="material-symbols-outlined icon-tone--location" aria-hidden="true">location_on</span>
                 {professional.city}
               </p>
             )}

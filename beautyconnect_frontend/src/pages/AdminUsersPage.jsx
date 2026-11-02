@@ -16,6 +16,28 @@ const getNestedValue = (source, ...paths) => {
   return undefined
 }
 
+function AdminProfileAvatar({ avatarUrl, name }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toLocaleUpperCase()
+
+  if (avatarUrl && !imageFailed) {
+    return (
+      <img
+        className="admin-table-profile-avatar"
+        src={getAssetUrl(avatarUrl)}
+        alt=""
+        onError={() => setImageFailed(true)}
+      />
+    )
+  }
+
+  return (
+    <span className="admin-table-profile-avatar admin-table-profile-avatar--fallback" aria-hidden="true">
+      {initials || 'BC'}
+    </span>
+  )
+}
+
 export default function AdminUsersPage() {
   const [analytics, setAnalytics] = useState(null)
   const [customers, setCustomers] = useState([])
@@ -178,7 +200,7 @@ export default function AdminUsersPage() {
           </div>
         </article>
         <article className="admin-member-summary-card">
-          <span className="material-symbols-outlined" aria-hidden="true">event</span>
+          <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">event</span>
           <div>
             <label>Pending profiles</label>
             <strong>{verifications.length}</strong>
@@ -217,11 +239,7 @@ export default function AdminUsersPage() {
                   <tr key={`${user.email}-${user.name}`}>
                     <td>
                       <div className="admin-table-profile-cell">
-                        {user.avatarUrl ? (
-                          <img src={getAssetUrl(user.avatarUrl)} alt="" />
-                        ) : (
-                          <span className="admin-application-avatar material-symbols-outlined" aria-hidden="true">person</span>
-                        )}
+                        <AdminProfileAvatar avatarUrl={user.avatarUrl} name={user.name} />
                         <strong>{user.name}</strong>
                       </div>
                     </td>
@@ -270,11 +288,7 @@ export default function AdminUsersPage() {
                   <tr key={professional.id}>
                     <td>
                       <div className="admin-table-profile-cell">
-                        {professional.avatarUrl ? (
-                          <img src={getAssetUrl(professional.avatarUrl)} alt="" />
-                        ) : (
-                          <span className="admin-application-avatar material-symbols-outlined" aria-hidden="true">person</span>
-                        )}
+                        <AdminProfileAvatar avatarUrl={professional.avatarUrl} name={professional.professionalName} />
                         <div>
                           <strong>{professional.professionalName}</strong>
                           <small>{getNestedValue(professional, 'fullName', 'user.fullName', 'profile.fullName') || 'Professional profile'}</small>

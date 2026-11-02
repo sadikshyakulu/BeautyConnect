@@ -290,6 +290,7 @@
 
 .dashboard-sidebar-link .material-symbols-outlined {
   font-size: 1.2rem;
+  transition: color 0.18s ease;
 }
 
 .dashboard-sidebar-link:hover,
@@ -468,6 +469,7 @@
   .navbar-logo-text {
     font-size: 1.15rem;
   }
+
   .navbar-inner {
     height: 64px;
     gap: 0.75rem;

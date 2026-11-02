@@ -98,7 +98,67 @@
   color: var(--primary);
 }
 
+.admin-metric-icon--cash {
+  color: #21834a;
+}
+
+.admin-metric-icon--coin {
+  color: #a87910;
+}
+
+.admin-metric-icon--request {
+  color: #bd6b16;
+}
+
+.admin-metric-icon--rose {
+  color: #bf5964;
+}
+
+.admin-metric-icon--teal {
+  color: #188c83;
+}
+
+.admin-metric-icon--violet {
+  color: #7753ae;
+}
+
+.admin-queue-tab-icon--coin {
+  color: #a87910;
+}
+
+.admin-action-icon--cash {
+  color: #21834a;
+  vertical-align: middle;
+}
+
+.admin-action-icon--reject {
+  color: #bd4d50;
+  vertical-align: middle;
+}
+
+.admin-payout-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-weight: 700;
+}
+
+.admin-payout-status .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.admin-payout-status--paid {
+  color: #21834a;
+}
+
+.admin-payout-status--rejected {
+  color: #bd4d50;
+}
+
 .admin-metric-label {
+  display: flex;
+  min-height: 2.2rem;
+  align-items: flex-end;
   padding-right: 2.7rem;
   color: var(--on-surface-variant);
   font-size: 0.76rem;
@@ -578,8 +638,7 @@
   gap: 0.7rem;
 }
 
-.admin-table-profile-cell img,
-.admin-table-profile-cell .admin-application-avatar {
+.admin-table-profile-avatar {
   display: grid;
   flex: 0 0 38px;
   width: 38px;
@@ -592,6 +651,13 @@
   background: #f1e2df;
   color: var(--primary);
   font-size: 1.1rem;
+}
+
+.admin-table-profile-avatar--fallback {
+  border: 1px solid rgba(149, 71, 65, 0.12);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .admin-table-profile-cell strong {
@@ -630,6 +696,316 @@
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+}
+
+.admin-payout-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
+  gap: 0.8rem;
+}
+
+.admin-payout-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fff, var(--surface-container-low));
+}
+
+.admin-payout-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-payout-professional {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-payout-avatar {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: #f1e2df;
+  box-shadow: 0 3px 10px rgba(64, 47, 59, 0.12);
+  color: var(--primary);
+  object-fit: cover;
+}
+
+.admin-payout-avatar--fallback {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-payout-avatar--table {
+  flex-basis: 38px;
+  width: 38px;
+  height: 38px;
+  font-size: 0.7rem;
+}
+
+.admin-payout-professional--table {
+  gap: 0.55rem;
+}
+
+.admin-payout-professional > div {
+  min-width: 0;
+}
+
+.admin-payout-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.admin-payout-header p {
+  margin: 0.15rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-payout-amount {
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.admin-payout-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1rem;
+  margin: 1rem 0 0;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--surface-container-high);
+  border-bottom: 1px solid var(--surface-container-high);
+}
+
+.admin-payout-details > div {
+  min-width: 0;
+}
+
+.admin-payout-details dt {
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.admin-payout-details dd {
+  margin: 0.1rem 0 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+
+.admin-payout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.admin-payout-actions .esewa-logo {
+  margin-right: 0.35rem;
+}
+
+.admin-payout-history {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.admin-payout-balances-table {
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.admin-payout-balances-table .table {
+  min-width: 930px;
+  font-size: 0.78rem;
+}
+
+.admin-payout-balances-table th,
+.admin-payout-balances-table td {
+  padding: 0.7rem;
+  white-space: nowrap;
+}
+
+.admin-payout-balances-table tbody th {
+  white-space: normal;
+}
+
+.admin-payout-balances-table tbody th small {
+  display: block;
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+.admin-payout-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.admin-payout-preview-metrics article {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.8rem;
+  background: linear-gradient(145deg, #fff, var(--surface-container-low));
+}
+
+.admin-payout-preview-metrics article > span {
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.admin-payout-preview-metrics article > strong {
+  font-size: 1.1rem;
+}
+
+.admin-payout-destination-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.admin-payout-destination {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.9rem;
+  background: linear-gradient(145deg, #fff, var(--surface-container-low));
+  color: var(--on-surface);
+  text-decoration: none;
+}
+
+.admin-payout-destination > .material-symbols-outlined {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.admin-payout-destination--requests > .material-symbols-outlined {
+  color: #bd6b16;
+}
+
+.admin-payout-destination--history > .material-symbols-outlined {
+  color: #5478a8;
+}
+
+.admin-payout-destination > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 0.2rem;
+}
+
+.admin-payout-destination small {
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+}
+
+.admin-payout-destination:hover {
+  border-color: var(--primary-container);
+  color: var(--on-surface);
+  box-shadow: 0 6px 18px rgba(64, 47, 59, 0.08);
+}
+
+.admin-payout-preview-table {
+  border: 1px solid var(--surface-container-high);
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.admin-payout-preview-table th,
+.admin-payout-preview-table td {
+  padding: 0.7rem;
+}
+
+.admin-payout-preview-table tbody th small {
+  display: block;
+  color: var(--on-surface-variant);
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+.admin-payout-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  color: var(--on-surface-variant);
+  font-size: 0.75rem;
+}
+
+.admin-payout-preview-footer a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-payout-preview-footer a:hover {
+  text-decoration: underline;
+}
+
+.admin-payout-dialog-backdrop {
+  position: fixed;
+  z-index: 1060;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(32, 25, 30, 0.48);
+  backdrop-filter: blur(5px);
+}
+
+.admin-payout-dialog {
+  width: min(100%, 520px);
+  padding: clamp(1.1rem, 3vw, 1.6rem);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 70px rgba(32, 25, 30, 0.28);
+}
+
+.admin-payout-dialog > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-payout-dialog h2 {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 1.35rem;
+}
+
+.admin-payout-dialog > p {
+  margin: 1rem 0;
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.admin-payout-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
 }
 
 .admin-dispute-header {
@@ -742,5 +1118,9 @@
   .admin-dispute-meta > strong {
     flex-basis: 100%;
     margin-left: 0;
+  }
+
+  .admin-payout-details {
+    grid-template-columns: 1fr;
   }
 }

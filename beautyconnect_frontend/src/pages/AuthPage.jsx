@@ -248,7 +248,7 @@ export default function AuthPage() {
                   <div className="auth-input-group">
                     <label className="text-xs text-on-surface font-medium" htmlFor="city">City</label>
                     <div className="auth-input-wrapper">
-                      <span className="material-symbols-outlined auth-input-icon" aria-hidden="true">location_on</span>
+                      <span className="material-symbols-outlined auth-input-icon icon-tone--location" aria-hidden="true">location_on</span>
                       <input
                         id="city"
                         type="text"

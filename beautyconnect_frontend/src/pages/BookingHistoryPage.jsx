@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth'
 import BookingLocationDetails from '../components/BookingLocationDetails'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
+import ReviewComposer from '../components/ReviewComposer'
 import './BookingHistoryPage.css'
 
 const bookingStatus = (status) => typeof status === 'number'
@@ -19,6 +20,7 @@ export default function BookingHistoryPage() {
   const [bookings, setBookings] = useState([])
   const [professionalAvatars, setProfessionalAvatars] = useState({})
   const [filter, setFilter] = useState('All')
+  const [reviewingBookingId, setReviewingBookingId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const isProfessional = user?.role === 'Professional'
@@ -90,7 +92,7 @@ export default function BookingHistoryPage() {
           <p className="text-on-surface-variant mb-0">
             {isProfessional
               ? 'Review appointments customers have booked with your studio.'
-              : 'Review your appointments, payment totals, and booking status.'}
+              : 'Review your appointments, payment totals, and leave feedback after a completed service.'}
           </p>
         </div>
         <span className="material-symbols-outlined booking-history-hero-icon" aria-hidden="true">history</span>
@@ -211,7 +213,7 @@ export default function BookingHistoryPage() {
 
                       <div className="booking-history-info-grid">
                         <div className="booking-history-info-card">
-                          <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                          <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">calendar_month</span>
                           <div>
                             <small>Appointment</small>
                             <strong>{bookingDate.toLocaleDateString(undefined, {
@@ -227,7 +229,7 @@ export default function BookingHistoryPage() {
                           </div>
                         </div>
                         <div className="booking-history-info-card booking-history-info-card--total">
-                          <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                          <span className="material-symbols-outlined icon-tone--coin" aria-hidden="true">payments</span>
                           <div>
                             <small>Booking total</small>
                             <strong><MoneyAmount value={booking.totalPrice} /></strong>
@@ -246,6 +248,23 @@ export default function BookingHistoryPage() {
                           {booking.cancellationReason && <p>Cancellation reason: {booking.cancellationReason}</p>}
                         </div>
                       )}
+                      {!isProfessional && status === 'Completed' && (
+                        booking.hasReview ? (
+                          <span className="booking-history-reviewed">
+                            <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                            Review submitted
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-outline-primary booking-history-review-button"
+                            aria-expanded={reviewingBookingId === booking.id}
+                            onClick={() => setReviewingBookingId(booking.id)}
+                          >
+                            Write review
+                          </button>
+                        )
+                      )}
                     </div>
                     <section className="booking-history-location" aria-label="Service location">
                       <p className="booking-history-kicker">Service location</p>
@@ -257,6 +276,19 @@ export default function BookingHistoryPage() {
                       />
                     </section>
                   </div>
+                  {!isProfessional && reviewingBookingId === booking.id && !booking.hasReview && (
+                    <ReviewComposer
+                      booking={booking}
+                      professionalAvatarUrl={personAvatarUrl}
+                      onCancel={() => setReviewingBookingId(null)}
+                      onSubmitted={(bookingId) => {
+                        setBookings((current) => current.map((item) =>
+                          item.id === bookingId ? { ...item, hasReview: true } : item,
+                        ))
+                        setReviewingBookingId(null)
+                      }}
+                    />
+                  )}
                 </article>
               )
             })}

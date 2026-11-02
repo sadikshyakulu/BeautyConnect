@@ -75,7 +75,7 @@
 }
 
 .customer-dashboard-stat strong {
-  color: var(--primary);
+  color: #315c83;
   font-family: var(--font-headline);
   line-height: 1.2;
 }
@@ -89,8 +89,10 @@
   height: 42px;
   place-items: center;
   border-radius: 0.85rem;
-  background: #f4e5e3;
-  color: var(--primary);
+  border: 1px solid #d6e5f5;
+  background: #eaf2fb;
+  color: var(--icon-info);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .customer-professional-grid {
@@ -678,51 +680,6 @@
 .customer-feedback-form {
   padding-top: 1rem;
   border-top: 1px solid var(--surface-container-high);
-}
-
-.review-rating {
-  display: inline-block;
-  direction: rtl;
-  min-height: 2.5rem;
-}
-
-.review-rating:not(:checked) > input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.review-rating:not(:checked) > label {
-  float: right;
-  cursor: pointer;
-  color: #666;
-  font-size: 2rem;
-  line-height: 1.2;
-  user-select: none;
-}
-
-.review-rating:not(:checked) > label::before {
-  content: '★';
-}
-
-.review-rating > input:checked ~ label,
-.review-rating:not(:checked) > label:hover,
-.review-rating:not(:checked) > label:hover ~ label {
-  color: #ff9e0b;
-}
-
-.review-rating > input:checked + label:hover,
-.review-rating > input:checked + label:hover ~ label,
-.review-rating > input:checked ~ label:hover,
-.review-rating > input:checked ~ label:hover ~ label {
-  color: #e58e09;
-}
-
-.review-rating > input:focus-visible + label {
-  border-radius: 0.2rem;
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
 }
 
 @media (max-width: 1199px) {

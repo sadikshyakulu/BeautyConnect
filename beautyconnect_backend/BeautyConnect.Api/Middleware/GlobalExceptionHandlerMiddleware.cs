@@ -7,11 +7,16 @@ public class GlobalExceptionHandlerMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger;
+    private readonly IWebHostEnvironment _environment;
 
-    public GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
+    public GlobalExceptionHandlerMiddleware(
+        RequestDelegate next,
+        ILogger<GlobalExceptionHandlerMiddleware> logger,
+        IWebHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -33,7 +38,8 @@ public class GlobalExceptionHandlerMiddleware
                 status = 500,
                 error = "InternalServerError",
                 message = "An unexpected error occurred. Please try again later.",
-                correlationId
+                correlationId,
+                detail = _environment.IsDevelopment() ? ex.Message : null
             };
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));

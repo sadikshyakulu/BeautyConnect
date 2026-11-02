@@ -1,7 +1,7 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { cancelBooking, getCustomerBookings } from '../api/booking'
-import { aggregateServiceRatings, createReview, getReviewsForProfessional, serviceRatingKey } from '../api/review'
+import { aggregateServiceRatings, getReviewsForProfessional, serviceRatingKey } from '../api/review'
 import { getProfessionalById, getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import BookingLocationDetails from '../components/BookingLocationDetails'
@@ -9,6 +9,7 @@ import RatingStars from '../components/RatingStars'
 import ExpandableText from '../components/ExpandableText'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
+import ReviewComposer from '../components/ReviewComposer'
 import { notify } from '../utils/notifications'
 import './CustomerDashboardPage.css'
 import { useAuth } from '../auth/useAuth'
@@ -39,9 +40,6 @@ export default function CustomerDashboardPage() {
   const [reviewing, setReviewing] = useState(null)
   const [cancelling, setCancelling] = useState(null)
   const [reviewedBookingIds, setReviewedBookingIds] = useState([])
-  const reviewFormRef = useRef(null)
-  const [rating, setRating] = useState(5)
-  const [comment, setComment] = useState('')
   const [cancellationReason, setCancellationReason] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -99,8 +97,6 @@ export default function CustomerDashboardPage() {
           const completedBooking = completedBookings.find((booking) => !booking.hasReview)
           if (completedBooking) {
             setTab('history')
-            setRating(5)
-            setComment('')
             setCancelling(null)
             setReviewing(completedBooking)
           } else {
@@ -197,12 +193,6 @@ export default function CustomerDashboardPage() {
     navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null })
   }, [location.hash, location.pathname, location.search, location.state, navigate])
 
-  useEffect(() => {
-    if (!reviewing) return
-    reviewFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    reviewFormRef.current?.focus({ preventScroll: true })
-  }, [reviewing])
-
   const upcoming = useMemo(
     () => bookings.filter((booking) => ['Pending', 'Confirmed'].includes(statusName(booking.status))),
     [bookings],
@@ -266,24 +256,6 @@ export default function CustomerDashboardPage() {
     }
   }
 
-  async function handleReview(event) {
-    event.preventDefault()
-    if (!reviewing) return
-    setSubmitting(true)
-    setErrorMessage('')
-    try {
-      await createReview({ bookingId: reviewing.id, rating, comment })
-      setReviewedBookingIds((current) => [...current, reviewing.id])
-      setReviewing(null)
-      setComment('')
-      notify.success('Your review was submitted.')
-    } catch (error) {
-      notify.error(error.response?.data?.message ?? 'Could not submit your review.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
   return (
     <div className="customer-dashboard">
       <header className="glass-card rounded-2xl customer-dashboard-hero mb-4">
@@ -298,7 +270,7 @@ export default function CustomerDashboardPage() {
               <img className="customer-dashboard-avatar" src={getAssetUrl(user.profile.avatarUrl)} alt="" />
             ) : (
               <Link className="customer-dashboard-avatar customer-dashboard-avatar--empty" to="/dashboard/customer/profile" aria-label="Add a profile photo">
-                <span className="material-symbols-outlined" aria-hidden="true">person</span>
+                <span className="material-symbols-outlined icon-tone--people" aria-hidden="true">person</span>
               </Link>
             )}
             <Link className="btn btn-primary" to="/search">Explore professionals</Link>
@@ -312,14 +284,14 @@ export default function CustomerDashboardPage() {
       <div className="customer-dashboard-stats mb-5">
         <div className="customer-dashboard-stat">
           <article className="glass-card rounded-2xl p-3 p-md-4 h-100">
-            <span className="material-symbols-outlined customer-stat-icon" aria-hidden="true">event_upcoming</span>
+            <span className="material-symbols-outlined customer-stat-icon icon-tone--info" aria-hidden="true">event_upcoming</span>
             <span className="small text-on-surface-variant">Upcoming appointments</span>
             <strong className="d-block fs-3">{upcoming.length}</strong>
           </article>
         </div>
         <div className="customer-dashboard-stat">
           <article className="glass-card rounded-2xl p-3 p-md-4 h-100">
-            <span className="material-symbols-outlined customer-stat-icon" aria-hidden="true">history</span>
+            <span className="material-symbols-outlined customer-stat-icon icon-tone--info" aria-hidden="true">history</span>
             <span className="small text-on-surface-variant">Past appointments</span>
             <strong className="d-block fs-3">{history.length}</strong>
           </article>
@@ -382,7 +354,7 @@ export default function CustomerDashboardPage() {
                       />
                     ) : (
                       <span className="rounded-circle bg-surface-container d-flex align-items-center justify-content-center" style={{ width: 56, height: 56 }} aria-hidden="true">
-                        <span className="material-symbols-outlined" aria-hidden="true">face_3</span>
+                        <span className="material-symbols-outlined icon-tone--beauty" aria-hidden="true">face_3</span>
                       </span>
                     )}
                     <div className="min-w-0">
@@ -563,7 +535,7 @@ export default function CustomerDashboardPage() {
                     </section>
 
                     <div className="customer-booking-info-card">
-                      <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                      <span className="material-symbols-outlined icon-tone--info" aria-hidden="true">calendar_month</span>
                       <div>
                         <small>Appointment</small>
                         <strong>{appointmentDate.toLocaleDateString(undefined, {
@@ -580,7 +552,7 @@ export default function CustomerDashboardPage() {
                     </div>
 
                     <div className="customer-booking-info-card customer-booking-total">
-                      <span className="material-symbols-outlined" aria-hidden="true">payments</span>
+                      <span className="material-symbols-outlined icon-tone--coin" aria-hidden="true">payments</span>
                       <div>
                         <small>Booking total</small>
                         <strong><MoneyAmount value={booking.totalPrice} /></strong>
@@ -606,7 +578,6 @@ export default function CustomerDashboardPage() {
                         type="button"
                         className="btn btn-outline-primary customer-booking-review"
                         onClick={() => {
-                          setRating(5)
                           setReviewing(booking)
                           setCancelling(null)
                         }}
@@ -627,43 +598,15 @@ export default function CustomerDashboardPage() {
                   </section>
                 </div>
                 {reviewing?.id === booking.id && (
-                  <div className="customer-feedback-form mt-4" ref={reviewFormRef} tabIndex="-1">
-                    <h3 className="h5">Review {booking.service?.name ?? booking.professionalBusinessName}</h3>
-                    <form onSubmit={handleReview}>
-                      <fieldset className="mb-3">
-                        <legend className="form-label">Your rating</legend>
-                        <div className="review-rating" role="radiogroup" aria-label="Choose a rating from one to five stars">
-                          {[5, 4, 3, 2, 1].map((value) => (
-                            <Fragment key={value}>
-                              <input
-                                id={`review-rating-${booking.id}-${value}`}
-                                name={`review-rating-${booking.id}`}
-                                type="radio"
-                                value={value}
-                                checked={rating === value}
-                                onChange={() => setRating(value)}
-                                aria-label={`${value} ${value === 1 ? 'star' : 'stars'}`}
-                              />
-                              <label htmlFor={`review-rating-${booking.id}-${value}`} title={`${value} ${value === 1 ? 'star' : 'stars'}`} aria-hidden="true" />
-                            </Fragment>
-                          ))}
-                        </div>
-                      </fieldset>
-                      <label className="form-label" htmlFor={`review-comment-${booking.id}`}>Your review</label>
-                      <textarea
-                        id={`review-comment-${booking.id}`}
-                        className="form-control mb-3"
-                        maxLength="2000"
-                        required
-                        value={comment}
-                        onChange={(event) => setComment(event.target.value)}
-                      />
-                      <div className="d-flex gap-2">
-                        <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit review'}</button>
-                        <button type="button" className="btn btn-outline-secondary" onClick={() => setReviewing(null)}>Cancel</button>
-                      </div>
-                    </form>
-                  </div>
+                  <ReviewComposer
+                    booking={booking}
+                    professionalAvatarUrl={professionalAvatarUrl}
+                    onCancel={() => setReviewing(null)}
+                    onSubmitted={(bookingId) => {
+                      setReviewedBookingIds((current) => [...current, bookingId])
+                      setReviewing(null)
+                    }}
+                  />
                 )}
                 {cancelling?.id === booking.id && (
                   <form className="customer-feedback-form mt-4" onSubmit={handleCancel}>

@@ -5,6 +5,40 @@ import { getAssetUrl } from '../api/assets'
 import { notify } from '../utils/notifications'
 import './Navbar.css'
 
+function DashboardAccountAvatar({ user, displayName }) {
+  const [imageFailed, setImageFailed] = useState(false)
+
+  if (user.role === 'Admin') {
+    return <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--admin" src="/beautyconnectlogo.png" alt="" />
+  }
+
+  if (user.profile?.avatarUrl && !imageFailed) {
+    return (
+      <img
+        className="dashboard-sidebar-avatar dashboard-sidebar-avatar--image"
+        src={getAssetUrl(user.profile.avatarUrl)}
+        alt=""
+        onError={() => setImageFailed(true)}
+      />
+    )
+  }
+
+  return (
+    <div className="dashboard-sidebar-avatar" aria-hidden="true">
+      {displayName.slice(0, 1).toLocaleUpperCase()}
+    </div>
+  )
+}
+
+function getNavigationIconTone(icon) {
+  if (icon === 'account_balance_wallet') return 'cash'
+  if (icon === 'pending_actions') return 'warning'
+  if (icon === 'history' || icon === 'travel_explore') return 'info'
+  if (icon === 'groups' || icon === 'person') return 'people'
+  if (icon === 'auto_awesome') return 'beauty'
+  return 'brand'
+}
+
 export default function Navbar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -34,6 +68,7 @@ export default function Navbar() {
     const dashboardLinks = user.role === 'Professional'
       ? [
           { label: 'Studio overview', to: '/dashboard/professional', icon: 'space_dashboard' },
+          { label: 'Payouts', to: '/dashboard/professional/payouts', icon: 'account_balance_wallet' },
           { label: 'Booking history', to: '/dashboard/professional/history', icon: 'history' },
           { label: 'Profile & services', to: '/dashboard/professional/studio', icon: 'auto_awesome' },
         ]
@@ -41,6 +76,9 @@ export default function Navbar() {
         ? [
             { label: 'Platform operations', to: '/admin', icon: 'admin_panel_settings' },
             { label: 'Users & professionals', to: '/admin/users', icon: 'groups' },
+            { label: 'Payout balances', to: '/admin/payouts', icon: 'account_balance_wallet' },
+            { label: 'Payout requests', to: '/admin/payouts/requests', icon: 'pending_actions' },
+            { label: 'Payout history', to: '/admin/payouts/history', icon: 'history' },
           ]
         : [
             { label: 'My dashboard', to: '/dashboard/customer', icon: 'space_dashboard' },
@@ -76,30 +114,22 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`dashboard-sidebar-link${isActive ? ' dashboard-sidebar-link--active' : ''}`}
+                className={`dashboard-sidebar-link${isActive ? ' dashboard-sidebar-link--active' : ''} dashboard-sidebar-link--${link.icon}`}
               >
-                <span className="material-symbols-outlined" aria-hidden="true">{link.icon}</span>
+                <span className={`material-symbols-outlined icon-tone--${getNavigationIconTone(link.icon)}`} aria-hidden="true">{link.icon}</span>
                 {link.label}
               </Link>
             )
           })}
         </nav>
         <div className="dashboard-sidebar-account">
-          {user.role === 'Admin' ? (
-            <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--admin" src="/beautyconnectlogo.png" alt="" />
-          ) : user.profile?.avatarUrl ? (
-            <img className="dashboard-sidebar-avatar dashboard-sidebar-avatar--image" src={getAssetUrl(user.profile.avatarUrl)} alt="" />
-          ) : (
-            <div className="dashboard-sidebar-avatar" aria-hidden="true">
-              {displayName.slice(0, 1).toLocaleUpperCase()}
-            </div>
-          )}
+          <DashboardAccountAvatar user={user} displayName={displayName} />
           <div className="dashboard-sidebar-user">
             <strong>{displayName}</strong>
             <span>{user.role} account</span>
           </div>
           <button type="button" className="dashboard-sidebar-signout" onClick={handleSignOut} aria-label="Sign out">
-            <span className="material-symbols-outlined" aria-hidden="true">logout</span>
+            <span className="material-symbols-outlined icon-tone--logout" aria-hidden="true">logout</span>
           </button>
         </div>
       </aside>

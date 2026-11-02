@@ -84,6 +84,7 @@ public sealed record AdminPayoutRequestDto(
     int ProfessionalProfileId,
     string ProfessionalName,
     string ProfessionalEmail,
+    string? ProfessionalAvatarUrl,
     decimal Amount,
     string Status,
     DateTime RequestedAt,

@@ -121,6 +121,69 @@
   font-weight: 600;
 }
 
+.professional-payout-preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.professional-payout-preview-metrics > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(149, 71, 65, 0.1);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.professional-payout-preview-metrics span {
+  color: var(--on-surface-variant);
+  font-size: 0.72rem;
+}
+
+.professional-payout-preview-metrics .money-amount {
+  color: #21834a;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.professional-payout-preview-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.8rem 0 0;
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+}
+
+.professional-payout-preview-notice .material-symbols-outlined {
+  color: #bd6b16;
+  font-size: 1.1rem;
+}
+
+.professional-payout-preview-table {
+  border: 1px solid rgba(149, 71, 65, 0.1);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.professional-payout-preview-table .table {
+  min-width: 720px;
+  font-size: 0.82rem;
+}
+
+.professional-payout-amount .money-amount {
+  color: #21834a !important;
+  font-weight: 700;
+}
+
+@media (max-width: 575.98px) {
+  .professional-payout-preview-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
 .professional-dashboard-meta .material-symbols-outlined {
   font-size: 0.95rem;
 }
@@ -196,13 +259,38 @@
   color: var(--primary);
 }
 
+.professional-dashboard-stat .professional-stat-icon.icon-tone--success {
+  border: 1px solid #d5ead9;
+  background: #eaf5ec;
+}
+
+.professional-dashboard-stat .professional-stat-icon.icon-tone--warning {
+  border: 1px solid #f1dfc8;
+  background: #fbf1e4;
+}
+
+.professional-dashboard-stat .professional-stat-icon.icon-tone--cash {
+  border: 1px solid #d5ead9;
+  background: #eaf5ec;
+}
+
+.professional-dashboard-stat .professional-stat-icon.icon-tone--coin {
+  border: 1px solid #f1e7ba;
+  background: #fbf5dc;
+}
+
+.professional-dashboard-stat .professional-stat-icon.icon-tone--beauty {
+  border: 1px solid #f0dedd;
+  background: #f9eeed;
+}
+
 .professional-dashboard-stat > span:not(.professional-stat-icon) {
   display: block;
   padding-right: 2.75rem;
 }
 
 .professional-dashboard-stat > strong {
-  color: var(--primary);
+  color: #315c83;
   font-family: var(--font-headline);
   line-height: 1.2;
 }

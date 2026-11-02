@@ -13,6 +13,7 @@ public interface IPayoutService
     Task<List<PayoutRequestSummaryDto>?> GetMyRequestsAsync(int professionalUserId);
     Task<List<AdminPayoutRequestDto>> ListQueueAsync();
     Task<List<AdminPayoutRequestDto>> ListHistoryAsync();
+    Task<List<AdminProfessionalPayoutBalanceDto>> ListProfessionalBalancesAsync();
     Task<PayoutOperationResult<AdminPayoutRequestDto>> MarkPaidAsync(
         int requestId,
         int adminUserId,

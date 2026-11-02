@@ -48,6 +48,18 @@ public class PlatformAnalyticsDto
     public DateTime ActiveUsersSinceUtc { get; set; }
 }
 
+public sealed record AdminProfessionalPayoutBalanceDto(
+    int ProfessionalProfileId,
+    string ProfessionalName,
+    string ProfessionalEmail,
+    string? ProfessionalAvatarUrl,
+    decimal CustomerPaymentsReceived,
+    decimal PlatformCommission,
+    decimal Pending,
+    decimal Available,
+    decimal Requested,
+    decimal PaidOut);
+
 public class AdminCustomerDto
 {
     public int Id { get; set; }
@@ -79,6 +91,7 @@ public class AdminRecentActivityDto
     public string Type { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Detail { get; set; } = string.Empty;
+    public decimal? Amount { get; set; }
     public string TimeLabel { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

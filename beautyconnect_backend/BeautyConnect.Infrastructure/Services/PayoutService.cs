@@ -97,26 +97,31 @@ public sealed class PayoutService : IPayoutService
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var availableBefore = now.AddHours(-_options.HoldHours);
-        var pending = await _context.Bookings
-            .Where(booking =>
-                booking.ProfessionalProfileId == professionalProfileId.Value
-                && booking.Status == BookingStatus.Confirmed
-                && booking.RefundStatus == RefundStatus.NotRequested)
-            .SumAsync(booking => (decimal?)booking.ProfessionalPayoutAmount) ?? 0m;
-        var available = await GetAvailableBookingsQuery(
-                professionalProfileId.Value,
+        var pendingBookings = await GetPendingBookingsQuery(availableBefore)
+            .Where(booking => booking.ProfessionalProfileId == professionalProfileId.Value)
+            .Select(booking => booking.ProfessionalPayoutAmount)
+            .ToListAsync();
+        var availableBookings = await GetAvailableBookingsQuery(
                 availableBefore)
-            .SumAsync(booking => (decimal?)booking.ProfessionalPayoutAmount) ?? 0m;
-        var requested = await _context.PayoutRequests
+            .Where(booking => booking.ProfessionalProfileId == professionalProfileId.Value)
+            .Select(booking => booking.ProfessionalPayoutAmount)
+            .ToListAsync();
+        var requestedAmounts = await _context.PayoutRequests
             .Where(request =>
                 request.ProfessionalProfileId == professionalProfileId.Value
                 && request.Status == PayoutRequestStatus.Requested)
-            .SumAsync(request => (decimal?)request.Amount) ?? 0m;
-        var paidOut = await _context.PayoutRequests
+            .Select(request => request.Amount)
+            .ToListAsync();
+        var paidOutAmounts = await _context.PayoutRequests
             .Where(request =>
                 request.ProfessionalProfileId == professionalProfileId.Value
                 && request.Status == PayoutRequestStatus.Paid)
-            .SumAsync(request => (decimal?)request.Amount) ?? 0m;
+            .Select(request => request.Amount)
+            .ToListAsync();
+        var pending = pendingBookings.Sum();
+        var available = availableBookings.Sum();
+        var requested = requestedAmounts.Sum();
+        var paidOut = paidOutAmounts.Sum();
 
         return PayoutOperationResult<PayoutEarningsSummaryDto>.Success(
             new PayoutEarningsSummaryDto(pending, available, requested, paidOut));
@@ -165,8 +170,8 @@ public sealed class PayoutService : IPayoutService
                 var now = _timeProvider.GetUtcNow().UtcDateTime;
                 var eligibleBefore = now.AddHours(-_options.HoldHours);
                 var eligible = await GetAvailableBookingsQuery(
-                        professionalProfile.Id,
                         eligibleBefore)
+                    .Where(booking => booking.ProfessionalProfileId == professionalProfile.Id)
                     .Select(booking => new { booking.Id, booking.ProfessionalPayoutAmount })
                     .ToListAsync();
                 var amount = eligible.Sum(booking => booking.ProfessionalPayoutAmount);
@@ -194,8 +199,8 @@ public sealed class PayoutService : IPayoutService
                 await _context.SaveChangesAsync();
 
                 var affectedBookings = await GetAvailableBookingsQuery(
-                        professionalProfile.Id,
                         eligibleBefore)
+                    .Where(booking => booking.ProfessionalProfileId == professionalProfile.Id)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(booking => booking.PayoutRequestId, payoutRequest.Id));
                 if (affectedBookings != eligible.Count)
@@ -264,6 +269,85 @@ public sealed class PayoutService : IPayoutService
         return requests.Select(ToAdminRequest).ToList();
     }
 
+    public async Task<List<AdminProfessionalPayoutBalanceDto>> ListProfessionalBalancesAsync()
+    {
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var availableBefore = now.AddHours(-_options.HoldHours);
+        var profiles = await _context.ProfessionalProfiles
+            .AsNoTracking()
+            .Select(profile => new
+            {
+                profile.Id,
+                profile.BusinessName,
+                profile.User.Email,
+                profile.AvatarUrl
+            })
+            .OrderBy(profile => profile.BusinessName)
+            .ToListAsync();
+
+        var pendingRows = await GetPendingBookingsQuery(availableBefore)
+            .Select(booking => new { booking.ProfessionalProfileId, booking.ProfessionalPayoutAmount })
+            .ToListAsync();
+        var pending = GroupMoneyTotals(
+            pendingRows,
+            row => row.ProfessionalProfileId,
+            row => row.ProfessionalPayoutAmount);
+        var availableRows = await GetAvailableBookingsQuery(availableBefore)
+            .Select(booking => new { booking.ProfessionalProfileId, booking.ProfessionalPayoutAmount })
+            .ToListAsync();
+        var available = GroupMoneyTotals(
+            availableRows,
+            row => row.ProfessionalProfileId,
+            row => row.ProfessionalPayoutAmount);
+        var requestedRows = await _context.PayoutRequests
+            .Where(request => request.Status == PayoutRequestStatus.Requested)
+            .Select(request => new { request.ProfessionalProfileId, request.Amount })
+            .ToListAsync();
+        var requested = GroupMoneyTotals(
+            requestedRows,
+            row => row.ProfessionalProfileId,
+            row => row.Amount);
+        var paidOutRows = await _context.PayoutRequests
+            .Where(request => request.Status == PayoutRequestStatus.Paid)
+            .Select(request => new { request.ProfessionalProfileId, request.Amount })
+            .ToListAsync();
+        var paidOut = GroupMoneyTotals(
+            paidOutRows,
+            row => row.ProfessionalProfileId,
+            row => row.Amount);
+        var customerPaymentRows = await _context.Bookings
+            .Where(booking =>
+                booking.EsewaTransactionCode != null
+                && booking.EsewaTotalAmount.HasValue)
+            .Select(booking => new { booking.ProfessionalProfileId, Amount = booking.EsewaTotalAmount!.Value })
+            .ToListAsync();
+        var customerPayments = GroupMoneyTotals(
+            customerPaymentRows,
+            row => row.ProfessionalProfileId,
+            row => row.Amount);
+        var commissionRows = await _context.Bookings
+            .Where(booking => booking.Status == BookingStatus.Completed)
+            .Select(booking => new { booking.ProfessionalProfileId, booking.CommissionAmount })
+            .ToListAsync();
+        var commissions = GroupMoneyTotals(
+            commissionRows,
+            row => row.ProfessionalProfileId,
+            row => row.CommissionAmount);
+
+        return profiles.Select(profile => new AdminProfessionalPayoutBalanceDto(
+                profile.Id,
+                profile.BusinessName,
+                profile.Email,
+                profile.AvatarUrl,
+                customerPayments.GetValueOrDefault(profile.Id),
+                commissions.GetValueOrDefault(profile.Id),
+                pending.GetValueOrDefault(profile.Id),
+                available.GetValueOrDefault(profile.Id),
+                requested.GetValueOrDefault(profile.Id),
+                paidOut.GetValueOrDefault(profile.Id)))
+            .ToList();
+    }
+
     public Task<PayoutOperationResult<AdminPayoutRequestDto>> MarkPaidAsync(
         int requestId,
         int adminUserId,
@@ -281,7 +365,14 @@ public sealed class PayoutService : IPayoutService
         int adminUserId,
         MarkPayoutPaidDto request)
     {
-        var reference = request.Reference.Trim();
+        var reference = request.Reference?.Trim();
+        if (string.IsNullOrEmpty(reference))
+        {
+            return PayoutOperationResult<AdminPayoutRequestDto>.Failure(
+                "A payment reference is required.",
+                PayoutErrorCode.InvalidRequest);
+        }
+
         if (reference.Length is < 1 or > 200)
         {
             return PayoutOperationResult<AdminPayoutRequestDto>.Failure(
@@ -289,27 +380,32 @@ public sealed class PayoutService : IPayoutService
                 PayoutErrorCode.InvalidRequest);
         }
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable);
-        var now = _timeProvider.GetUtcNow().UtcDateTime;
-        var affected = await _context.PayoutRequests
-            .Where(item => item.Id == requestId && item.Status == PayoutRequestStatus.Requested)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(item => item.Status, PayoutRequestStatus.Paid)
-                .SetProperty(item => item.ProcessedAt, now)
-                .SetProperty(item => item.ProcessedByAdminUserId, adminUserId)
-                .SetProperty(item => item.Reference, reference)
-                .SetProperty(item => item.Notes, request.Notes == null ? null : request.Notes.Trim())
-                .SetProperty(item => item.OpenProfessionalProfileId, (int?)null));
-        if (affected == 0)
+        var notes = request.Notes?.Trim();
+        var executionStrategy = _context.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            await transaction.RollbackAsync();
-            return await GetProcessingFailureAsync(requestId);
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable);
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
+            var affected = await _context.PayoutRequests
+                .Where(item => item.Id == requestId && item.Status == PayoutRequestStatus.Requested)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(item => item.Status, PayoutRequestStatus.Paid)
+                    .SetProperty(item => item.ProcessedAt, now)
+                    .SetProperty(item => item.ProcessedByAdminUserId, adminUserId)
+                    .SetProperty(item => item.Reference, reference)
+                    .SetProperty(item => item.Notes, notes)
+                    .SetProperty(item => item.OpenProfessionalProfileId, (int?)null));
+            if (affected == 0)
+            {
+                await transaction.RollbackAsync();
+                return await GetProcessingFailureAsync(requestId);
+            }
 
-        await transaction.CommitAsync();
-        var updated = await GetAdminRequestsQuery().FirstAsync(item => item.Id == requestId);
-        return PayoutOperationResult<AdminPayoutRequestDto>.Success(ToAdminRequest(updated));
+            await transaction.CommitAsync();
+            var updated = await GetAdminRequestsQuery().FirstAsync(item => item.Id == requestId);
+            return PayoutOperationResult<AdminPayoutRequestDto>.Success(ToAdminRequest(updated));
+        });
     }
 
     private async Task<PayoutOperationResult<AdminPayoutRequestDto>> RejectRequestAsync(
@@ -325,30 +421,34 @@ public sealed class PayoutService : IPayoutService
                 PayoutErrorCode.InvalidRequest);
         }
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable);
-        var now = _timeProvider.GetUtcNow().UtcDateTime;
-        var affected = await _context.PayoutRequests
-            .Where(item => item.Id == requestId && item.Status == PayoutRequestStatus.Requested)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(item => item.Status, PayoutRequestStatus.Rejected)
-                .SetProperty(item => item.ProcessedAt, now)
-                .SetProperty(item => item.ProcessedByAdminUserId, adminUserId)
-                .SetProperty(item => item.RejectionReason, reason)
-                .SetProperty(item => item.OpenProfessionalProfileId, (int?)null));
-        if (affected == 0)
+        var executionStrategy = _context.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            await transaction.RollbackAsync();
-            return await GetProcessingFailureAsync(requestId);
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable);
+            var now = _timeProvider.GetUtcNow().UtcDateTime;
+            var affected = await _context.PayoutRequests
+                .Where(item => item.Id == requestId && item.Status == PayoutRequestStatus.Requested)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(item => item.Status, PayoutRequestStatus.Rejected)
+                    .SetProperty(item => item.ProcessedAt, now)
+                    .SetProperty(item => item.ProcessedByAdminUserId, adminUserId)
+                    .SetProperty(item => item.RejectionReason, reason)
+                    .SetProperty(item => item.OpenProfessionalProfileId, (int?)null));
+            if (affected == 0)
+            {
+                await transaction.RollbackAsync();
+                return await GetProcessingFailureAsync(requestId);
+            }
 
-        await _context.Bookings
-            .Where(booking => booking.PayoutRequestId == requestId)
-            .ExecuteUpdateAsync(setters => setters
-                .SetProperty(booking => booking.PayoutRequestId, (int?)null));
-        await transaction.CommitAsync();
-        var updated = await GetAdminRequestsQuery().FirstAsync(item => item.Id == requestId);
-        return PayoutOperationResult<AdminPayoutRequestDto>.Success(ToAdminRequest(updated));
+            await _context.Bookings
+                .Where(booking => booking.PayoutRequestId == requestId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(booking => booking.PayoutRequestId, (int?)null));
+            await transaction.CommitAsync();
+            var updated = await GetAdminRequestsQuery().FirstAsync(item => item.Id == requestId);
+            return PayoutOperationResult<AdminPayoutRequestDto>.Success(ToAdminRequest(updated));
+        });
     }
 
     private async Task<PayoutOperationResult<AdminPayoutRequestDto>> GetProcessingFailureAsync(int requestId)
@@ -359,11 +459,24 @@ public sealed class PayoutService : IPayoutService
             exists ? PayoutErrorCode.Conflict : PayoutErrorCode.NotFound);
     }
 
-    private IQueryable<Booking> GetAvailableBookingsQuery(int professionalProfileId, DateTime eligibleBefore)
+    private IQueryable<Booking> GetPendingBookingsQuery(DateTime eligibleBefore)
     {
         return _context.Bookings.Where(booking =>
-            booking.ProfessionalProfileId == professionalProfileId
-            && booking.Status == BookingStatus.Completed
+            booking.RefundStatus == RefundStatus.NotRequested
+            && booking.PayoutRequestId == null
+            && (booking.Status == BookingStatus.Confirmed
+                || (booking.Status == BookingStatus.Completed
+                    && (!booking.CompletedAt.HasValue
+                        || booking.CompletedAt.Value > eligibleBefore
+                        || (booking.Dispute != null
+                            && (booking.Dispute.Status == DisputeStatus.Open
+                                || booking.Dispute.Status == DisputeStatus.UnderReview))))));
+    }
+
+    private IQueryable<Booking> GetAvailableBookingsQuery(DateTime eligibleBefore)
+    {
+        return _context.Bookings.Where(booking =>
+            booking.Status == BookingStatus.Completed
             && booking.CompletedAt.HasValue
             && booking.CompletedAt.Value <= eligibleBefore
             && booking.RefundStatus == RefundStatus.NotRequested
@@ -386,6 +499,13 @@ public sealed class PayoutService : IPayoutService
             .Where(profile => profile.UserId == professionalUserId)
             .Select(profile => (int?)profile.Id)
             .FirstOrDefaultAsync();
+
+    private static Dictionary<int, decimal> GroupMoneyTotals<T>(
+        IEnumerable<T> rows,
+        Func<T, int> professionalProfileId,
+        Func<T, decimal> amount) =>
+        rows.GroupBy(professionalProfileId)
+            .ToDictionary(group => group.Key, group => group.Sum(amount));
 
     private PayoutDetailsDto ToPayoutDetails(ProfessionalProfile profile)
     {
@@ -421,6 +541,7 @@ public sealed class PayoutService : IPayoutService
             request.ProfessionalProfileId,
             request.ProfessionalProfile.BusinessName,
             request.ProfessionalProfile.User.Email,
+            request.ProfessionalProfile.AvatarUrl,
             request.Amount,
             request.Status.ToString(),
             request.RequestedAt,

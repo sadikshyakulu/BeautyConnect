@@ -204,6 +204,29 @@
   min-width: 0;
 }
 
+.booking-history-review-button,
+.booking-history-reviewed {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.45rem;
+  border-radius: 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.booking-history-review-button {
+  padding: 0.25rem 0.55rem;
+}
+
+.booking-history-reviewed {
+  padding: 0.4rem 0.7rem;
+  background: #e6f2e8;
+  color: #28643a;
+  font-size: 0.7rem;
+}
+
 .booking-history-summary {
   display: flex;
   min-width: 0;
