@@ -187,7 +187,7 @@ static async Task SeedAdminAsync(WebApplication app)
     {
         if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(password))
         {
-            email = "admin.test@beautyconnect.local";
+            email = "admin@gmail.com";
             password = "admin@123";
         }
     }

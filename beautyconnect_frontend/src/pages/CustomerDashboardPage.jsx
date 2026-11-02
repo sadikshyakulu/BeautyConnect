@@ -1,12 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { cancelBooking, getCustomerBookings } from '../api/booking'
-import { aggregateServiceRatings, getReviewsForProfessional, serviceRatingKey } from '../api/review'
 import { getProfessionalById, getProfessionals } from '../api/search'
 import { getAssetUrl } from '../api/assets'
 import BookingLocationDetails from '../components/BookingLocationDetails'
-import RatingStars from '../components/RatingStars'
-import ExpandableText from '../components/ExpandableText'
 import LoadingState from '../components/LoadingState'
 import MoneyAmount from '../components/MoneyAmount'
 import ReviewComposer from '../components/ReviewComposer'
@@ -29,9 +26,6 @@ export default function CustomerDashboardPage() {
   const [bookings, setBookings] = useState([])
   const [professionalAvatars, setProfessionalAvatars] = useState({})
   const [professionals, setProfessionals] = useState([])
-  const [serviceRatings, setServiceRatings] = useState(new Map())
-  const [serviceRatingFailures, setServiceRatingFailures] = useState(new Set())
-  const [serviceRatingsLoading, setServiceRatingsLoading] = useState(true)
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError, setCatalogError] = useState('')
   const [serviceFilter, setServiceFilter] = useState('All services')
@@ -138,35 +132,6 @@ export default function CustomerDashboardPage() {
       active = false
     }
   }, [])
-
-  useEffect(() => {
-    if (catalogLoading) return undefined
-
-    let active = true
-    Promise.allSettled(professionals.map(async (professional) => ({
-      professionalId: professional.id,
-      ratings: aggregateServiceRatings(await getReviewsForProfessional(professional.id)),
-    })))
-      .then((results) => {
-        if (!active) return
-        const ratings = new Map()
-        const failedProfessionalIds = new Set()
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            ratings.set(result.value.professionalId, result.value.ratings)
-          } else {
-            failedProfessionalIds.add(professionals[index].id)
-          }
-        })
-        setServiceRatings(ratings)
-        setServiceRatingFailures(failedProfessionalIds)
-        setServiceRatingsLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
-  }, [catalogLoading, professionals])
 
   useEffect(() => {
     const payment = searchParams.get('payment')
@@ -342,18 +307,26 @@ export default function CustomerDashboardPage() {
           </div>
         ) : (
           <div className={`customer-professional-grid${displayedProfessionals.length === 1 ? ' customer-professional-grid--featured' : ''}`}>
-            {displayedProfessionals.map((professional) => (
+            {displayedProfessionals.map((professional) => {
+              const featuredService = professional.visibleServices[0]
+              const servicePrices = professional.visibleServices
+                .map((service) => Number(service.price))
+                .filter(Number.isFinite)
+              const lowestPrice = servicePrices.length ? Math.min(...servicePrices) : null
+              const hasServiceFilters = serviceFilter !== 'All services' || serviceSearch.trim().length > 0
+
+              return (
                 <article className="glass-card rounded-2xl customer-professional-card" key={professional.id}>
                   <div className="customer-professional-summary">
                     {professional.avatarUrl ? (
                       <img
                         className="rounded-circle object-fit-cover"
-                        style={{ width: 72, height: 72 }}
+                        style={{ width: 64, height: 64 }}
                         src={getAssetUrl(professional.avatarUrl)}
                         alt=""
                       />
                     ) : (
-                      <span className="rounded-circle bg-surface-container d-flex align-items-center justify-content-center" style={{ width: 56, height: 56 }} aria-hidden="true">
+                      <span className="rounded-circle bg-surface-container d-flex align-items-center justify-content-center" style={{ width: 64, height: 64 }} aria-hidden="true">
                         <span className="material-symbols-outlined icon-tone--beauty" aria-hidden="true">face_3</span>
                       </span>
                     )}
@@ -365,78 +338,48 @@ export default function CustomerDashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="customer-professional-offerings">
-                    {professional.visibleServices.map((service) => {
-                      const serviceRating = serviceRatings.get(professional.id)?.get(serviceRatingKey(service))
-                        ?? serviceRatings.get(professional.id)?.get(`name:${service.name.trim().toLocaleLowerCase()}`)
-                      return (
-                      <div className={`customer-offering${service.images?.length ? ' customer-offering--with-gallery' : ''}`} key={service.id}>
-                        {service.images?.length > 0 && (
-                          <div className="customer-offering-gallery" aria-label={`${service.name} photos`}>
-                            {service.images.slice(0, 3).map((image, index) => (
-                              <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
-                            ))}
-                          </div>
-                        )}
-                        <div className="customer-offering-info">
-                          <div className="customer-offering-heading">
-                            <Link
-                              className="customer-offering-name"
-                              to={`/artist/${professional.id}/service/${service.id}`}
-                            >
-                              {service.name}
-                            </Link>
-                            <strong className="customer-offering-price"><MoneyAmount value={service.price} /></strong>
-                          </div>
-                          <div className="customer-offering-meta">
-                            <span>{service.category}</span>
-                            <span>{service.durationMinutes} min</span>
-                          </div>
-                          {service.description && (
-                            <ExpandableText
-                              className="customer-offering-description"
-                              text={service.description}
-                              lines={2}
-                            />
-                          )}
-                          <div className="customer-offering-rating" aria-live="polite">
-                            {serviceRatingsLoading ? (
-                              <LoadingState className="small" variant="inline" label="Loading rating…" />
-                            ) : serviceRatingFailures.has(professional.id) ? (
-                              <span className="small text-on-surface-variant">Rating unavailable</span>
-                            ) : serviceRating ? (
-                              <>
-                                <RatingStars
-                                  rating={serviceRating.total / serviceRating.count}
-                                  className="rating-stars--compact"
-                                />
-                                <strong>
-                                  {(serviceRating.total / serviceRating.count).toFixed(1)}
-                                </strong>
-                                <span className="small text-on-surface-variant">
-                                  ({serviceRating.count})
-                                </span>
-                              </>
-                            ) : (
-                              <span className="small text-on-surface-variant">No reviews yet</span>
-                            )}
-                          </div>
-                          <Link
-                            className="customer-offering-link"
-                            to={`/artist/${professional.id}/service/${service.id}`}
-                          >
-                            Service details
-                          </Link>
-                        </div>
-                      </div>
-                      )
-                    })}
+                  <div className="customer-professional-highlights">
+                    <span className="customer-professional-service-count">
+                      {hasServiceFilters
+                        ? `${professional.visibleServices.length} matching ${professional.visibleServices.length === 1 ? 'service' : 'services'}`
+                        : `${professional.visibleServices.length} ${professional.visibleServices.length === 1 ? 'service' : 'services'} available`}
+                    </span>
+                    {lowestPrice !== null && (
+                      <p className="customer-professional-starting-price mb-0">
+                        From <strong><MoneyAmount value={lowestPrice} /></strong>
+                      </p>
+                    )}
                   </div>
+                  {featuredService && (
+                    <Link
+                      className="customer-featured-service"
+                      to={`/artist/${professional.id}/service/${featuredService.id}`}
+                    >
+                      {featuredService.images?.[0] ? (
+                        <img
+                          className="customer-featured-service-image"
+                          src={getAssetUrl(featuredService.images[0])}
+                          alt=""
+                        />
+                      ) : (
+                        <span className="customer-featured-service-icon material-symbols-outlined" aria-hidden="true">
+                          auto_awesome
+                        </span>
+                      )}
+                      <span className="customer-featured-service-copy">
+                        <span className="customer-featured-service-label">FEATURED SERVICE</span>
+                        <strong>{featuredService.name}</strong>
+                        <span>{[featuredService.category, `${featuredService.durationMinutes} min`].filter(Boolean).join(' · ')}</span>
+                      </span>
+                      <span className="material-symbols-outlined customer-featured-service-arrow" aria-hidden="true">arrow_forward</span>
+                    </Link>
+                  )}
                   <Link className="btn btn-outline-primary customer-professional-cta" to={`/artist/${professional.id}`}>
-                    View times &amp; book
+                    Explore services &amp; book
                   </Link>
                 </article>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
