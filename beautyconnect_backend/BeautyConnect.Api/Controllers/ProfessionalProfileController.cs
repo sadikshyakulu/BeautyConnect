@@ -122,6 +122,19 @@ public class ProfessionalProfileController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("services/{serviceId:int}/images")]
+    public async Task<IActionResult> RemoveServiceImage(int serviceId, [FromQuery] string imageUrl)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
+        if (string.IsNullOrWhiteSpace(imageUrl)) return BadRequest(new { message = "An image URL is required." });
+
+        var removed = await _profileService.RemoveServiceImageAsync(userId.Value, serviceId, imageUrl);
+        if (removed == null) return NotFound(new { message = "Service not found." });
+        if (!removed.Value) return NotFound(new { message = "Service image not found." });
+        return NoContent();
+    }
+
     [HttpPost("submit-verification")]
     public async Task<IActionResult> SubmitForVerification()
     {

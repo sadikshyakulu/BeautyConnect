@@ -191,6 +191,37 @@ public class ProfessionalProfileService : IProfessionalProfileService
         return new PortfolioImageUploadResultDto { ImageUrl = upload.ImageUrl };
     }
 
+    public async Task<bool?> RemoveServiceImageAsync(int userId, int serviceId, string imageUrl)
+    {
+        var service = await _context.Services
+            .Include(item => item.ProfessionalProfile)
+            .FirstOrDefaultAsync(item =>
+                item.Id == serviceId
+                && item.ProfessionalProfile.UserId == userId);
+        if (service == null) return null;
+
+        var images = JsonSerializer.Deserialize<List<string>>(service.ImagesJson) ?? [];
+        if (!images.Remove(imageUrl)) return false;
+
+        service.ImagesJson = JsonSerializer.Serialize(images);
+        await _context.SaveChangesAsync();
+
+        const string imagePathPrefix = "/uploads/services/";
+        if (imageUrl.StartsWith(imagePathPrefix, StringComparison.Ordinal))
+        {
+            var fileName = imageUrl[imagePathPrefix.Length..];
+            if (Guid.TryParseExact(Path.GetFileNameWithoutExtension(fileName), "N", out _)
+                && Path.GetFileName(fileName) == fileName
+                && new[] { ".jpg", ".png" }.Contains(Path.GetExtension(fileName), StringComparer.OrdinalIgnoreCase))
+            {
+                var filePath = Path.Combine(_uploadRootDirectory, "services", fileName);
+                if (File.Exists(filePath)) File.Delete(filePath);
+            }
+        }
+
+        return true;
+    }
+
     public async Task<bool> SubmitForVerificationAsync(int userId)
     {
         var profile = await _context.ProfessionalProfiles

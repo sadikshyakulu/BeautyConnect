@@ -20,5 +20,6 @@ public interface IProfessionalProfileService
         Stream imageStream,
         string contentType,
         long contentLength);
+    Task<bool?> RemoveServiceImageAsync(int userId, int serviceId, string imageUrl);
     Task<bool> SubmitForVerificationAsync(int userId);
 }

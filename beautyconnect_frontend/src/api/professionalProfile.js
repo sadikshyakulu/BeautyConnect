@@ -36,6 +36,13 @@ export async function uploadServiceImage(serviceId, image) {
   return data
 }
 
+export async function removeServiceImage(serviceId, imageUrl) {
+  const { data } = await client.delete(`/ProfessionalProfile/services/${serviceId}/images`, {
+    params: { imageUrl },
+  })
+  return data
+}
+
 export async function submitForVerification() {
   const { data } = await client.post('/ProfessionalProfile/submit-verification')
   return data

@@ -10,6 +10,7 @@ import {
   submitForVerification,
   updateMyProfile,
   updateService,
+  removeServiceImage,
   uploadPortfolioImage,
   uploadServiceImage,
 } from '../api/professionalProfile'
@@ -43,6 +44,7 @@ export default function ProfessionalStudioPage() {
   const [savingService, setSavingService] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadingServiceId, setUploadingServiceId] = useState(null)
+  const [removingServiceImage, setRemovingServiceImage] = useState(null)
   const [submittingVerification, setSubmittingVerification] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -306,6 +308,20 @@ export default function ProfessionalStudioPage() {
     }
   }
 
+  async function handleServiceImageRemove(service, image) {
+    const imageKey = `${service.id}:${image}`
+    setRemovingServiceImage(imageKey)
+    try {
+      await removeServiceImage(service.id, image)
+      await loadProfile()
+      notify.success(`Photo removed from ${service.name}.`)
+    } catch (error) {
+      notify.error(error.response?.data?.message ?? `Could not remove the photo from ${service.name}.`)
+    } finally {
+      setRemovingServiceImage(null)
+    }
+  }
+
   async function handleVerificationSubmit() {
     setErrorMessage('')
     setSubmittingVerification(true)
@@ -487,7 +503,24 @@ export default function ProfessionalStudioPage() {
                       {service.images?.length > 0 && (
                         <div className="studio-service-gallery">
                           {service.images.map((image, index) => (
-                            <img key={`${image}-${index}`} src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
+                            <div
+                              className="studio-service-image"
+                              key={`${image}-${index}`}
+                              style={{ position: 'relative', flex: '0 0 56px', width: 56, height: 56 }}
+                            >
+                              <img src={getAssetUrl(image)} alt={`${service.name} example ${index + 1}`} />
+                              <button
+                                className="studio-service-image-remove"
+                                style={{ position: 'absolute', top: 4, right: 4, zIndex: 1 }}
+                                type="button"
+                                aria-label={`Remove ${service.name} photo ${index + 1}`}
+                                title="Remove photo"
+                                disabled={uploadingServiceId !== null || removingServiceImage !== null}
+                                onClick={() => handleServiceImageRemove(service, image)}
+                              >
+                                <span className="material-symbols-outlined" aria-hidden="true">close</span>
+                              </button>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -500,7 +533,7 @@ export default function ProfessionalStudioPage() {
                             type="file"
                             accept="image/jpeg,image/png"
                             multiple
-                            disabled={uploadingServiceId !== null || (service.images?.length ?? 0) >= 10}
+                            disabled={uploadingServiceId !== null || removingServiceImage !== null || (service.images?.length ?? 0) >= 10}
                             onChange={(event) => handleServiceImagesUpload(service, event)}
                           />
                         </label>
