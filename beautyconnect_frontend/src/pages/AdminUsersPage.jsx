@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getAnalytics, getCustomers, getPendingVerifications } from '../api/admin'
+import { getAdminProfessionals, getAnalytics, getCustomers, getPendingVerifications } from '../api/admin'
 import { getAssetUrl } from '../api/assets'
-import { getProfessionals } from '../api/search'
 import LoadingState from '../components/LoadingState'
 import './AdminPanelPage.css'
 
@@ -31,7 +30,7 @@ export default function AdminUsersPage() {
     Promise.allSettled([
       getAnalytics(),
       getCustomers(),
-      getProfessionals({ page: 1, pageSize: 50 }),
+      getAdminProfessionals(),
       getPendingVerifications(),
     ])
       .then((results) => {
@@ -39,7 +38,7 @@ export default function AdminUsersPage() {
 
         if (results[0].status === 'fulfilled') setAnalytics(results[0].value)
         if (results[1].status === 'fulfilled') setCustomers(results[1].value ?? [])
-        if (results[2].status === 'fulfilled') setProfessionals(results[2].value?.results ?? [])
+        if (results[2].status === 'fulfilled') setProfessionals(results[2].value ?? [])
         if (results[3].status === 'fulfilled') setVerifications(results[3].value ?? [])
 
         const failures = results
@@ -63,6 +62,7 @@ export default function AdminUsersPage() {
     return customers.map((customer) => ({
       name: customer.name || 'Customer',
       email: customer.email || 'No email available',
+      phone: customer.phoneNumber || 'Not provided',
       location: customer.location || 'Not provided',
       status: customer.status || 'Active',
       avatarUrl: getNestedValue(customer, 'avatarUrl', 'profile.avatarUrl', 'user.avatarUrl', 'user.profile.avatarUrl'),
@@ -138,9 +138,10 @@ export default function AdminUsersPage() {
       professionalEmail,
       professionalName,
       professionalLocation,
+      professionalPhone: professional.phoneNumber || 'Not provided',
       speciality: getNestedValue(professional, 'speciality', 'profile.speciality') || 'Not specified',
       status: verificationStatus(professional.verificationStatus ?? 'Approved'),
-      serviceCount: professional.matchingServices?.length ?? 0,
+      serviceCount: professional.serviceCount ?? professional.matchingServices?.length ?? 0,
     }
   }), [professionals, professionalEmailLookup])
 
@@ -201,6 +202,7 @@ export default function AdminUsersPage() {
               <tr>
                 <th>Customer</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Location</th>
                 <th>Status</th>
               </tr>
@@ -208,7 +210,7 @@ export default function AdminUsersPage() {
             <tbody>
               {customerRows.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="admin-table-empty">No customer records available yet.</td>
+                  <td colSpan="5" className="admin-table-empty">No customer records available yet.</td>
                 </tr>
               ) : (
                 customerRows.map((user) => (
@@ -224,6 +226,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td>{user.email}</td>
+                    <td>{user.phone}</td>
                     <td>{user.location}</td>
                     <td><span className="admin-status-badge admin-status-badge--approved">{user.status}</span></td>
                   </tr>
@@ -250,6 +253,7 @@ export default function AdminUsersPage() {
               <tr>
                 <th>Profile</th>
                 <th>Email</th>
+                <th>Phone</th>
                 <th>Speciality</th>
                 <th>Location</th>
                 <th>Services</th>
@@ -259,7 +263,7 @@ export default function AdminUsersPage() {
             <tbody>
               {resolvedProfessionals.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="admin-table-empty">No professionals available yet.</td>
+                  <td colSpan="7" className="admin-table-empty">No professionals available yet.</td>
                 </tr>
               ) : (
                 resolvedProfessionals.map((professional) => (
@@ -278,6 +282,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td>{professional.professionalEmail}</td>
+                    <td>{professional.professionalPhone}</td>
                     <td>{professional.speciality}</td>
                     <td>{professional.professionalLocation}</td>
                     <td>{professional.serviceCount}</td>

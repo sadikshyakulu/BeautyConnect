@@ -208,9 +208,34 @@ public class AdminService : IAdminService
             UserId = profile.UserId,
             Name = string.IsNullOrWhiteSpace(profile.FullName) ? "Customer" : profile.FullName.Trim(),
             Email = profile.User?.Email ?? string.Empty,
+            PhoneNumber = profile.PhoneNumber,
             AvatarUrl = profile.AvatarUrl,
             Location = "Not provided",
             Status = "Active"
+        }).ToList();
+    }
+
+    public async Task<List<AdminProfessionalDto>> GetProfessionalsAsync()
+    {
+        var professionals = await _context.ProfessionalProfiles
+            .AsNoTracking()
+            .Include(profile => profile.User)
+            .Include(profile => profile.Services)
+            .OrderBy(profile => profile.Id)
+            .ToListAsync();
+
+        return professionals.Select(profile => new AdminProfessionalDto
+        {
+            Id = profile.Id,
+            UserId = profile.UserId,
+            Email = profile.User?.Email ?? string.Empty,
+            BusinessName = profile.BusinessName,
+            PhoneNumber = profile.PhoneNumber,
+            Speciality = profile.Speciality,
+            City = profile.City,
+            AvatarUrl = profile.AvatarUrl,
+            VerificationStatus = profile.VerificationStatus,
+            ServiceCount = profile.Services.Count
         }).ToList();
     }
 

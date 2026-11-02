@@ -8,6 +8,7 @@ import LoadingState from '../components/LoadingState'
 import LocationPicker from '../components/LocationPicker'
 import MoneyAmount from '../components/MoneyAmount'
 import { notify } from '../utils/notifications'
+import { NEPAL_PHONE_PREFIX, withNepalPhonePrefix } from '../utils/phone'
 
 function EsewaLogo({ compact = false }) {
   return (
@@ -35,7 +36,7 @@ export default function BookingPage() {
     landmark: '',
     latitude: null,
     longitude: null,
-    contactPhone: '',
+    contactPhone: NEPAL_PHONE_PREFIX,
   })
   const [payment, setPayment] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -364,7 +365,7 @@ export default function BookingPage() {
                           aria-invalid={!isPhoneValid}
                           aria-describedby={!isPhoneValid ? 'booking-phone-error' : undefined}
                           className={`form-control${!isPhoneValid ? ' booking-field-invalid' : ''}`}
-                          onChange={(event) => updateLocation({ contactPhone: event.target.value })}
+                          onChange={(event) => updateLocation({ contactPhone: withNepalPhonePrefix(event.target.value) })}
                         />
                         {!isPhoneValid && (
                           <p id="booking-phone-error" className="booking-field-error" role="alert">

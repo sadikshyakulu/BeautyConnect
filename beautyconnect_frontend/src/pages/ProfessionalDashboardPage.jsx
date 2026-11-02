@@ -645,20 +645,79 @@ export default function ProfessionalDashboardPage() {
 
         {cancellationFeedback.length > 0 && (
           <section className="col-12">
-            <div className="glass-card rounded-2xl p-4">
-              <h2 className="h5">Customer cancellation feedback</h2>
-              <div className="row g-3">
-                {cancellationFeedback.map((booking) => (
-                  <div className="col-12 col-md-6 col-xxl-4" key={booking.id}>
-                    <article className="border rounded-3 p-3 h-100">
-                      <strong className="d-block">{booking.customerName} · {booking.service?.name ?? 'Service booking'}</strong>
-                      <span className="small text-on-surface-variant d-block mt-1">
-                        {new Date(booking.scheduledDateTime).toLocaleString()}
-                      </span>
-                      <p className="mb-0 mt-2">{booking.cancellationReason}</p>
-                    </article>
+            <div className="glass-card rounded-2xl p-4 professional-cancellation-panel">
+              <header className="professional-cancellation-heading">
+                <div className="professional-cancellation-title">
+                  <span className="material-symbols-outlined" aria-hidden="true">rate_review</span>
+                  <div>
+                    <p className="professional-cancellation-eyebrow">Booking insights</p>
+                    <h2>Customer cancellation feedback</h2>
+                    <p>Review the reason customers shared when cancelling an appointment.</p>
                   </div>
-                ))}
+                </div>
+                <span className="professional-cancellation-count">
+                  {cancellationFeedback.length} {cancellationFeedback.length === 1 ? 'response' : 'responses'}
+                </span>
+              </header>
+              <div className="professional-cancellation-list">
+                {cancellationFeedback.map((booking) => {
+                  const customerAvatarUrl = booking.customerAvatarUrl
+                    || booking.CustomerAvatarUrl
+                    || booking.customerProfile?.avatarUrl
+                    || booking.customer?.avatarUrl
+                    || booking.customer?.profile?.avatarUrl
+                  const serviceImage = booking.service?.images?.find(Boolean)
+                  return (
+                    <article className="professional-cancellation-card" key={booking.id}>
+                      <div className="professional-cancellation-service-avatar">
+                        <span className="material-symbols-outlined" aria-hidden="true">spa</span>
+                        {serviceImage && (
+                          <img
+                            src={getAssetUrl(serviceImage)}
+                            alt={`${booking.service?.name ?? 'Service'} preview`}
+                            onError={(event) => { event.currentTarget.hidden = true }}
+                          />
+                        )}
+                      </div>
+                      <div className="professional-cancellation-details">
+                        <header className="professional-cancellation-card-header">
+                          <span className="professional-cancellation-status">Cancelled</span>
+                        </header>
+                        <div className="professional-cancellation-booking">
+                          <h3>{booking.service?.name ?? 'Service booking'}</h3>
+                        </div>
+                        <div className="professional-cancellation-meta">
+                          <div className="professional-cancellation-customer">
+                            <div className="professional-cancellation-avatar">
+                              <span aria-hidden="true">
+                                {booking.customerName?.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'CU'}
+                              </span>
+                              {customerAvatarUrl && (
+                                <img
+                                  src={getAssetUrl(customerAvatarUrl)}
+                                  alt={`${booking.customerName || 'Customer'} profile`}
+                                  onError={(event) => { event.currentTarget.hidden = true }}
+                                />
+                              )}
+                            </div>
+                            <span className="professional-cancellation-customer-name">
+                              <small>Cancelled by</small>
+                              <strong>{booking.customerName || 'BeautyConnect customer'}</strong>
+                            </span>
+                          </div>
+                          <p className="professional-cancellation-date">
+                            <span className="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                            <time>{new Date(booking.scheduledDateTime).toLocaleString()}</time>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="professional-cancellation-reason">
+                        <span>Customer's reason</span>
+                        <p>{booking.cancellationReason}</p>
+                      </div>
+                    </article>
+                  )
+                })}
               </div>
             </div>
           </section>

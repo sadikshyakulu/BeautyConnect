@@ -41,3 +41,8 @@ export async function getCustomers() {
   const { data } = await client.get('/Admin/customers')
   return data
 }
+
+export async function getAdminProfessionals() {
+  const { data } = await client.get('/Admin/professionals')
+  return data
+}

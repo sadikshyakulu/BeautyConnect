@@ -77,6 +77,12 @@ public class AdminController : ControllerBase
         return Ok(await _adminService.GetCustomersAsync());
     }
 
+    [HttpGet("professionals")]
+    public async Task<IActionResult> GetProfessionals()
+    {
+        return Ok(await _adminService.GetProfessionalsAsync());
+    }
+
     private async Task<IActionResult> UpdateVerificationAsync(
         Func<Task<(PendingProfessionalVerificationDto? Profile, string? Error)>> update)
     {

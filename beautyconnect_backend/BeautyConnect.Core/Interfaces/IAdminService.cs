@@ -14,4 +14,5 @@ public interface IAdminService
     Task<PlatformAnalyticsDto> GetAnalyticsAsync();
     Task<List<AdminRecentActivityDto>> GetRecentActivityAsync();
     Task<List<AdminCustomerDto>> GetCustomersAsync();
+    Task<List<AdminProfessionalDto>> GetProfessionalsAsync();
 }

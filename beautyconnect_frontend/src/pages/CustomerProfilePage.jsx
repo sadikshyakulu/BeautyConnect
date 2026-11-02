@@ -147,8 +147,18 @@ export default function CustomerProfilePage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Email address</dt>
-                  <dd>{user?.email ?? 'Not available'}</dd>
+                  <dt><label htmlFor="customer-profile-email">Email address</label></dt>
+                  <dd>
+                    <input
+                      id="customer-profile-email"
+                      className="form-control"
+                      type="email"
+                      value={user?.email ?? ''}
+                      placeholder="Not available"
+                      autoComplete="email"
+                      disabled
+                    />
+                  </dd>
                 </div>
                 <div>
                   <dt><label htmlFor="customer-profile-phone">Phone number</label></dt>
@@ -168,8 +178,16 @@ export default function CustomerProfilePage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>Account type</dt>
-                  <dd>Customer</dd>
+                  <dt><label htmlFor="customer-profile-account-type">Account type</label></dt>
+                  <dd>
+                    <input
+                      id="customer-profile-account-type"
+                      className="form-control"
+                      type="text"
+                      value="Customer"
+                      disabled
+                    />
+                  </dd>
                 </div>
               </dl>
               <button className="btn btn-primary w-100 mt-3" type="submit" disabled={savingProfile}>

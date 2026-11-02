@@ -915,6 +915,10 @@
   vertical-align: middle;
 }
 
+.booking-payment-submit:hover .booking-esewa-logo {
+  color: #ffffff;
+}
+
 .booking-payment-submit .material-symbols-outlined {
   font-size: 1.15rem;
   transition: transform 0.18s ease;

@@ -52,9 +52,24 @@ public class AdminCustomerDto
     public int UserId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
     public string? AvatarUrl { get; set; }
     public string Location { get; set; } = "Not provided";
     public string Status { get; set; } = "Active";
+}
+
+public class AdminProfessionalDto
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string BusinessName { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
+    public string? Speciality { get; set; }
+    public string? City { get; set; }
+    public string? AvatarUrl { get; set; }
+    public VerificationStatus VerificationStatus { get; set; }
+    public int ServiceCount { get; set; }
 }
 
 public class AdminRecentActivityDto
