@@ -73,6 +73,9 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ContactPhone")
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
@@ -119,6 +122,13 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("PayoutRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ProfessionalPayoutAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<int>("ProfessionalProfileId")
                         .HasColumnType("int");
 
@@ -163,9 +173,13 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.HasIndex("EsewaTransactionUuid")
                         .IsUnique();
 
+                    b.HasIndex("PayoutRequestId");
+
                     b.HasIndex("ServiceId");
 
                     b.HasIndex("ProfessionalProfileId", "ScheduledDateTime", "Status");
+
+                    b.HasIndex("ProfessionalProfileId", "Status", "CompletedAt", "PayoutRequestId");
 
                     b.ToTable("Bookings");
                 });
@@ -303,6 +317,10 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("longtext");
 
+                    b.Property<decimal>("ProfessionalPayoutAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<int>("ProfessionalProfileId")
                         .HasColumnType("int");
 
@@ -338,6 +356,81 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.ToTable("PaymentIntents");
                 });
 
+            modelBuilder.Entity("BeautyConnect.Core.Entities.PayoutRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("AccountNumberEncrypted")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int?>("OpenProfessionalProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PayoutMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("ProcessedByAdminUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProfessionalProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpenProfessionalProfileId")
+                        .IsUnique();
+
+                    b.HasIndex("ProcessedByAdminUserId");
+
+                    b.HasIndex("ProfessionalProfileId", "Status", "RequestedAt");
+
+                    b.ToTable("PayoutRequests");
+                });
+
             modelBuilder.Entity("BeautyConnect.Core.Entities.ProfessionalProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -367,6 +460,22 @@ namespace BeautyConnect.Infrastructure.Migrations
 
                     b.Property<double>("Longitude")
                         .HasColumnType("double");
+
+                    b.Property<string>("PayoutAccountName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("PayoutAccountNumberEncrypted")
+                        .HasMaxLength(2048)
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<string>("PayoutBankName")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("PayoutMethod")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(30)
@@ -587,6 +696,11 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("BeautyConnect.Core.Entities.PayoutRequest", "PayoutRequest")
+                        .WithMany("Bookings")
+                        .HasForeignKey("PayoutRequestId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("BeautyConnect.Core.Entities.ProfessionalProfile", "ProfessionalProfile")
                         .WithMany("Bookings")
                         .HasForeignKey("ProfessionalProfileId")
@@ -600,6 +714,8 @@ namespace BeautyConnect.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("CustomerProfile");
+
+                    b.Navigation("PayoutRequest");
 
                     b.Navigation("ProfessionalProfile");
 
@@ -668,6 +784,24 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.Navigation("ProfessionalProfile");
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("BeautyConnect.Core.Entities.PayoutRequest", b =>
+                {
+                    b.HasOne("BeautyConnect.Core.Entities.User", "ProcessedByAdminUser")
+                        .WithMany()
+                        .HasForeignKey("ProcessedByAdminUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("BeautyConnect.Core.Entities.ProfessionalProfile", "ProfessionalProfile")
+                        .WithMany()
+                        .HasForeignKey("ProfessionalProfileId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProcessedByAdminUser");
+
+                    b.Navigation("ProfessionalProfile");
                 });
 
             modelBuilder.Entity("BeautyConnect.Core.Entities.ProfessionalProfile", b =>
@@ -742,6 +876,11 @@ namespace BeautyConnect.Infrastructure.Migrations
                     b.Navigation("Bookings");
 
                     b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("BeautyConnect.Core.Entities.PayoutRequest", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 
             modelBuilder.Entity("BeautyConnect.Core.Entities.ProfessionalProfile", b =>

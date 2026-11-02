@@ -19,6 +19,7 @@ public class BeautyConnectDbContext : DbContext
     public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Dispute> Disputes => Set<Dispute>();
+    public DbSet<PayoutRequest> PayoutRequests => Set<PayoutRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,10 @@ public class BeautyConnectDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(e => e.PhoneNumber).HasMaxLength(30);
+            entity.Property(e => e.PayoutMethod).HasMaxLength(20);
+            entity.Property(e => e.PayoutAccountName).HasMaxLength(100);
+            entity.Property(e => e.PayoutAccountNumberEncrypted).HasMaxLength(2048);
+            entity.Property(e => e.PayoutBankName).HasMaxLength(100);
             entity.Property(e => e.VerificationStatus).HasConversion<string>().HasMaxLength(30);
             
             // Search indexes for sub-2s query requirement
@@ -109,6 +114,7 @@ public class BeautyConnectDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.TotalPrice).HasPrecision(10, 2);
             entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
+            entity.Property(e => e.ProfessionalPayoutAmount).HasPrecision(10, 2);
             entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100);
             entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
             entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
@@ -139,6 +145,8 @@ public class BeautyConnectDbContext : DbContext
 
             entity.HasIndex(e => new { e.ProfessionalProfileId, e.ScheduledDateTime, e.Status });
             entity.HasIndex(e => e.EsewaTransactionUuid).IsUnique();
+            entity.HasIndex(e => new { e.ProfessionalProfileId, e.Status, e.CompletedAt, e.PayoutRequestId });
+            entity.HasIndex(e => e.PayoutRequestId);
         });
 
         modelBuilder.Entity<PaymentIntent>(entity =>
@@ -146,6 +154,7 @@ public class BeautyConnectDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.TotalPrice).HasPrecision(10, 2);
             entity.Property(e => e.CommissionAmount).HasPrecision(10, 2);
+            entity.Property(e => e.ProfessionalPayoutAmount).HasPrecision(10, 2);
             entity.Property(e => e.EsewaTotalAmount).HasPrecision(10, 2);
             entity.Property(e => e.EsewaTransactionUuid).HasMaxLength(100).IsRequired();
             entity.Property(e => e.EsewaTransactionCode).HasMaxLength(200);
@@ -173,6 +182,36 @@ public class BeautyConnectDbContext : DbContext
                 .HasForeignKey<PaymentIntent>("BookingId")
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<PayoutRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
+            entity.Property(e => e.PayoutMethod).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.AccountName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.AccountNumberEncrypted).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.BankName).HasMaxLength(100);
+            entity.Property(e => e.Reference).HasMaxLength(200);
+            entity.Property(e => e.RejectionReason).HasMaxLength(1000);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.HasIndex(e => e.OpenProfessionalProfileId).IsUnique();
+            entity.HasIndex(e => new { e.ProfessionalProfileId, e.Status, e.RequestedAt });
+            entity.HasOne(e => e.ProfessionalProfile)
+                .WithMany()
+                .HasForeignKey(e => e.ProfessionalProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.ProcessedByAdminUser)
+                .WithMany()
+                .HasForeignKey(e => e.ProcessedByAdminUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Booking>()
+            .HasOne(e => e.PayoutRequest)
+            .WithMany(e => e.Bookings)
+            .HasForeignKey(e => e.PayoutRequestId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Review
         modelBuilder.Entity<Review>(entity =>

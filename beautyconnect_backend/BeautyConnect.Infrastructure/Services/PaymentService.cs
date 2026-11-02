@@ -103,11 +103,10 @@ public sealed class PaymentService : IPaymentService
         }
 
         var scheduledDate = DateOnly.FromDateTime(schedule.LocalStart);
-        var commission = decimal.Round(
-            service.Price * _options.CommissionRate,
-            2,
-            MidpointRounding.AwayFromZero);
-        var totalAmount = service.Price + commission;
+        var (commission, professionalPayoutAmount) = PayoutCalculator.Calculate(
+            service.Price,
+            _options.CommissionRate);
+        var totalAmount = service.Price;
         var now = DateTime.UtcNow;
         var intent = new PaymentIntent
         {
@@ -118,6 +117,7 @@ public sealed class PaymentService : IPaymentService
             EndDateTime = schedule.LocalEnd,
             TotalPrice = service.Price,
             CommissionAmount = commission,
+            ProfessionalPayoutAmount = professionalPayoutAmount,
             EsewaTotalAmount = totalAmount,
             EsewaTransactionUuid = CreateTransactionUuid(service.Id),
             LocationAddress = request.Location.AddressLine,
@@ -221,7 +221,7 @@ public sealed class PaymentService : IPaymentService
         var amountText = FormatAmount(intent.TotalPrice);
         var taxAmountText = FormatAmount(0m);
         var totalAmountText = FormatAmount(intent.EsewaTotalAmount);
-        var productServiceChargeText = FormatAmount(intent.CommissionAmount);
+        const string productServiceChargeText = "0.00";
         var productDeliveryChargeText = FormatAmount(0m);
         var transactionUuid = intent.EsewaTransactionUuid;
         var productCode = ProductCode;
@@ -664,6 +664,7 @@ public sealed class PaymentService : IPaymentService
                     Status = BookingStatus.Confirmed,
                     TotalPrice = paymentIntent.TotalPrice,
                     CommissionAmount = paymentIntent.CommissionAmount,
+                    ProfessionalPayoutAmount = paymentIntent.ProfessionalPayoutAmount,
                     EsewaTransactionUuid = paymentIntent.EsewaTransactionUuid,
                     EsewaTransactionCode = confirmedTransactionCode,
                     EsewaTotalAmount = paymentIntent.EsewaTotalAmount,
@@ -756,7 +757,6 @@ public sealed class PaymentService : IPaymentService
             {
                 booking.Status = BookingStatus.Confirmed;
                 booking.EsewaTransactionCode = confirmedTransactionCode;
-                booking.CommissionAmount = booking.EsewaTotalAmount!.Value - booking.TotalPrice;
                 await _context.SaveChangesAsync(cancellationToken);
             }
             else if (booking.Status != BookingStatus.Confirmed

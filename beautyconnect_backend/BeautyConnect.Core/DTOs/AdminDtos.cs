@@ -41,6 +41,8 @@ public class PlatformAnalyticsDto
 {
     public int TotalBookings { get; set; }
     public decimal Revenue { get; set; }
+    public decimal RequestedPayoutTotal { get; set; }
+    public decimal PaidPayoutTotal { get; set; }
     public int ActiveUsers { get; set; }
     public int VerifiedProfessionalCount { get; set; }
     public DateTime ActiveUsersSinceUtc { get; set; }

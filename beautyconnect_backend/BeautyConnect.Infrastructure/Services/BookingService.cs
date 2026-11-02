@@ -167,6 +167,10 @@ public class BookingService : IBookingService
         }
 
         booking.Status = targetStatus;
+        if (targetStatus == BookingStatus.Completed)
+        {
+            booking.CompletedAt ??= DateTime.UtcNow;
+        }
         await _context.SaveChangesAsync();
         return (ToDto(booking, includeProfessionalContact: !professional), null);
     }

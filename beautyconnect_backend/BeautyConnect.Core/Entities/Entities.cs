@@ -52,6 +52,11 @@ public class ProfessionalProfile
     public int UserId { get; set; }
     public string BusinessName { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public string? PayoutMethod { get; set; }
+    public string? PayoutAccountName { get; set; }
+    [JsonIgnore]
+    public string? PayoutAccountNumberEncrypted { get; set; }
+    public string? PayoutBankName { get; set; }
     public string? Bio { get; set; }
     public string? Speciality { get; set; }
     public string? City { get; set; }
@@ -111,6 +116,9 @@ public class Booking
     public BookingStatus Status { get; set; } = BookingStatus.Pending;
     public decimal TotalPrice { get; set; }
     public decimal CommissionAmount { get; set; }
+    public decimal ProfessionalPayoutAmount { get; set; }
+    public int? PayoutRequestId { get; set; }
+    public DateTime? CompletedAt { get; set; }
     public string? EsewaTransactionUuid { get; set; }
     public string? EsewaTransactionCode { get; set; }
     public decimal? EsewaTotalAmount { get; set; }
@@ -134,6 +142,7 @@ public class Booking
     public Service Service { get; set; } = null!;
     public Review? Review { get; set; }
     public Dispute? Dispute { get; set; }
+    public PayoutRequest? PayoutRequest { get; set; }
 }
 
 public class PaymentIntent
@@ -146,6 +155,7 @@ public class PaymentIntent
     public DateTime EndDateTime { get; set; }
     public decimal TotalPrice { get; set; }
     public decimal CommissionAmount { get; set; }
+    public decimal ProfessionalPayoutAmount { get; set; }
     public decimal EsewaTotalAmount { get; set; }
     public string EsewaTransactionUuid { get; set; } = string.Empty;
     public string? EsewaTransactionCode { get; set; }
@@ -164,6 +174,30 @@ public class PaymentIntent
     public ProfessionalProfile ProfessionalProfile { get; set; } = null!;
     public Service Service { get; set; } = null!;
     public Booking? Booking { get; set; }
+}
+
+public class PayoutRequest
+{
+    public int Id { get; set; }
+    public int ProfessionalProfileId { get; set; }
+    public decimal Amount { get; set; }
+    public PayoutRequestStatus Status { get; set; } = PayoutRequestStatus.Requested;
+    public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? ProcessedAt { get; set; }
+    public int? ProcessedByAdminUserId { get; set; }
+    public string PayoutMethod { get; set; } = string.Empty;
+    public string AccountName { get; set; } = string.Empty;
+    [JsonIgnore]
+    public string AccountNumberEncrypted { get; set; } = string.Empty;
+    public string? BankName { get; set; }
+    public string? Reference { get; set; }
+    public string? RejectionReason { get; set; }
+    public string? Notes { get; set; }
+    public int? OpenProfessionalProfileId { get; set; }
+
+    public ProfessionalProfile ProfessionalProfile { get; set; } = null!;
+    public User? ProcessedByAdminUser { get; set; }
+    public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }
 
 public class Review

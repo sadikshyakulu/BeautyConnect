@@ -83,6 +83,12 @@ public class AdminService : IAdminService
         var revenue = await _context.Bookings
             .Where(booking => booking.Status == BookingStatus.Completed)
             .SumAsync(booking => (decimal?)booking.CommissionAmount) ?? 0m;
+        var requestedPayoutTotal = await _context.PayoutRequests
+            .Where(request => request.Status == PayoutRequestStatus.Requested)
+            .SumAsync(request => (decimal?)request.Amount) ?? 0m;
+        var paidPayoutTotal = await _context.PayoutRequests
+            .Where(request => request.Status == PayoutRequestStatus.Paid)
+            .SumAsync(request => (decimal?)request.Amount) ?? 0m;
         var customerUserIds = _context.Bookings
             .Where(booking => booking.CreatedAt >= activeUsersSinceUtc)
             .Select(booking => booking.CustomerProfile.UserId);
@@ -100,6 +106,8 @@ public class AdminService : IAdminService
         {
             TotalBookings = totalBookings,
             Revenue = revenue,
+            RequestedPayoutTotal = requestedPayoutTotal,
+            PaidPayoutTotal = paidPayoutTotal,
             ActiveUsers = activeUsers,
             VerifiedProfessionalCount = verifiedProfessionalCount,
             ActiveUsersSinceUtc = activeUsersSinceUtc

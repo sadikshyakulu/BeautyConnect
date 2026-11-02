@@ -66,7 +66,16 @@ builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IPayoutDetailsProtector, DataProtectionPayoutDetailsProtector>();
+builder.Services.AddScoped<IPayoutService, PayoutService>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<EsewaOptions>(builder.Configuration.GetSection(EsewaOptions.SectionName));
+builder.Services.AddDataProtection();
+builder.Services.AddOptions<PayoutOptions>()
+    .Bind(builder.Configuration.GetSection(PayoutOptions.SectionName))
+    .Validate(options => options.MinimumAmount > 0m, "Payout:MinimumAmount must be greater than zero.")
+    .Validate(options => options.HoldHours >= 0, "Payout:HoldHours cannot be negative.")
+    .ValidateOnStart();
 builder.Services.Configure<LocationBoundsOptions>(options =>
 {
     var boundsSection = builder.Configuration.GetSection("Location:Bounds");

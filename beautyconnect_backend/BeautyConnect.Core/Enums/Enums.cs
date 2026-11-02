@@ -43,3 +43,18 @@ public enum DisputeStatus
     Resolved,
     Dismissed
 }
+
+public enum PayoutStatus
+{
+    NotDue,
+    Available,
+    Requested,
+    Paid
+}
+
+public enum PayoutRequestStatus
+{
+    Requested,
+    Paid,
+    Rejected
+}
